@@ -2,11 +2,15 @@
 
 import Link from 'next/link';
 import { Exercise } from '@/types/categories';
+import { Category } from '@/lib/api/categories';
+import { Set } from '@/types/sets';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, PlayIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface ExercisesClientProps {
-  exercises: Exercise[];
+  category: Category;
+  set: Set;
+  initialExercises: Exercise[];
 }
 
 const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
@@ -28,13 +32,13 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
   );
 };
 
-export default function ExercisesClient({ exercises }: ExercisesClientProps) {
+export default function ExercisesClient({ category, set, initialExercises }: ExercisesClientProps) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-xl font-semibold text-gray-900">
-            სავარჯიშოები
+            {set?.name?.ka} - სავარჯიშოები
           </h1>
           <p className="mt-2 text-sm text-gray-700">
             სეტში არსებული სავარჯიშოების სია
@@ -47,7 +51,7 @@ export default function ExercisesClient({ exercises }: ExercisesClientProps) {
             className="gap-2"
             asChild
           >
-            <Link href="./add">
+            <Link href={`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises/add`}>
               <PlusIcon className="h-5 w-5" />
               სავარჯიშოს დამატება
             </Link>
@@ -55,7 +59,7 @@ export default function ExercisesClient({ exercises }: ExercisesClientProps) {
         </div>
       </div>
 
-      {exercises.length === 0 ? (
+      {initialExercises.length === 0 ? (
         <div className="text-center py-12">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
@@ -82,7 +86,7 @@ export default function ExercisesClient({ exercises }: ExercisesClientProps) {
               className="gap-2"
               asChild
             >
-              <Link href="./add">
+              <Link href={`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises/add`}>
                 <PlusIcon className="h-5 w-5" />
                 სავარჯიშოს დამატება
               </Link>
@@ -115,7 +119,7 @@ export default function ExercisesClient({ exercises }: ExercisesClientProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {exercises.map((exercise) => (
+                    {initialExercises.map((exercise) => (
                       <tr key={exercise.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                           <div className="flex items-center">

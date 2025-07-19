@@ -1,10 +1,19 @@
 import { CreateSetRequest, Set, UpdateSetData } from "@/types/sets";
 
-const API_BASE_URL = '/api';
+// Consistent API base URL
+const API_BASE_URL = 'http://localhost:4000';
+
+// Helper function to construct API URLs
+function constructApiUrl(path: string): string {
+  return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 export async function createSet(request: CreateSetRequest): Promise<Set> {
   try {
-    const response = await fetch(`${API_BASE_URL}/sets`, {
+    const url = constructApiUrl('sets');
+    console.log('📤 Creating set');
+    
+    const response = await fetch(url, {
       method: "POST",
       ...(request.isFormData
         ? {
@@ -25,7 +34,9 @@ export async function createSet(request: CreateSetRequest): Promise<Set> {
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('✅ Set created');
+    return data;
   } catch (error) {
     console.error("Error creating set:", error);
     throw error;
@@ -34,7 +45,10 @@ export async function createSet(request: CreateSetRequest): Promise<Set> {
 
 export async function updateSet(setId: string, data: UpdateSetData): Promise<Set> {
   try {
-    const response = await fetch(`${API_BASE_URL}/sets/${setId}`, {
+    const url = constructApiUrl(`sets/${setId}`);
+    console.log('📤 Updating set:', setId);
+    
+    const response = await fetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -49,22 +63,33 @@ export async function updateSet(setId: string, data: UpdateSetData): Promise<Set
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('✅ Set updated');
+    return result;
   } catch (error) {
     console.error("Error updating set:", error);
     throw error;
   }
 }
 
-export async function getAllSets(categoryId?: string): Promise<Set[]> {
+export async function getAllSets(categoryId?: string, subCategoryId?: string): Promise<Set[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories/${categoryId}/sets`);
+    const queryParams = new URLSearchParams();
+    if (categoryId) queryParams.append('categoryId', categoryId);
+    if (subCategoryId) queryParams.append('subCategoryId', subCategoryId);
+    
+    const url = constructApiUrl(`sets${queryParams.toString() ? `?${queryParams.toString()}` : ''}`);
+    console.log('📤 Fetching sets from:', url);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('✅ Fetched sets:', data.length);
+    return data;
   } catch (error) {
     console.error("Error getting all sets:", error);
     throw error;
@@ -73,13 +98,18 @@ export async function getAllSets(categoryId?: string): Promise<Set[]> {
 
 export async function getSetById(setId: string): Promise<Set> {
   try {
-    const response = await fetch(`${API_BASE_URL}/sets/${setId}`);
+    const url = constructApiUrl(`sets/${setId}`);
+    console.log('📤 Fetching set:', setId);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('✅ Set fetched');
+    return data;
   } catch (error) {
     console.error("Error getting set by ID:", error);
     throw error;
@@ -88,7 +118,10 @@ export async function getSetById(setId: string): Promise<Set> {
 
 export async function deleteSet(setId: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/sets/${setId}`, {
+    const url = constructApiUrl(`sets/${setId}`);
+    console.log('📤 Deleting set:', setId);
+    
+    const response = await fetch(url, {
       method: "DELETE",
       credentials: "include",
     });
@@ -96,6 +129,8 @@ export async function deleteSet(setId: string): Promise<void> {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    console.log('✅ Set deleted');
   } catch (error) {
     console.error("Error deleting set:", error);
     throw error;

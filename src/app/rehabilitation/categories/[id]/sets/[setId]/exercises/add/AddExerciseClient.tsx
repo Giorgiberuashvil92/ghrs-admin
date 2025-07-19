@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Category, Exercise, ExerciseFormData } from '@/types/categories';
+import { Exercise, ExerciseFormData } from '@/types/categories';
+import { Category } from '@/lib/api/categories';
 import { Set } from '@/types/sets';
 import { Button } from '@/components/ui/button';
 import { createExercise } from '@/lib/api/exercises';
@@ -820,7 +821,7 @@ export default function AddExerciseClient({ category, set }: AddExerciseClientPr
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => router.back()}
+                onClick={() => router.push(`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises`)}
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"
               >

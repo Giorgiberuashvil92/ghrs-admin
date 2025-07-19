@@ -20,11 +20,11 @@ export const NAV_DATA = [
         items: [
           {
             title: "Categories",
-            url: "/pages/rehabilitation/categories",
+            url: "/rehabilitation/categories",
           },
           {
             title: "Exercises",
-            url: "/pages/rehabilitation/exercises",
+            url: "/rehabilitation/exercises",
           },
           {
             title: "Videos",

@@ -1,6 +1,6 @@
 import { Exercise, LocalizedString } from "@/types/categories";
 
-const API_BASE_URL = '/api';  // Changed from process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API_BASE_URL = 'http://localhost:4000';
 
 // Helper function to construct API URLs
 function constructApiUrl(path: string): string {
@@ -114,7 +114,7 @@ export async function getExercises(params?: { categoryId?: string, subCategoryId
   if (params?.categoryId) queryParams.append('categoryId', params.categoryId);
   if (params?.subCategoryId) queryParams.append('subCategoryId', params.subCategoryId);
   
-  const url = `${API_BASE_URL}/exercises${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const url = constructApiUrl(`exercises${queryParams.toString() ? `?${queryParams.toString()}` : ''}`);
   const response = await fetch(url);
   
   if (!response.ok) {
@@ -128,7 +128,7 @@ export async function getExercises(params?: { categoryId?: string, subCategoryId
 export async function getExercisesBySetId(setId: string): Promise<Exercise[]> {
   try {
     console.log('📤 Fetching exercises for setId:', setId);
-    const response = await fetch(`${API_BASE_URL}/exercises/set/${setId}`);
+    const response = await fetch(constructApiUrl(`exercises/set/${setId}`));
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -144,7 +144,7 @@ export async function getExercisesBySetId(setId: string): Promise<Exercise[]> {
 }
 
 export async function getExercisesByCategory(categoryId: string): Promise<Exercise[]> {
-  const response = await fetch(`${API_BASE_URL}/exercises/category/${categoryId}`);
+  const response = await fetch(constructApiUrl(`exercises/category/${categoryId}`));
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch exercises by category' }));
@@ -155,7 +155,7 @@ export async function getExercisesByCategory(categoryId: string): Promise<Exerci
 }
 
 export async function getExercisesByDifficulty(difficulty: 'easy' | 'medium' | 'hard'): Promise<Exercise[]> {
-  const response = await fetch(`${API_BASE_URL}/exercises/difficulty/${difficulty}`);
+  const response = await fetch(constructApiUrl(`exercises/difficulty/${difficulty}`));
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch exercises by difficulty' }));
@@ -166,7 +166,7 @@ export async function getExercisesByDifficulty(difficulty: 'easy' | 'medium' | '
 }
 
 export async function getExerciseById(id: string): Promise<Exercise> {
-  const response = await fetch(`${API_BASE_URL}/exercises/${id}`);
+  const response = await fetch(constructApiUrl(`exercises/${id}`));
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch exercise' }));
@@ -256,7 +256,7 @@ export async function createExercise(data: FormData): Promise<Exercise> {
     console.log('თამბნეილის URL:', thumbnailUrl || '❌ არ არის მითითებული');
     console.groupEnd();
 
-    const response = await fetch(`${API_BASE_URL}/exercises`, {
+    const response = await fetch(constructApiUrl('exercises'), {
       method: 'POST',
       body: data
     });
@@ -280,7 +280,7 @@ export async function createExercise(data: FormData): Promise<Exercise> {
 }
 
 export async function updateExercise(id: string, data: FormData): Promise<Exercise> {
-  const response = await fetch(`${API_BASE_URL}/exercises/${id}`, {
+  const response = await fetch(constructApiUrl(`exercises/${id}`), {
     method: 'PATCH',
     body: data
   });
@@ -294,7 +294,7 @@ export async function updateExercise(id: string, data: FormData): Promise<Exerci
 }
 
 export async function deleteExercise(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/exercises/${id}`, {
+  const response = await fetch(constructApiUrl(`exercises/${id}`), {
     method: 'DELETE'
   });
 

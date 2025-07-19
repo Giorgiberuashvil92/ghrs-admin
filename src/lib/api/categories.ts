@@ -1,6 +1,6 @@
 import { SubCategory, Complex, Exercise } from "@/types/categories";
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:4000';
 
 // API პასუხის ინტერფეისები
 interface ApiResponse<T> {
@@ -80,9 +80,22 @@ export async function createCategory(data: CreateCategoryData) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Server error response:', errorData);
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        console.error('Server error response:', errorData);
+        errorMessage = errorData.message || errorMessage;
+      } catch (jsonError) {
+        // Error response is not JSON, try to get text
+        try {
+          const errorText = await response.text();
+          console.error('Server error response (text):', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (textError) {
+          console.error('Could not parse error response');
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -124,6 +137,23 @@ export async function getCategoryById(categoryId: string): Promise<Category> {
   }
 }
 
+// Add function to get category sets according to API spec
+export async function getCategorySets(categoryId: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories/${categoryId}/sets`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error getting category sets:', error);
+    throw error;
+  }
+}
+
 export async function updateCategory(categoryId: string, data: UpdateCategoryData): Promise<Category> {
   try {
     console.log('Sending update data:', {
@@ -153,9 +183,22 @@ export async function updateCategory(categoryId: string, data: UpdateCategoryDat
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Server error response:', errorData);
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        console.error('Server error response:', errorData);
+        errorMessage = errorData.message || errorMessage;
+      } catch (jsonError) {
+        // Error response is not JSON, try to get text
+        try {
+          const errorText = await response.text();
+          console.error('Server error response (text):', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (textError) {
+          console.error('Could not parse error response');
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     return await response.json();
