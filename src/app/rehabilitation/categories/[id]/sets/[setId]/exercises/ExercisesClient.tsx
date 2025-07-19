@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Exercise } from '@/types/categories';
 import { Category } from '@/lib/api/categories';
+import { SubCategory } from '@/types/categories';
 import { Set } from '@/types/sets';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, PlayIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -11,6 +12,7 @@ interface ExercisesClientProps {
   category: Category;
   set: Set;
   initialExercises: Exercise[];
+  subcategory?: SubCategory; // ოფციონალური საბ კატეგორია
 }
 
 const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
@@ -32,16 +34,29 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
   );
 };
 
-export default function ExercisesClient({ category, set, initialExercises }: ExercisesClientProps) {
+export default function ExercisesClient({ category, set, initialExercises, subcategory }: ExercisesClientProps) {
+  // Build paths dynamically based on whether we have a subcategory
+  const basePath = subcategory 
+    ? `/rehabilitation/categories/${category._id}/subcategories/${subcategory._id}`
+    : `/rehabilitation/categories/${category._id}`;
+  
+  const addExercisePath = `${basePath}/sets/${set._id}/exercises/add`;
+  
+  const title = subcategory 
+    ? `${category.name.ka} › ${subcategory.name.ka} › ${set?.name?.ka} - სავარჯიშოები`
+    : `${category.name.ka} › ${set?.name?.ka} - სავარჯიშოები`;
+    
+  const description = "სეტში არსებული სავარჯიშოების სია";
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-xl font-semibold text-gray-900">
-            {set?.name?.ka} - სავარჯიშოები
+            {title}
           </h1>
           <p className="mt-2 text-sm text-gray-700">
-            სეტში არსებული სავარჯიშოების სია
+            {description}
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -51,7 +66,7 @@ export default function ExercisesClient({ category, set, initialExercises }: Exe
             className="gap-2"
             asChild
           >
-            <Link href={`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises/add`}>
+            <Link href={addExercisePath}>
               <PlusIcon className="h-5 w-5" />
               სავარჯიშოს დამატება
             </Link>
@@ -86,7 +101,7 @@ export default function ExercisesClient({ category, set, initialExercises }: Exe
               className="gap-2"
               asChild
             >
-              <Link href={`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises/add`}>
+              <Link href={addExercisePath}>
                 <PlusIcon className="h-5 w-5" />
                 სავარჯიშოს დამატება
               </Link>
@@ -174,7 +189,7 @@ export default function ExercisesClient({ category, set, initialExercises }: Exe
                               </button>
                             )}
                             <Link
-                              href={`./exercises/${exercise.id}/edit`}
+                              href={`${basePath}/sets/${set._id}/exercises/${exercise.id}/edit`}
                               className="text-primary hover:text-opacity-90"
                               title="რედაქტირება"
                             >

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Category } from '@/lib/api/categories';
+import { SubCategory } from '@/types/categories';
 import { createSet } from '@/lib/api/sets';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '@/i18n/language-context';
@@ -15,11 +16,17 @@ import { UploadIcon } from '@/assets/icons';
 
 interface AddSetClientProps {
   category: Category;
+  subcategory?: SubCategory; // ოფციონალური საბ კატეგორია
 }
 
-export default function AddSetClient({ category }: AddSetClientProps) {
+export default function AddSetClient({ category, subcategory }: AddSetClientProps) {
   const router = useRouter();
   const { t, language } = useLanguage();
+  
+  // Build redirect path based on whether we have a subcategory
+  const redirectPath = subcategory 
+    ? `/rehabilitation/categories/${category._id}/subcategories/${subcategory._id}/sets`
+    : `/rehabilitation/categories/${category._id}/sets`;
   const [isLoading, setIsLoading] = useState(false);
   const [imageType, setImageType] = useState<'url' | 'file'>('url');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -67,6 +74,7 @@ export default function AddSetClient({ category }: AddSetClientProps) {
       const setData: CreateSetData = {
         ...formData,
         categoryId: category._id,
+        subCategoryId: subcategory?._id,
       };
 
       if (imageType === 'file' && imageFile) {
@@ -75,6 +83,9 @@ export default function AddSetClient({ category }: AddSetClientProps) {
         // დავამატოთ ყველა ველი FormData-ში
         formDataToSend.append('thumbnailImage', imageFile);
         formDataToSend.append('categoryId', category._id);
+        if (subcategory) {
+          formDataToSend.append('subCategoryId', subcategory._id);
+        }
         
         // ლოკალიზებული ველები
         if (formData.name) {
@@ -116,7 +127,7 @@ export default function AddSetClient({ category }: AddSetClientProps) {
       }
 
       toast.success('სეტი წარმატებით დაემატა');
-      router.push(`/rehabilitation/categories/${category._id}/sets`);
+      router.push(redirectPath);
       router.refresh();
     } catch (error) {
       console.error('Error creating set:', error);
@@ -129,7 +140,11 @@ export default function AddSetClient({ category }: AddSetClientProps) {
   return (
     <>
       <div className="mx-auto max-w-270">
-        <Breadcrumb pageName={`სეტის დამატება - ${category.name[language]}`} />
+        <Breadcrumb pageName={
+          subcategory 
+            ? `სეტის დამატება - ${category.name[language]} › ${subcategory.name[language]}`
+            : `სეტის დამატება - ${category.name[language]}`
+        } />
 
         <div className="grid grid-cols-12 gap-4">
           {/* მთავარი ფორმა */}

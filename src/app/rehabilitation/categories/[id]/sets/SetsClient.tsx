@@ -3,24 +3,41 @@
 import Link from 'next/link';
 import { Set } from '@/types/sets';
 import { Category } from '@/lib/api/categories';
+import { SubCategory } from '@/types/categories';
 import { Button } from '@/components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 interface SetsClientProps {
   initialSets: Set[];
   category: Category;
+  subcategory?: SubCategory; // ოფციონალური საბ კატეგორია
 }
 
-export default function SetsClient({ initialSets, category }: SetsClientProps) {
+export default function SetsClient({ initialSets, category, subcategory }: SetsClientProps) {
+  // Build paths dynamically based on whether we have a subcategory
+  const basePath = subcategory 
+    ? `/rehabilitation/categories/${category._id}/subcategories/${subcategory._id}`
+    : `/rehabilitation/categories/${category._id}`;
+  
+  const addSetPath = `${basePath}/sets/add`;
+  
+  const title = subcategory 
+    ? `${category.name.ka} › ${subcategory.name.ka} - სეტები`
+    : `${category.name.ka} - სეტები`;
+    
+  const description = subcategory
+    ? `საბ კატეგორიაში არსებული სეტების სია`
+    : `კატეგორიაში არსებული სეტების სია`;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-xl font-semibold text-gray-900">
-            {category.name.ka} - სეტები
+            {title}
           </h1>
           <p className="mt-2 text-sm text-gray-700">
-            კატეგორიაში არსებული სეტების სია
+            {description}
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -30,7 +47,7 @@ export default function SetsClient({ initialSets, category }: SetsClientProps) {
             className="gap-2"
             asChild
           >
-            <Link href={`/rehabilitation/categories/${category._id}/sets/add`}>
+            <Link href={addSetPath}>
               <PlusIcon className="h-5 w-5" />
               სეტის დამატება
             </Link>
@@ -65,7 +82,7 @@ export default function SetsClient({ initialSets, category }: SetsClientProps) {
               className="gap-2"
               asChild
             >
-              <Link href={`/rehabilitation/categories/${category._id}/sets/add`}>
+              <Link href={addSetPath}>
                 <PlusIcon className="h-5 w-5" />
                 სეტის დამატება
               </Link>
@@ -127,14 +144,14 @@ export default function SetsClient({ initialSets, category }: SetsClientProps) {
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex justify-end gap-2">
                             <Link
-                              href={`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises`}
+                              href={`${basePath}/sets/${set._id}/exercises`}
                               className="text-blue-600 hover:text-blue-900"
                               title="სავარჯიშოები"
                             >
                               სავარჯიშოები
                             </Link>
                             <Link
-                              href={`/rehabilitation/categories/${category._id}/sets/${set._id}/edit`}
+                              href={`${basePath}/sets/${set._id}/edit`}
                               className="text-primary hover:text-opacity-90"
                             >
                               რედაქტირება

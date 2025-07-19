@@ -17,7 +17,9 @@ export default function CategoriesPage() {
     try {
       setLoading(true);
       const data = await getAllCategories();
-      setCategories(data);
+      // ვფილტრავთ მხოლოდ კატეგორიებს (parentId არ აქვს)
+      const categoriesOnly = data.filter((item: any) => !item.parentId);
+      setCategories(categoriesOnly);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -88,27 +90,40 @@ export default function CategoriesPage() {
               </span>
             </div>
             
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => router.push(`/rehabilitation/categories/${category._id}/sets`)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-              >
-                სეტები
-              </button>
+            <div className="flex flex-col gap-2 mt-4">
+              {/* პირდაპირ კონტენტი */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => router.push(`/rehabilitation/categories/${category._id}/sets`)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm flex-1"
+                >
+                  პირდაპირ სეტები
+                </button>
+                
+                <button
+                  onClick={() => router.push(`/rehabilitation/categories/${category._id}/subcategories`)}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm flex-1"
+                >
+                  საბ კატეგორიები
+                </button>
+              </div>
               
-              <button
-                onClick={() => router.push(`/rehabilitation/categories/${category._id}/edit`)}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-              >
-                რედაქტირება
-              </button>
-              
-              <button
-                onClick={() => handleDelete(category._id)}
-                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-              >
-                წაშლა
-              </button>
+              {/* მართვის ღილაკები */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => router.push(`/rehabilitation/categories/${category._id}/edit`)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm flex-1"
+                >
+                  რედაქტირება
+                </button>
+                
+                <button
+                  onClick={() => handleDelete(category._id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex-1"
+                >
+                  წაშლა
+                </button>
+              </div>
             </div>
           </div>
         ))}

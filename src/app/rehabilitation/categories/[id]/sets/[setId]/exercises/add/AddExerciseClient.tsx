@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Exercise, ExerciseFormData } from '@/types/categories';
+import { Exercise, ExerciseFormData, SubCategory } from '@/types/categories';
 import { Category } from '@/lib/api/categories';
 import { Set } from '@/types/sets';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { TrashIcon, PhotoIcon, LinkIcon, VideoCameraIcon, ClockIcon, ChartBarIco
 interface AddExerciseClientProps {
   category: Category;
   set: Set;
+  subcategory?: SubCategory; // ოფციონალური საბ კატეგორია
 }
 
 const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
@@ -33,8 +34,13 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
   );
 };
 
-export default function AddExerciseClient({ category, set }: AddExerciseClientProps) {
+export default function AddExerciseClient({ category, set, subcategory }: AddExerciseClientProps) {
   const router = useRouter();
+  
+  // Build redirect path based on whether we have a subcategory
+  const redirectPath = subcategory 
+    ? `/rehabilitation/categories/${category._id}/subcategories/${subcategory._id}/sets/${set._id}/exercises`
+    : `/rehabilitation/categories/${category._id}/sets/${set._id}/exercises`;
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
@@ -237,7 +243,7 @@ export default function AddExerciseClient({ category, set }: AddExerciseClientPr
       }
 
       const exercise = await createExercise(formDataToSend);
-      router.push(`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises`);
+      router.push(redirectPath);
       router.refresh();
     } catch (error) {
       console.error('Error creating exercise:', error);
@@ -261,13 +267,23 @@ export default function AddExerciseClient({ category, set }: AddExerciseClientPr
                 ახალი სავარჯიშოს დამატება
               </h1>
               <p className="mt-2 text-lg text-gray-600">
-                {set.name.ka} - {category.name.ka}
+                {subcategory 
+                  ? `${category.name.ka} › ${subcategory.name.ka} › ${set.name.ka}`
+                  : `${category.name.ka} › ${set.name.ka}`
+                }
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>კატეგორია:</span>
             <span className="font-medium">{category.name.ka}</span>
+            {subcategory && (
+              <>
+                <span>•</span>
+                <span>საბ კატეგორია:</span>
+                <span className="font-medium">{subcategory.name.ka}</span>
+              </>
+            )}
             <span>•</span>
             <span>სეტი:</span>
             <span className="font-medium">{set.name.ka}</span>

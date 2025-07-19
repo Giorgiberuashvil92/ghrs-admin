@@ -37,6 +37,7 @@ export interface CreateSetData {
   description?: LocalizedString;
   thumbnailImage: string;
   categoryId: string;
+  subCategoryId?: string;
   price: SetPrice;
   levels: SetLevels;
   isActive: boolean;
