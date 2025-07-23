@@ -2,41 +2,52 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createSubCategory, getCategoryById, type Category } from "@/lib/api/categories";
+import {
+  createSubCategory,
+  getCategoryById,
+  type Category,
+} from "@/lib/api/categories";
 import { LocalizedString } from "@/types/categories";
 import { useLanguage } from "@/i18n/language-context";
-import { TrashIcon, PhotoIcon, LinkIcon } from '@heroicons/react/24/outline';
-import { Button } from '@/components/ui/button';
+import { TrashIcon, PhotoIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { Button } from "@/components/ui/button";
 
-const API_BASE_URL = 'http://localhost:4000';
+// const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = "https://grs-bkbc.onrender.com";
 
 // ცალკე ფუნქცია ფაილების ატვირთვისთვის
-const createSubCategoryWithFile = async (categoryId: string, formData: FormData) => {
+const createSubCategoryWithFile = async (
+  categoryId: string,
+  formData: FormData,
+) => {
   try {
-    console.log('Creating subcategory with file upload');
-    for (let [key, value] of formData.entries()) {
+    console.log("Creating subcategory with file upload");
+    for (const [key, value] of Array.from(formData.entries())) {
       console.log(`${key}:`, value);
     }
 
-    const response = await fetch(`${API_BASE_URL}/categories/${categoryId}/subcategories`, {
-      method: "POST",
-      credentials: 'include',
-      body: formData
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/categories/${categoryId}/subcategories`,
+      {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      },
+    );
 
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
         const errorData = await response.json();
-        console.error('Server error response:', errorData);
+        console.error("Server error response:", errorData);
         errorMessage = errorData.message || errorMessage;
       } catch (jsonError) {
         try {
           const errorText = await response.text();
-          console.error('Server error response (text):', errorText);
+          console.error("Server error response (text):", errorText);
           errorMessage = errorText || errorMessage;
         } catch (textError) {
-          console.error('Could not parse error response');
+          console.error("Could not parse error response");
         }
       }
       throw new Error(errorMessage);
@@ -44,27 +55,19 @@ const createSubCategoryWithFile = async (categoryId: string, formData: FormData)
 
     return await response.json();
   } catch (error) {
-    console.error('Error creating subcategory with file:', error);
+    console.error("Error creating subcategory with file:", error);
     throw error;
   }
 };
 
 const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
-  if (src.startsWith('data:')) {
+  if (src.startsWith("data:")) {
     return (
-      <img
-        src={src}
-        alt={alt}
-        className="h-24 w-24 object-cover rounded-lg"
-      />
+      <img src={src} alt={alt} className="h-24 w-24 rounded-lg object-cover" />
     );
   }
   return (
-    <img
-      src={src}
-      alt={alt}
-      className="h-24 w-24 object-cover rounded-lg"
-    />
+    <img src={src} alt={alt} className="h-24 w-24 rounded-lg object-cover" />
   );
 };
 
@@ -74,7 +77,9 @@ interface AddSubCategoryPageProps {
   }>;
 }
 
-export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) {
+export default function AddSubCategoryPage({
+  params,
+}: AddSubCategoryPageProps) {
   const router = useRouter();
   const resolvedParams = React.use(params);
   const { t, language } = useLanguage();
@@ -85,12 +90,12 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
   const [isImageUrlInput, setIsImageUrlInput] = useState(false);
   const imageFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
-    name: { ka: '', en: '', ru: '' } as LocalizedString,
-    description: { ka: '', en: '', ru: '' } as LocalizedString,
-    imageUrl: '',
+    name: { ka: "", en: "", ru: "" } as LocalizedString,
+    description: { ka: "", en: "", ru: "" } as LocalizedString,
+    imageUrl: "",
     isActive: true,
     isPublished: false,
-    sortOrder: 0
+    sortOrder: 0,
   });
 
   useEffect(() => {
@@ -102,7 +107,7 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
       const categoryData = await getCategoryById(resolvedParams.id);
       setCategory(categoryData);
     } catch (error) {
-      console.error('Error fetching category:', error);
+      console.error("Error fetching category:", error);
     }
   };
 
@@ -113,7 +118,7 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
         setImageFile(file);
-        setFormData(prev => ({ ...prev, imageUrl: "" })); // Clear URL input if file is chosen
+        setFormData((prev) => ({ ...prev, imageUrl: "" })); // Clear URL input if file is chosen
       };
       reader.readAsDataURL(file);
     }
@@ -122,9 +127,9 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
   const handleImageDelete = () => {
     setImagePreview(null);
     setImageFile(null);
-    setFormData(prev => ({ ...prev, imageUrl: "" }));
+    setFormData((prev) => ({ ...prev, imageUrl: "" }));
     if (imageFileRef.current) {
-      imageFileRef.current.value = '';
+      imageFileRef.current.value = "";
     }
   };
 
@@ -134,7 +139,7 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
       setImageFile(null); // Clear file input if URL is chosen
       setIsImageUrlInput(false);
     } else {
-      alert(t('pleaseEnterImageUrl'));
+      alert(t("pleaseEnterImageUrl"));
     }
   };
 
@@ -146,16 +151,20 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
       // ფაილი თუ არის, FormData-ს გამოვიყენოთ
       if (imageFile || (formData.imageUrl && formData.imageUrl.trim())) {
         const dataToSend = new FormData();
-        dataToSend.append('name', JSON.stringify(formData.name));
-        dataToSend.append('description', JSON.stringify(formData.description));
-        dataToSend.append('isActive', formData.isActive.toString());
-        dataToSend.append('isPublished', formData.isPublished.toString());
-        dataToSend.append('sortOrder', formData.sortOrder.toString());
+        dataToSend.append("name", JSON.stringify(formData.name));
+        dataToSend.append("description", JSON.stringify(formData.description));
+        dataToSend.append("isActive", formData.isActive.toString());
+        dataToSend.append("isPublished", formData.isPublished.toString());
+        dataToSend.append("sortOrder", formData.sortOrder.toString());
 
         if (imageFile) {
-          dataToSend.append('image', imageFile);
-        } else if (formData.imageUrl && formData.imageUrl.trim() && /^https?:\/\//.test(formData.imageUrl)) {
-          dataToSend.append('imageUrl', formData.imageUrl);
+          dataToSend.append("image", imageFile);
+        } else if (
+          formData.imageUrl &&
+          formData.imageUrl.trim() &&
+          /^https?:\/\//.test(formData.imageUrl)
+        ) {
+          dataToSend.append("imageUrl", formData.imageUrl);
         }
 
         await createSubCategoryWithFile(resolvedParams.id, dataToSend);
@@ -166,173 +175,204 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
           description: formData.description,
           isActive: formData.isActive,
           isPublished: formData.isPublished,
-          sortOrder: formData.sortOrder
+          sortOrder: formData.sortOrder,
         };
-        
+
         await createSubCategory(resolvedParams.id, jsonData);
       }
-      
-      alert(t('subcategoryAddedSuccessfully'));
-      router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories`);
+
+      alert(t("subcategoryAddedSuccessfully"));
+      router.push(
+        `/rehabilitation/categories/${resolvedParams.id}/subcategories`,
+      );
     } catch (error) {
-      console.error('Error creating subcategory:', error);
-      alert(t('errorCreatingSubcategory'));
+      console.error("Error creating subcategory:", error);
+      alert(t("errorCreatingSubcategory"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (field: 'name' | 'description', language: 'ka' | 'en' | 'ru', value: string) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: "name" | "description",
+    language: "ka" | "en" | "ru",
+    value: string,
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       [field]: {
         ...prev[field],
-        [language]: value
-      }
+        [language]: value,
+      },
     }));
   };
 
   if (!category) {
     return (
       <div className="p-8">
-        <div className="animate-pulse">{t('loading')}</div>
+        <div className="animate-pulse">{t("loading")}</div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-xl bg-white shadow-xl">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6">
-            <button 
-              onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories`)}
-              className="text-purple-100 hover:text-white mb-2 flex items-center"
+            <button
+              onClick={() =>
+                router.push(
+                  `/rehabilitation/categories/${resolvedParams.id}/subcategories`,
+                )
+              }
+              className="mb-2 flex items-center text-purple-100 hover:text-white"
             >
-              ← {t('backToSubcategories')}
+              ← {t("backToSubcategories")}
             </button>
-            <h1 className="text-3xl font-bold text-white">{t('addNewSubcategory')}</h1>
-            <p className="text-purple-100 mt-2">
-              {t('addSubcategoryInCategory', { categoryName: category.name[language] || category.name.ka })}
+            <h1 className="text-3xl font-bold text-white">
+              {t("addNewSubcategory")}
+            </h1>
+            <p className="mt-2 text-purple-100">
+              {t("addSubcategoryInCategory") +
+                " " +
+                (category.name[language] || category.name.ka)}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-8 p-8">
             {/* სახელი */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('nameInGeorgianRequired')}
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  {t("nameInGeorgianRequired")}
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.name.ka}
-                  onChange={(e) => handleInputChange('name', 'ka', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder={t('exampleLowerLimbs')}
+                  onChange={(e) =>
+                    handleInputChange("name", "ka", e.target.value)
+                  }
+                  className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
+                  placeholder={t("exampleLowerLimbs")}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('nameInEnglish')}
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  {t("nameInEnglish")}
                 </label>
                 <input
                   type="text"
                   value={formData.name.en}
-                  onChange={(e) => handleInputChange('name', 'en', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    handleInputChange("name", "en", e.target.value)
+                  }
+                  className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
                   placeholder="e.g. Lower Limbs"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('nameInRussian')}
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  {t("nameInRussian")}
                 </label>
                 <input
                   type="text"
                   value={formData.name.ru}
-                  onChange={(e) => handleInputChange('name', 'ru', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    handleInputChange("name", "ru", e.target.value)
+                  }
+                  className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
                   placeholder="напр. Нижние конечности"
                 />
               </div>
             </div>
 
             {/* აღწერა */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('descriptionInGeorgian')}
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  {t("descriptionInGeorgian")}
                 </label>
                 <textarea
                   rows={4}
                   value={formData.description.ka}
-                  onChange={(e) => handleInputChange('description', 'ka', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
-                  placeholder={t('subcategoryDescriptionPlaceholder')}
+                  onChange={(e) =>
+                    handleInputChange("description", "ka", e.target.value)
+                  }
+                  className="w-full resize-none rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
+                  placeholder={t("subcategoryDescriptionPlaceholder")}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('descriptionInEnglish')}
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  {t("descriptionInEnglish")}
                 </label>
                 <textarea
                   rows={4}
                   value={formData.description.en}
-                  onChange={(e) => handleInputChange('description', 'en', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+                  onChange={(e) =>
+                    handleInputChange("description", "en", e.target.value)
+                  }
+                  className="w-full resize-none rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
                   placeholder="Subcategory description..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('descriptionInRussian')}
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  {t("descriptionInRussian")}
                 </label>
                 <textarea
                   rows={4}
                   value={formData.description.ru}
-                  onChange={(e) => handleInputChange('description', 'ru', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+                  onChange={(e) =>
+                    handleInputChange("description", "ru", e.target.value)
+                  }
+                  className="w-full resize-none rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
                   placeholder="Описание подкатегории..."
                 />
               </div>
             </div>
 
             {/* სურათის URL */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <PhotoIcon className="h-5 w-5 mr-2" />
-                {t('categoryImage')}
+            <div className="rounded-xl bg-gray-50 p-6">
+              <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+                <PhotoIcon className="mr-2 h-5 w-5" />
+                {t("categoryImage")}
               </h3>
-              
+
               <div className="space-y-4">
                 <label className="block text-sm font-semibold text-gray-700">
-                  {t('uploadImage')}
+                  {t("uploadImage")}
                 </label>
-                
+
                 {imagePreview ? (
                   <div className="relative">
-                    <ImageComponent src={imagePreview} alt={t('thumbnailAlt')} />
+                    <ImageComponent
+                      src={imagePreview}
+                      alt={t("thumbnailAlt")}
+                    />
                     <button
                       type="button"
                       onClick={handleImageDelete}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white transition-colors hover:bg-red-600"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                  <div className="rounded-xl border-2 border-dashed border-gray-300 p-6 text-center">
                     <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-500">{t('noImageUploaded')}</p>
+                    <p className="mt-2 text-sm text-gray-500">
+                      {t("noImageUploaded")}
+                    </p>
                   </div>
                 )}
-                
+
                 <div className="flex gap-2">
                   <input
                     ref={imageFileRef}
@@ -343,41 +383,43 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
                   />
                   <Button
                     type="button"
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     onClick={() => imageFileRef.current?.click()}
                     className="flex-1"
                   >
-                    <PhotoIcon className="h-4 w-4 mr-1" />
-                    {t('file')}
+                    <PhotoIcon className="mr-1 h-4 w-4" />
+                    {t("file")}
                   </Button>
                   <Button
                     type="button"
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     onClick={() => setIsImageUrlInput(!isImageUrlInput)}
                     className="flex-1"
                   >
-                    <LinkIcon className="h-4 w-4 mr-1" />
-                    {t('url')}
+                    <LinkIcon className="mr-1 h-4 w-4" />
+                    {t("url")}
                   </Button>
                 </div>
-                
+
                 {isImageUrlInput && (
                   <div className="flex gap-2">
                     <input
                       type="url"
                       value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      placeholder={t('enterImageUrl')}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      onChange={(e) =>
+                        setFormData({ ...formData, imageUrl: e.target.value })
+                      }
+                      placeholder={t("enterImageUrl")}
+                      className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-purple-500"
                     />
                     <Button
                       type="button"
                       onClick={handleImageUrlSubmit}
                       size="sm"
                     >
-                      {t('add')}
+                      {t("add")}
                     </Button>
                   </div>
                 )}
@@ -386,36 +428,46 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
 
             {/* რიგითი ნომერი */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {t('sortOrder')}
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                {t("sortOrder")}
               </label>
               <input
                 type="number"
                 value={formData.sortOrder}
-                onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    sortOrder: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-purple-500"
                 placeholder="0"
                 min="0"
               />
             </div>
 
             {/* სტატუსები */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {t('statuses')}
+            <div className="rounded-xl bg-gray-50 p-6">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                {t("statuses")}
               </h3>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center gap-x-3">
                   <input
                     id="is-active"
                     type="checkbox"
                     checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isActive: e.target.checked })
+                    }
                     className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
-                  <label htmlFor="is-active" className="block text-sm font-semibold leading-6 text-gray-900">
-                    {t('active')}
+                  <label
+                    htmlFor="is-active"
+                    className="block text-sm font-semibold leading-6 text-gray-900"
+                  >
+                    {t("active")}
                   </label>
                 </div>
 
@@ -424,38 +476,50 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
                     id="is-published"
                     type="checkbox"
                     checked={formData.isPublished}
-                    onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isPublished: e.target.checked,
+                      })
+                    }
                     className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
-                  <label htmlFor="is-published" className="block text-sm font-semibold leading-6 text-gray-900">
-                    {t('published')}
+                  <label
+                    htmlFor="is-published"
+                    className="block text-sm font-semibold leading-6 text-gray-900"
+                  >
+                    {t("published")}
                   </label>
                 </div>
               </div>
             </div>
 
             {/* ღილაკები */}
-            <div className="border-t border-gray-200 pt-8 flex justify-end gap-4">
+            <div className="flex justify-end gap-4 border-t border-gray-200 pt-8">
               <button
                 type="button"
-                onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories`)}
+                onClick={() =>
+                  router.push(
+                    `/rehabilitation/categories/${resolvedParams.id}/subcategories`,
+                  )
+                }
                 disabled={loading}
-                className="rounded-xl px-8 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold disabled:opacity-50"
+                className="rounded-xl border border-gray-300 px-8 py-3 font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                {t('cancel')}
+                {t("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-xl px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold disabled:opacity-50"
+                className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 font-semibold text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    {t('saving')}...
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                    {t("saving")}...
                   </div>
                 ) : (
-                  t('createSubcategory')
+                  t("createSubcategory")
                 )}
               </button>
             </div>
@@ -464,4 +528,4 @@ export default function AddSubCategoryPage({ params }: AddSubCategoryPageProps) 
       </div>
     </div>
   );
-} 
+}
