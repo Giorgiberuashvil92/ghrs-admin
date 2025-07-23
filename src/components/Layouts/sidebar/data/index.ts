@@ -23,6 +23,10 @@ export const NAV_DATA = [
             url: "/rehabilitation/categories",
           },
           {
+            title: "Popular Exercises",
+            url: "/rehabilitation/popular-exercises",
+          },
+          {
             title: "Exercises",
             url: "/rehabilitation/exercises",
           },
@@ -43,12 +47,16 @@ export const NAV_DATA = [
         ],
       },
       {
-        title: "Blog",
+        title: "Content Management",
         icon: Icons.PieChart,
         items: [
           {
             title: "Articles",
-            url: "/pages/blog",
+            url: "/admin/articles",
+          },
+          {
+            title: "Blogs",
+            url: "/admin/blogs",
           },
         ],
       },

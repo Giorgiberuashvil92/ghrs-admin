@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSubCategories, getCategoryById, deleteSubCategory, type Category } from "@/lib/api/categories";
 import { SubCategory } from "@/types/categories";
+import { useLanguage } from "@/i18n/language-context";
 
 interface SubCategoriesPageProps {
   params: Promise<{
@@ -14,6 +15,7 @@ interface SubCategoriesPageProps {
 export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
   const router = useRouter();
   const resolvedParams = React.use(params);
+  const { t } = useLanguage();
   const [category, setCategory] = useState<Category | null>(null);
   const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,21 +41,21 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
   };
 
   const handleDelete = async (subCategoryId: string) => {
-    if (!confirm('დარწმუნებული ხართ?')) return;
+    if (!confirm(t('confirmDelete'))) return;
     
     try {
       await deleteSubCategory(resolvedParams.id, subCategoryId);
       setSubcategories(prev => prev.filter(sub => sub._id !== subCategoryId));
     } catch (error) {
       console.error('Error deleting subcategory:', error);
-      alert('შეცდომა წაშლისას');
+      alert(t('errorDeletingSubcategory'));
     }
   };
 
   if (loading) {
     return (
       <div className="p-8">
-        <div className="animate-pulse">იტვირთება...</div>
+        <div className="animate-pulse">{t('loading')}</div>
       </div>
     );
   }
@@ -61,7 +63,7 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
   if (!category) {
     return (
       <div className="p-8">
-        <div className="text-red-500">კატეგორია ვერ მოიძებნა</div>
+        <div className="text-red-500">{t('categoryNotFound')}</div>
       </div>
     );
   }
@@ -75,10 +77,10 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
             onClick={() => router.push('/rehabilitation/categories')}
             className="text-blue-500 hover:text-blue-600 mb-2 flex items-center"
           >
-            ← უკან კატეგორიებზე
+            ← {t('backToCategories')}
           </button>
           <h1 className="text-3xl font-bold">
-            {category.name.ka} - საბ კატეგორიები
+            {category.name.ka} - {t('subcategories')}
           </h1>
         </div>
         <div className="flex gap-3">
@@ -86,13 +88,13 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
             onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/sets`)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
           >
-            ← პირდაპირ სეტები
+            ← {t('directSets')}
           </button>
           <button 
             onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories/add`)}
             className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded"
           >
-            + ახალი საბ კატეგორია
+            + {t('addNewSubcategory')}
           </button>
         </div>
       </div>
@@ -118,13 +120,13 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
               <span className={`px-2 py-1 rounded text-sm ${
                 subcategory.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               }`}>
-                {subcategory.isActive ? 'აქტიური' : 'არააქტიური'}
+                {subcategory.isActive ? t('active') : t('inactive')}
               </span>
               
               <span className={`px-2 py-1 rounded text-sm ${
                 subcategory.isPublished ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
               }`}>
-                {subcategory.isPublished ? 'გამოქვეყნებული' : 'ნაბოლოი'}
+                {subcategory.isPublished ? t('published') : t('draft')}
               </span>
             </div>
             
@@ -133,7 +135,7 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
                 onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories/${subcategory._id}/sets`)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm w-full"
               >
-                სეტები ({subcategory.complexes?.length || 0})
+                {t('sets')} ({subcategory.complexes?.length || 0})
               </button>
               
               <div className="flex gap-2">
@@ -141,14 +143,14 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
                   onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories/${subcategory._id}/edit`)}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm flex-1"
                 >
-                  რედაქტირება
+                  {t('edit')}
                 </button>
                 
                 <button
                   onClick={() => handleDelete(subcategory._id)}
                   className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex-1"
                 >
-                  წაშლა
+                  {t('delete')}
                 </button>
               </div>
             </div>
@@ -158,12 +160,12 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
 
       {subcategories.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">საბ კატეგორიები არ არის</p>
+          <p className="text-gray-500 mb-4">{t('noSubcategories')}</p>
           <button 
             onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories/add`)}
             className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded"
           >
-            შექმენი პირველი საბ კატეგორია
+            {t('createFirstSubcategory')}
           </button>
         </div>
       )}

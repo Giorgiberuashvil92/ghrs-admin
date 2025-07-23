@@ -7,6 +7,7 @@ import { Set } from '@/types/sets';
 import { Category } from '@/types/categories';
 import { Button } from '@/components/ui/button';
 import { updateSet } from '@/lib/api/sets';
+import { useLanguage } from '@/i18n/language-context';
 import { TrashIcon, PhotoIcon, LinkIcon } from '@heroicons/react/24/outline';
 
 interface EditSetClientProps {
@@ -38,6 +39,7 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 
 export default function EditSetClient({ category, initialSet }: EditSetClientProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [set, setSet] = useState(initialSet);
   const [previewImage, setPreviewImage] = useState<string | null>(initialSet.thumbnailImage || null);
@@ -70,7 +72,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
       setIsUrlInput(false);
       setImageUrl(''); // გაასუფთავე ველი
     } else {
-      alert('გთხოვთ შეიყვანოთ URL');
+      alert(t('pleaseEnterImageUrl'));
     }
   };
 
@@ -103,10 +105,10 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
       <div className="p-6 lg:p-8 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
-            სეტის რედაქტირება - {set.name.ka}
+            {t('editSet')} - {set.name.ka}
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            შეცვალეთ სეტის ინფორმაცია და გამოაქვეყნეთ
+            {t('changeSetInfo')}
           </p>
         </div>
 
@@ -115,7 +117,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
             {/* სურათის სექცია */}
             <div className="col-span-full">
               <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
-                სეტის სურათი
+                {t('setImage')}
               </label>
               <div className="flex items-start gap-x-4">
                 {previewImage ? (
@@ -149,7 +151,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                       }}
                     >
                       <PhotoIcon className="h-4 w-4 mr-2" />
-                      სურათის ატვირთვა
+                      {t('uploadImage')}
                     </Button>
                     <Button
                       type="button"
@@ -157,7 +159,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                       onClick={() => setIsUrlInput(true)}
                     >
                       <LinkIcon className="h-4 w-4 mr-2" />
-                      URL-ის ჩაწერა
+                      {t('enterImageUrl')}
                     </Button>
                   </div>
 
@@ -167,7 +169,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                         type="url"
                         value={imageUrl}
                         onChange={(e) => setImageUrl(e.target.value)}
-                        placeholder="ჩაწერეთ სურათის URL"
+                        placeholder={t('enterImageUrl')}
                         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                       />
                       <Button
@@ -176,7 +178,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                         variant="default"
                         className="whitespace-nowrap"
                       >
-                        დამატება
+                        {t('add')}
                       </Button>
                     </div>
                   )}
@@ -197,7 +199,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
               <div className="space-y-4">
                 <div>
                   <label htmlFor="name-ka" className="block text-sm font-medium text-gray-700">
-                    სახელი (ქართულად)
+                    {t('nameInGeorgian')}
                   </label>
                   <div className="mt-1">
                     <input
@@ -213,7 +215,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
                 <div>
                   <label htmlFor="name-en" className="block text-sm font-medium text-gray-700">
-                    სახელი (ინგლისურად)
+                    {t('nameInEnglish')}
                   </label>
                   <div className="mt-1">
                     <input
@@ -232,7 +234,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
               <div className="space-y-4">
                 <div>
                   <label htmlFor="description-ka" className="block text-sm font-medium text-gray-700">
-                    აღწერა (ქართულად)
+                    {t('descriptionInGeorgian')}
                   </label>
                   <div className="mt-1">
                     <textarea
@@ -255,7 +257,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
                 <div>
                   <label htmlFor="description-en" className="block text-sm font-medium text-gray-700">
-                    აღწერა (ინგლისურად)
+                    {t('descriptionInEnglish')}
                   </label>
                   <div className="mt-1">
                     <textarea
@@ -280,11 +282,11 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
             {/* ფასების სექცია */}
             <div className="border-t border-gray-200 pt-8">
-              <h3 className="text-base font-semibold leading-7 text-gray-900 mb-4">ფასები</h3>
+              <h3 className="text-base font-semibold leading-7 text-gray-900 mb-4">{t('pricing')}</h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <div>
                   <label htmlFor="price-monthly" className="block text-sm font-medium text-gray-700">
-                    თვიური
+                    {t('monthly')}
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <input
@@ -303,7 +305,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
                 <div>
                   <label htmlFor="price-three-months" className="block text-sm font-medium text-gray-700">
-                    3 თვე
+                    {t('threeMonths')}
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <input
@@ -322,7 +324,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
                 <div>
                   <label htmlFor="price-six-months" className="block text-sm font-medium text-gray-700">
-                    6 თვე
+                    {t('sixMonths')}
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <input
@@ -341,7 +343,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
                 <div>
                   <label htmlFor="price-yearly" className="block text-sm font-medium text-gray-700">
-                    წლიური
+                    {t('yearly')}
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <input
@@ -362,7 +364,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
 
             {/* სტატუსის სექცია */}
             <div className="border-t border-gray-200 pt-8">
-              <h3 className="text-base font-semibold leading-7 text-gray-900 mb-4">სტატუსი</h3>
+              <h3 className="text-base font-semibold leading-7 text-gray-900 mb-4">{t('status')}</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-x-3">
                   <input
@@ -374,7 +376,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <label htmlFor="is-active" className="block text-sm font-medium leading-6 text-gray-900">
-                    აქტიური
+                    {t('active')}
                   </label>
                 </div>
 
@@ -388,7 +390,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <label htmlFor="is-published" className="block text-sm font-medium leading-6 text-gray-900">
-                    გამოქვეყნებული
+                    {t('published')}
                   </label>
                 </div>
               </div>
@@ -402,7 +404,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                 onClick={() => router.back()}
                 disabled={isLoading}
               >
-                გაუქმება
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -410,7 +412,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                 disabled={isLoading}
                 className="bg-primary hover:bg-primary/90"
               >
-                {isLoading ? 'ინახება...' : 'შენახვა'}
+                {isLoading ? t('updating') : t('updateSet')}
               </Button>
             </div>
           </form>

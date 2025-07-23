@@ -10,6 +10,7 @@ import { getExerciseById, updateExercise } from '@/lib/api/exercises';
 import { getCategoryById } from '@/lib/api/categories';
 import { getSetById } from '@/lib/api/sets';
 import { TrashIcon, PhotoIcon, LinkIcon, VideoCameraIcon, ClockIcon, ChartBarIcon, CogIcon } from '@heroicons/react/24/outline';
+import { useLanguage } from '@/i18n/language-context';
 
 interface EditExercisePageProps {
   params: Promise<{
@@ -40,6 +41,7 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 
 export default function EditExercisePage({ params }: EditExercisePageProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const resolvedParams = use(params);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -133,7 +135,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('მონაცემების ჩატვირთვისას შეცდომა');
+      alert(t('errorLoadingData'));
     } finally {
       setFetchLoading(false);
     }
@@ -157,7 +159,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     setFormErrors(errors);
 
     if (!isValidObjectId(formData.setId) || !isValidObjectId(formData.categoryId)) {
-      alert('სეტის ან კატეგორიის ID არასწორია');
+      alert(t('invalidId'));
       return false;
     }
     
@@ -227,7 +229,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       setIsThumbnailUrlInput(false);
       handleMediaChange();
     } else {
-      alert('გთხოვთ შეიყვანოთ სურათის URL');
+      alert(t('pleaseEnterImageUrl'));
     }
   };
 
@@ -238,7 +240,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       setIsVideoUrlInput(false);
       handleMediaChange();
     } else {
-      alert('გთხოვთ შეიყვანოთ ვიდეოს URL');
+      alert(t('pleaseEnterVideoUrl'));
     }
   };
 
@@ -249,12 +251,12 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     try {
       if (!validateForm()) {
         setIsLoading(false);
-        alert('გთხოვთ შეავსოთ ყველა სავალდებულო ველი');
+        alert(t('pleaseFillAllRequiredFields'));
         return;
       }
 
       if (formData.name.ka.includes('http') || formData.description.ka.includes('http')) {
-        alert('გთხოვთ შეიყვანოთ ტექსტი, არა URL-ები სახელისა და აღწერის ველებში');
+        alert(t('pleaseEnterTextNotUrls'));
         setIsLoading(false);
         return;
       }
@@ -304,12 +306,12 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       }
 
       await updateExercise(resolvedParams.exerciseId, formDataToSend);  
-      alert('სავარჯიშო წარმატებით განახლდა');
+      alert(t('exerciseUpdatedSuccessfully'));
       router.push(`/rehabilitation/categories/${resolvedParams.id}/sets/${resolvedParams.setId}/exercises`);
       router.refresh();
     } catch (error) {
       console.error('Error updating exercise:', error);
-      alert('შეცდომა სავარჯიშოს განახლებისას');
+      alert(t('errorUpdatingExercise'));
     } finally {
       setIsLoading(false);
     }
@@ -326,7 +328,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
   if (!exercise || !category || !set) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-500">სავარჯიშო, კატეგორია ან სეტი ვერ მოიძებნა</div>
+        <div className="text-red-500">{t('exerciseCategoryOrSetNotFound')}</div>
       </div>
     );
   }
@@ -336,7 +338,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-2xl rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
-            <h1 className="text-3xl font-bold text-white">სავარჯიშოს რედაქტირება</h1>
+            <h1 className="text-3xl font-bold text-white">{t('editExercise')}</h1>
             <p className="text-blue-100 mt-2">
               {category.name.ka} / {set.name.ka}
             </p>
@@ -347,7 +349,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  სავარჯიშოს სახელი (ქართული) *
+                  {t('exerciseNameKa')} *
                 </label>
                 <input
                   type="text"
@@ -360,33 +362,33 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     formErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
-                  placeholder="მაგ. ბიცეფსის ვარჯიში"
+                  placeholder={t('enterExerciseName')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  სავარჯიშოს სახელი (ინგლისური)
+                  {t('exerciseNameEn')}
                 </label>
                 <input
                   type="text"
                   value={formData.name.en}
                   onChange={(e) => setFormData({ ...formData, name: { ...formData.name, en: e.target.value } })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="e.g. Bicep Curl"
+                  placeholder={t('enterExerciseNameEn')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  სავარჯიშოს სახელი (რუსული)
+                  {t('exerciseNameRu')}
                 </label>
                 <input
                   type="text"
                   value={formData.name.ru}
                   onChange={(e) => setFormData({ ...formData, name: { ...formData.name, ru: e.target.value } })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="напр. Сгибание бицепса"
+                  placeholder={t('enterExerciseNameRu')}
                 />
               </div>
             </div>
@@ -395,7 +397,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  აღწერა (ქართული) *
+                  {t('exerciseDescriptionKa')} *
                 </label>
                 <textarea
                   required
@@ -408,33 +410,33 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
                     formErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
-                  placeholder="სავარჯიშოს დეტალური აღწერა..."
+                  placeholder={t('enterExerciseDescriptionKa')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  აღწერა (ინგლისური)
+                  {t('exerciseDescriptionEn')}
                 </label>
                 <textarea
                   rows={4}
                   value={formData.description.en}
                   onChange={(e) => setFormData({ ...formData, description: { ...formData.description, en: e.target.value } })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Detailed exercise description..."
+                  placeholder={t('enterExerciseDescriptionEn')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  აღწერა (რუსული)
+                  {t('exerciseDescriptionRu')}
                 </label>
                 <textarea
                   rows={4}
                   value={formData.description.ru}
                   onChange={(e) => setFormData({ ...formData, description: { ...formData.description, ru: e.target.value } })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Подробное описание упражнения..."
+                  placeholder={t('enterExerciseDescriptionRu')}
                 />
               </div>
             </div>
@@ -443,7 +445,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  რეკომენდაციები (ქართული) *
+                  {t('exerciseRecommendationsKa')} *
                 </label>
                 <textarea
                   required
@@ -456,33 +458,33 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
                     formErrors.recommendations ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
-                  placeholder="უსაფრთხოების რეკომენდაციები და რჩევები..."
+                  placeholder={t('enterExerciseRecommendationsKa')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  რეკომენდაციები (ინგლისური)
+                  {t('exerciseRecommendationsEn')}
                 </label>
                 <textarea
                   rows={3}
                   value={formData.recommendations.en}
                   onChange={(e) => setFormData({ ...formData, recommendations: { ...formData.recommendations, en: e.target.value } })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Safety recommendations and tips..."
+                  placeholder={t('enterExerciseRecommendationsEn')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  რეკომენდაციები (რუსული)
+                  {t('exerciseRecommendationsRu')}
                 </label>
                 <textarea
                   rows={3}
                   value={formData.recommendations.ru}
                   onChange={(e) => setFormData({ ...formData, recommendations: { ...formData.recommendations, ru: e.target.value } })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Рекомендации по безопасности и советы..."
+                  placeholder={t('enterExerciseRecommendationsRu')}
                 />
               </div>
             </div>
@@ -491,19 +493,19 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <VideoCameraIcon className="h-5 w-5 mr-2" />
-                მედია ფაილები
+                {t('exerciseMediaFiles')}
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* სურათის ატვირთვა */}
                 <div className="space-y-4">
                   <label className="block text-sm font-semibold text-gray-700">
-                    სავარჯიშოს სურათი *
+                    {t('exerciseThumbnail')} *
                   </label>
                   
                   {thumbnailPreview ? (
                     <div className="relative">
-                      <ImageComponent src={thumbnailPreview} alt="თამბნეილი" />
+                      <ImageComponent src={thumbnailPreview} alt={t('thumbnailAlt')} />
                       <button
                         type="button"
                         onClick={handleThumbnailDelete}
@@ -515,7 +517,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
                       <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-500">სურათი არ არის ატვირთული</p>
+                      <p className="mt-2 text-sm text-gray-500">{t('noImageUploaded')}</p>
                     </div>
                   )}
                   
@@ -535,7 +537,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                       className="flex-1"
                     >
                       <PhotoIcon className="h-4 w-4 mr-1" />
-                      ფაილი
+                      {t('file')}
                     </Button>
                     <Button
                       type="button"
@@ -545,7 +547,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                       className="flex-1"
                     >
                       <LinkIcon className="h-4 w-4 mr-1" />
-                      URL
+                      {t('url')}
                     </Button>
                   </div>
                   
@@ -555,7 +557,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                         type="url"
                         value={thumbnailUrl}
                         onChange={(e) => setThumbnailUrl(e.target.value)}
-                        placeholder="https://example.com/image.jpg"
+                        placeholder={t('enterImageUrl')}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <Button
@@ -563,7 +565,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                         onClick={handleThumbnailUrlSubmit}
                         size="sm"
                       >
-                        დამატება
+                        {t('add')}
                       </Button>
                     </div>
                   )}
@@ -572,7 +574,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                 {/* ვიდეოს ატვირთვა */}
                 <div className="space-y-4">
                   <label className="block text-sm font-semibold text-gray-700">
-                    სავარჯიშოს ვიდეო *
+                    {t('exerciseVideo')} *
                   </label>
                   
                   {videoPreview ? (
@@ -597,7 +599,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
                       <VideoCameraIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-500">ვიდეო არ არის ატვირთული</p>
+                      <p className="mt-2 text-sm text-gray-500">{t('noVideoUploaded')}</p>
                     </div>
                   )}
                   
@@ -617,7 +619,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                       className="flex-1"
                     >
                       <VideoCameraIcon className="h-4 w-4 mr-1" />
-                      ფაილი
+                      {t('file')}
                     </Button>
                     <Button
                       type="button"
@@ -627,7 +629,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                       className="flex-1"
                     >
                       <LinkIcon className="h-4 w-4 mr-1" />
-                      URL
+                      {t('url')}
                     </Button>
                   </div>
                   
@@ -637,7 +639,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                         type="url"
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
-                        placeholder="https://example.com/video.mp4"
+                        placeholder={t('enterVideoUrl')}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <Button
@@ -645,7 +647,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                         onClick={handleVideoUrlSubmit}
                         size="sm"
                       >
-                        დამატება
+                        {t('add')}
                       </Button>
                     </div>
                   )}
@@ -657,13 +659,13 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <ChartBarIcon className="h-5 w-5 mr-2" />
-                სავარჯიშოს პარამეტრები
+                {t('exerciseParameters')}
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ვიდეოს ხანგრძლივობა *
+                    {t('videoDuration')} *
                   </label>
                   <input
                     type="text"
@@ -676,13 +678,13 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       formErrors.videoDuration ? 'border-red-300 bg-red-50' : 'border-gray-200'
                     }`}
-                    placeholder="00:05:30"
+                    placeholder={t('enterVideoDuration')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ვარჯიშის ხანგრძლივობა *
+                    {t('exerciseDuration')} *
                   </label>
                   <input
                     type="text"
@@ -695,13 +697,13 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       formErrors.duration ? 'border-red-300 bg-red-50' : 'border-gray-200'
                     }`}
-                    placeholder="30 წუთი"
+                    placeholder={t('enterExerciseDuration')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    სირთულე *
+                    {t('difficulty')} *
                   </label>
                   <select
                     required
@@ -709,22 +711,22 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   >
-                    <option value="easy">მარტივი</option>
-                    <option value="medium">საშუალო</option>
-                    <option value="hard">რთული</option>
+                    <option value="easy">{t('easy')}</option>
+                    <option value="medium">{t('medium')}</option>
+                    <option value="hard">{t('hard')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    რიგითი ნომერი
+                    {t('sortOrder')}
                   </label>
                   <input
                     type="number"
                     value={formData.sortOrder}
                     onChange={(e) => setFormData({ ...formData, sortOrder: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="0"
+                    placeholder={t('enterSortOrder')}
                     min="0"
                   />
                 </div>
@@ -733,7 +735,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    განმეორებები *
+                    {t('repetitions')} *
                   </label>
                   <input
                     type="text"
@@ -746,13 +748,13 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       formErrors.repetitions ? 'border-red-300 bg-red-50' : 'border-gray-200'
                     }`}
-                    placeholder="10-15"
+                    placeholder={t('enterRepetitions')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    სეტები *
+                    {t('sets')} *
                   </label>
                   <input
                     type="text"
@@ -765,13 +767,13 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       formErrors.sets ? 'border-red-300 bg-red-50' : 'border-gray-200'
                     }`}
-                    placeholder="3"
+                    placeholder={t('enterSets')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    დასვენების დრო *
+                    {t('restTime')} *
                   </label>
                   <input
                     type="text"
@@ -784,7 +786,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       formErrors.restTime ? 'border-red-300 bg-red-50' : 'border-gray-200'
                     }`}
-                    placeholder="60 წამი"
+                    placeholder={t('enterRestTime')}
                   />
                 </div>
               </div>
@@ -794,7 +796,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <CogIcon className="h-5 w-5 mr-2" />
-                პარამეტრები
+                {t('parameters')}
               </h3>
               
               <div className="space-y-4">
@@ -808,7 +810,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="is-active" className="block text-sm font-semibold leading-6 text-gray-900">
-                    აქტიური
+                    {t('isActive')}
                   </label>
                 </div>
 
@@ -822,7 +824,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="is-published" className="block text-sm font-semibold leading-6 text-gray-900">
-                    გამოქვეყნებული
+                    {t('isPublished')}
                   </label>
                 </div>
               </div>
@@ -837,7 +839,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"
               >
-                გაუქმება
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -848,10 +850,10 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ინახება...
+                    {t('saving')}...
                   </div>
                 ) : (
-                  'სავარჯიშოს განახლება'
+                  t('updateExercise')
                 )}
               </Button>
             </div>

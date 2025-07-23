@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCategoryById, updateCategory, type Category } from "@/lib/api/categories";
+import { useLanguage } from "@/i18n/language-context";
 
 interface EditCategoryPageProps {
   params: { id: string };
@@ -10,6 +11,7 @@ interface EditCategoryPageProps {
 
 export default function EditCategoryPage({ params }: EditCategoryPageProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [category, setCategory] = useState<Category | null>(null);
@@ -49,7 +51,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
       });
     } catch (error) {
       console.error('Error fetching category:', error);
-      alert('კატეგორიის ჩატვირთვისას შეცდომა');
+      alert(t('categoryNotFound'));
       router.push('/rehabilitation/categories');
     } finally {
       setFetchLoading(false);
@@ -70,7 +72,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
     e.preventDefault();
     
     if (!formData.name.ka) {
-      alert('გთხოვთ შეიყვანოთ კატეგორიის ქართული სახელი');
+      alert(t('pleaseEnterGeorgianName'));
       return;
     }
     
@@ -78,11 +80,11 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
     
     try {
       await updateCategory(params.id, formData);
-      alert('კატეგორია წარმატებით განახლდა');
+      alert(t('categoryUpdatedSuccess'));
       router.push('/rehabilitation/categories');
     } catch (error) {
       console.error('Error updating category:', error);
-      alert('შეცდომა კატეგორიის განახლებისას');
+      alert(t('categoryUpdateError'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
     return (
       <div className="p-8">
         <div className="max-w-2xl mx-auto">
-          <div className="animate-pulse">კატეგორია იტვირთება...</div>
+          <div className="animate-pulse">{t('loading')}</div>
         </div>
       </div>
     );
@@ -102,7 +104,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
     return (
       <div className="p-8">
         <div className="max-w-2xl mx-auto">
-          <div className="text-red-500">კატეგორია ვერ მოიძებნა</div>
+          <div className="text-red-500">{t('categoryNotFound')}</div>
         </div>
       </div>
     );
@@ -111,97 +113,97 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
   return (
     <div className="p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">კატეგორიის რედაქტირება</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('editCategory')}</h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* ქართული სახელი */}
           <div>
-            <label className="block text-sm font-medium mb-2">სახელი (ქართული) *</label>
+            <label className="block text-sm font-medium mb-2">{t('nameInGeorgian')} *</label>
             <input
               type="text"
               required
               value={formData.name.ka}
               onChange={(e) => handleInputChange('name', 'ka', e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="მაგ. ორთოპედია"
+              placeholder={t('enterGeorgianName')}
             />
           </div>
 
           {/* ინგლისური სახელი */}
           <div>
-            <label className="block text-sm font-medium mb-2">სახელი (ინგლისური)</label>
+            <label className="block text-sm font-medium mb-2">{t('nameInEnglish')}</label>
             <input
               type="text"
               value={formData.name.en}
               onChange={(e) => handleInputChange('name', 'en', e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. Orthopedics"
+              placeholder={t('enterEnglishName')}
             />
           </div>
 
           {/* რუსული სახელი */}
           <div>
-            <label className="block text-sm font-medium mb-2">სახელი (რუსული)</label>
+            <label className="block text-sm font-medium mb-2">{t('nameInRussian')}</label>
             <input
               type="text"
               value={formData.name.ru}
               onChange={(e) => handleInputChange('name', 'ru', e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="напр. Ортопедия"
+              placeholder={t('enterRussianName')}
             />
           </div>
 
           {/* ქართული აღწერა */}
           <div>
-            <label className="block text-sm font-medium mb-2">აღწერა (ქართული)</label>
+            <label className="block text-sm font-medium mb-2">{t('descriptionInGeorgian')}</label>
             <textarea
               value={formData.description.ka}
               onChange={(e) => handleInputChange('description', 'ka', e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
               rows={3}
-              placeholder="კატეგორიის აღწერა..."
+              placeholder={t('enterGeorgianDescription')}
             />
           </div>
 
           {/* ინგლისური აღწერა */}
           <div>
-            <label className="block text-sm font-medium mb-2">აღწერა (ინგლისური)</label>
+            <label className="block text-sm font-medium mb-2">{t('descriptionInEnglish')}</label>
             <textarea
               value={formData.description.en}
               onChange={(e) => handleInputChange('description', 'en', e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
               rows={3}
-              placeholder="Category description..."
+              placeholder={t('enterEnglishDescription')}
             />
           </div>
 
           {/* რუსული აღწერა */}
           <div>
-            <label className="block text-sm font-medium mb-2">აღწერა (რუსული)</label>
+            <label className="block text-sm font-medium mb-2">{t('descriptionInRussian')}</label>
             <textarea
               value={formData.description.ru}
               onChange={(e) => handleInputChange('description', 'ru', e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
               rows={3}
-              placeholder="Описание категории..."
+              placeholder={t('enterRussianDescription')}
             />
           </div>
 
           {/* სურათის URL */}
           <div>
-            <label className="block text-sm font-medium mb-2">სურათის URL</label>
+            <label className="block text-sm font-medium mb-2">{t('imageUrl')}</label>
             <input
               type="url"
               value={formData.image}
               onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com/image.jpg"
+              placeholder={t('enterImageUrl')}
             />
           </div>
 
           {/* რიგითობა */}
           <div>
-            <label className="block text-sm font-medium mb-2">რიგითობა</label>
+            <label className="block text-sm font-medium mb-2">{t('sortOrder')}</label>
             <input
               type="number"
               value={formData.sortOrder}
@@ -221,7 +223,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
                 className="mr-2"
               />
-              <label htmlFor="isActive" className="text-sm font-medium">აქტიური</label>
+              <label htmlFor="isActive" className="text-sm font-medium">{t('active')}</label>
             </div>
 
             <div className="flex items-center">
@@ -232,7 +234,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                 onChange={(e) => setFormData(prev => ({ ...prev, isPublished: e.target.checked }))}
                 className="mr-2"
               />
-              <label htmlFor="isPublished" className="text-sm font-medium">გამოქვეყნებული</label>
+              <label htmlFor="isPublished" className="text-sm font-medium">{t('published')}</label>
             </div>
           </div>
 
@@ -244,7 +246,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
               className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
               disabled={loading}
             >
-              გაუქმება
+              {t('cancel')}
             </button>
             
             <button
@@ -252,7 +254,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
               disabled={loading}
               className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
             >
-              {loading ? 'ინახება...' : 'შენახვა'}
+              {loading ? t('saving') : t('save')}
             </button>
           </div>
         </form>

@@ -28,6 +28,7 @@ export interface Set {
   levels: SetLevels;
   isActive: boolean;
   isPublished: boolean;
+  isPopular?: boolean; // პოპულარობის ფლაგი
   createdAt: string;
   updatedAt: string;
 }
@@ -35,13 +36,14 @@ export interface Set {
 export interface CreateSetData {
   name: LocalizedString;
   description?: LocalizedString;
-  thumbnailImage: string;
+  image: string;
   categoryId: string;
   subCategoryId?: string;
   price: SetPrice;
   levels: SetLevels;
   isActive: boolean;
   isPublished: boolean;
+  isPopular?: boolean; // პოპულარობის ფლაგი
 }
 
 export type CreateSetRequest = {
@@ -57,4 +59,5 @@ export interface UpdateSetData {
   levels?: Partial<SetLevels>;
   isActive?: boolean;
   isPublished?: boolean;
+  isPopular?: boolean; // პოპულარობის ფლაგი
 } 

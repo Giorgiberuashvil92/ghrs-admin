@@ -8,6 +8,7 @@ import { Set } from '@/types/sets';
 import { Button } from '@/components/ui/button';
 import { createExercise } from '@/lib/api/exercises';
 import { TrashIcon, PhotoIcon, LinkIcon, VideoCameraIcon, ClockIcon, ChartBarIcon, CogIcon } from '@heroicons/react/24/outline';
+import { useLanguage } from '@/i18n/language-context';
 
 interface AddExerciseClientProps {
   category: Category;
@@ -36,6 +37,7 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 
 export default function AddExerciseClient({ category, set, subcategory }: AddExerciseClientProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   
   // Build redirect path based on whether we have a subcategory
   const redirectPath = subcategory 
@@ -81,9 +83,13 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
     media?: boolean;
   }>({});
 
+  // ახალი ლოგიკა: მხოლოდ ერთი მაინც იყოს არჩეული (ფოტო ან ვიდეო)
   const validateForm = () => {
     const isValidObjectId = (id: string) => /^[a-f\d]{24}$/i.test(id);
 
+    // მედიის ვალიდაცია: მინიმუმ ერთი მაინც იყოს არჩეული
+    const hasImage = !!formData.thumbnailImage;
+    const hasVideo = !!formData.videoFile;
     const errors = {
       name: !formData.name.ka.trim(),
       description: !formData.description.ka.trim(),
@@ -93,17 +99,13 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       repetitions: !formData.repetitions.trim(),
       sets: !formData.sets.trim(),
       restTime: !formData.restTime.trim(),
-      media: !formData.videoFile && !formData.thumbnailImage,
+      media: !hasImage && !hasVideo,
     };
-    
     setFormErrors(errors);
-
-    // შევამოწმოთ ObjectId-ები
     if (!isValidObjectId(formData.setId) || !isValidObjectId(formData.categoryId)) {
-      alert('სეტის ან კატეგორიის ID არასწორია');
+      alert(t('invalidId'));
       return false;
     }
-    
     return !Object.values(errors).some(Boolean);
   };
 
@@ -164,7 +166,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       setThumbnailUrl(''); // გაასუფთავე ველი
       handleMediaChange();
     } else {
-      alert('გთხოვთ შეიყვანოთ URL');
+      alert(t('pleaseEnterUrl'));
     }
   };
 
@@ -178,32 +180,26 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       setVideoUrl(''); // გაასუფთავე ველი
       handleMediaChange();
     } else {
-      alert('გთხოვთ შეიყვანოთ URL');
+      alert(t('pleaseEnterUrl'));
     }
   };
 
+  // სურათის ატვირთვის ბლოკში
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      // ვალიდაცია
       if (!validateForm()) {
         setIsLoading(false);
-        alert('გთხოვთ შეავსოთ ყველა სავალდებულო ველი');
+        alert(t('pleaseFillAllRequiredFields'));
         return;
       }
-
-      // შეამოწმე რომ name და description არ არის URL-ები
       if (formData.name.ka.includes('http') || formData.description.ka.includes('http')) {
-        alert('გთხოვთ შეიყვანოთ ტექსტი, არა URL-ები სახელისა და აღწერის ველებში');
+        alert(t('pleaseEnterTextNotUrl'));
         setIsLoading(false);
         return;
       }
-
       const formDataToSend = new FormData();
-      
-      // ტექსტური ველები
       formDataToSend.append('name', JSON.stringify(formData.name));
       formDataToSend.append('description', JSON.stringify(formData.description));
       formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
@@ -218,36 +214,55 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       formDataToSend.append('sortOrder', formData.sortOrder || '0');
       formDataToSend.append('setId', formData.setId);
       formDataToSend.append('categoryId', formData.categoryId);
-
-      // ფაილები ან URL-ები
-      if (formData.videoFile instanceof File) {
-        formDataToSend.append('videoFile', formData.videoFile);
-      } else if (formData.videoFile && typeof formData.videoFile === 'string') {
-        formDataToSend.append('videoUrl', formData.videoFile);
-      }
-      
+      // Cloudinary-სთვის: ფაილები ერთ ველში file (array)
       if (formData.thumbnailImage instanceof File) {
-        formDataToSend.append('thumbnailFile', formData.thumbnailImage);
-      } else if (formData.thumbnailImage && typeof formData.thumbnailImage === 'string') {
-        formDataToSend.append('thumbnailUrl', formData.thumbnailImage);
+        formDataToSend.append('file', formData.thumbnailImage);
       }
-
+      if (formData.videoFile instanceof File) {
+        formDataToSend.append('file', formData.videoFile);
+      }
+      // თუ ლინკია და ნამდვილად URL-ია, მხოლოდ მაშინ ჩაწერე
+      if (typeof formData.thumbnailImage === 'string') {
+        const thumbUrl = formData.thumbnailImage as string;
+        if (thumbUrl.trim() && /^https?:\/\//.test(thumbUrl)) {
+          formDataToSend.append('thumbnailUrl', thumbUrl);
+        }
+      }
+      if (typeof formData.videoFile === 'string') {
+        const vidUrl = formData.videoFile as string;
+        if (vidUrl.trim() && /^https?:\/\//.test(vidUrl)) {
+          formDataToSend.append('videoUrl', vidUrl);
+        }
+      }
       // Debug: დავინახოთ რა იგზავნება
-      console.log('Sending form data:');
+      console.log('==== FormData to be sent ====');
+      console.log('formData.thumbnailImage:', formData.thumbnailImage, typeof formData.thumbnailImage);
+      console.log('formData.videoFile:', formData.videoFile, typeof formData.videoFile);
+      if (thumbnailFileRef.current) {
+        console.log('thumbnailFileRef.current.files:', thumbnailFileRef.current.files);
+      }
+      if (videoFileRef.current) {
+        console.log('videoFileRef.current.files:', videoFileRef.current.files);
+      }
       for (let [key, value] of formDataToSend.entries()) {
         if (value instanceof File) {
-          console.log(`${key}:`, `File: ${value.name} (${value.type}), size: ${value.size} bytes`);
+          console.log(`${key}: [File]`, value.name, value.type, value.size + ' bytes');
         } else {
           console.log(`${key}:`, value);
         }
       }
-
       const exercise = await createExercise(formDataToSend);
       router.push(redirectPath);
       router.refresh();
     } catch (error) {
-      console.error('Error creating exercise:', error);
-      alert('შეცდომა სავარჯიშოს შექმნისას');
+      if (error instanceof Response) {
+        error.text().then(text => {
+          console.error('Server error response:', text);
+        });
+      } else {
+        console.error('Error creating exercise:', error);
+      }
+      alert(t('errorCreatingExercise'));
     } finally {
       setIsLoading(false);
     }
@@ -264,7 +279,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                ახალი სავარჯიშოს დამატება
+                {t('addNewExercise')}
               </h1>
               <p className="mt-2 text-lg text-gray-600">
                 {subcategory 
@@ -275,17 +290,17 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>კატეგორია:</span>
+            <span>{t('category')}:</span>
             <span className="font-medium">{category.name.ka}</span>
             {subcategory && (
               <>
                 <span>•</span>
-                <span>საბ კატეგორია:</span>
+                <span>{t('subCategory')}:</span>
                 <span className="font-medium">{subcategory.name.ka}</span>
               </>
             )}
             <span>•</span>
-            <span>სეტი:</span>
+            <span>{t('set')}:</span>
             <span className="font-medium">{set.name.ka}</span>
           </div>
         </div>
@@ -299,14 +314,16 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <CogIcon className="h-5 w-5 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">ძირითადი ინფორმაცია</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {t('basicInformation')}
+                </h2>
               </div>
               
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div className="space-y-6">
                   <div>
                     <label htmlFor="name-ka" className="block text-sm font-semibold text-gray-700 mb-2">
-                      სახელი (ქართულად)
+                      {t('nameKa')}
                     </label>
                     <div className="relative">
                       <input
@@ -319,17 +336,17 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                           handleInputChange('name', e.target.value);
                         }}
                         className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-lg ${formErrors.name ? 'border-red-500' : ''}`}
-                        placeholder="ჩაწერეთ სავარჯიშოს სახელი"
+                        placeholder={t('enterExerciseName')}
                       />
                       {formErrors.name && (
-                        <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                        <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                       )}
                     </div>
                   </div>
 
                   <div>
                     <label htmlFor="name-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                      სახელი (ინგლისურად)
+                      {t('nameEn')}
                     </label>
                     <div className="relative">
                       <input
@@ -339,7 +356,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                         value={formData.name.en}
                         onChange={(e) => setFormData({ ...formData, name: { ...formData.name, en: e.target.value } })}
                         className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-lg"
-                        placeholder="Enter exercise name"
+                        placeholder={t('enterExerciseName')}
                       />
                     </div>
                   </div>
@@ -348,7 +365,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="space-y-6">
                   <div>
                     <label htmlFor="description-ka" className="block text-sm font-semibold text-gray-700 mb-2">
-                      აღწერა (ქართულად)
+                      {t('descriptionKa')}
                     </label>
                     <div className="relative">
                       <textarea
@@ -368,17 +385,17 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                           handleInputChange('description', e.target.value);
                         }}
                         className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none ${formErrors.description ? 'border-red-500' : ''}`}
-                        placeholder="დაწერეთ სავარჯიშოს აღწერა"
+                        placeholder={t('writeExerciseDescription')}
                       />
                       {formErrors.description && (
-                        <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                        <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                       )}
                     </div>
                   </div>
 
                   <div>
                     <label htmlFor="description-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                      აღწერა (ინგლისურად)
+                      {t('descriptionEn')}
                     </label>
                     <div className="relative">
                       <textarea
@@ -395,7 +412,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                           }
                         })}
                         className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none"
-                        placeholder="Write exercise description"
+                        placeholder={t('writeExerciseDescription')}
                       />
                     </div>
                   </div>
@@ -409,13 +426,15 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="p-2 bg-green-100 rounded-lg">
                   <CogIcon className="h-5 w-5 text-green-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">რეკომენდაციები</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {t('recommendations')}
+                </h2>
               </div>
               
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div>
                   <label htmlFor="recommendations-ka" className="block text-sm font-semibold text-gray-700 mb-2">
-                    რეკომენდაციები (ქართულად)
+                    {t('recommendationsKa')}
                   </label>
                   <div className="relative">
                     <textarea
@@ -435,17 +454,17 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                         handleInputChange('recommendations', e.target.value);
                       }}
                       className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 resize-none ${formErrors.recommendations ? 'border-red-500' : ''}`}
-                      placeholder="დაწერეთ რეკომენდაციები"
+                      placeholder={t('writeRecommendations')}
                     />
                     {formErrors.recommendations && (
-                      <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="recommendations-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                    რეკომენდაციები (ინგლისურად)
+                    {t('recommendationsEn')}
                   </label>
                   <div className="relative">
                     <textarea
@@ -462,7 +481,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                         }
                       })}
                       className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 resize-none"
-                      placeholder="Write recommendations"
+                      placeholder={t('writeRecommendations')}
                     />
                   </div>
                 </div>
@@ -475,19 +494,21 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <VideoCameraIcon className="h-5 w-5 text-purple-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">მედია ფაილები</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {t('mediaFiles')}
+                </h2>
               </div>
               
               <div className={`grid grid-cols-1 gap-8 lg:grid-cols-2 ${formErrors.media ? 'border-red-500 border rounded-xl p-4' : ''}`}>
                 {formErrors.media && (
                   <div className="lg:col-span-2">
-                    <p className="text-sm text-red-500">გთხოვთ ატვირთოთ სურათი ან ვიდეო</p>
+                    <p className="text-sm text-red-500">{t('pleaseUploadImageOrVideo')}</p>
                   </div>
                 )}
                 {/* სურათი */}
                 <div className="space-y-4">
                   <label className="block text-sm font-semibold text-gray-700">
-                    სავარჯიშოს სურათი
+                    {t('exerciseThumbnail')}
                   </label>
                   <div className="flex items-start gap-4">
                     {thumbnailPreview ? (
@@ -520,18 +541,20 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                             thumbnailFileRef.current?.click();
                           }}
                           className="rounded-lg"
+                          disabled={typeof formData.thumbnailImage === 'string' && formData.thumbnailImage}
                         >
                           <PhotoIcon className="h-4 w-4 mr-2" />
-                          სურათის ატვირთვა
+                          {t('uploadImage')}
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setIsThumbnailUrlInput(true)}
                           className="rounded-lg"
+                          disabled={formData.thumbnailImage instanceof File}
                         >
                           <LinkIcon className="h-4 w-4 mr-2" />
-                          URL-ის ჩაწერა
+                          {t('enterUrl')}
                         </Button>
                       </div>
 
@@ -541,7 +564,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                             type="url"
                             value={thumbnailUrl}
                             onChange={(e) => setThumbnailUrl(e.target.value)}
-                            placeholder="ჩაწერეთ სურათის URL"
+                            placeholder={t('enterImageUrl')}
                             className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
                           />
                           <Button
@@ -550,7 +573,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                             variant="default"
                             className="whitespace-nowrap rounded-lg bg-purple-600 hover:bg-purple-700"
                           >
-                            დამატება
+                            {t('add')}
                           </Button>
                         </div>
                       )}
@@ -569,7 +592,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 {/* ვიდეო */}
                 <div className="space-y-4">
                   <label className="block text-sm font-semibold text-gray-700">
-                    სავარჯიშოს ვიდეო
+                    {t('exerciseVideo')}
                   </label>
                   <div className="flex items-start gap-4">
                     {videoPreview ? (
@@ -599,18 +622,20 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                         variant="outline"
                         onClick={() => videoFileRef.current?.click()}
                         className="rounded-lg"
+                        disabled={typeof formData.videoFile === 'string' && formData.videoFile}
                       >
                         <VideoCameraIcon className="h-4 w-4 mr-2" />
-                        ვიდეოს ატვირთვა
+                        {t('uploadVideo')}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setIsVideoUrlInput(true)}
                         className="rounded-lg"
+                        disabled={formData.videoFile instanceof File}
                       >
                         <LinkIcon className="h-4 w-4 mr-2" />
-                        URL-ის ჩაწერა
+                        {t('enterUrl')}
                       </Button>
                     </div>
 
@@ -620,7 +645,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                           type="url"
                           value={videoUrl}
                           onChange={(e) => setVideoUrl(e.target.value)}
-                          placeholder="ჩაწერეთ ვიდეოს URL"
+                          placeholder={t('enterVideoUrl')}
                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
                         />
                         <Button
@@ -629,7 +654,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                           variant="default"
                           className="whitespace-nowrap rounded-lg bg-purple-600 hover:bg-purple-700"
                         >
-                          დამატება
+                          {t('add')}
                         </Button>
                       </div>
                     )}
@@ -652,13 +677,15 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="p-2 bg-orange-100 rounded-lg">
                   <ClockIcon className="h-5 w-5 text-orange-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">სავარჯიშოს დეტალები</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {t('exerciseDetails')}
+                </h2>
               </div>
               
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <label htmlFor="duration" className="block text-sm font-semibold text-gray-700 mb-2">
-                    ხანგრძლივობა
+                    {t('duration')}
                   </label>
                   <div className="relative">
                     <input
@@ -674,14 +701,14 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                       className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 ${formErrors.duration ? 'border-red-500' : ''}`}
                     />
                     {formErrors.duration && (
-                      <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="difficulty" className="block text-sm font-semibold text-gray-700 mb-2">
-                    სირთულე
+                    {t('difficulty')}
                   </label>
                   <div className="relative">
                     <select
@@ -691,16 +718,16 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                       onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
                       className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
                     >
-                      <option value="easy">მარტივი</option>
-                      <option value="medium">საშუალო</option>
-                      <option value="hard">რთული</option>
+                      <option value="easy">{t('easy')}</option>
+                      <option value="medium">{t('medium')}</option>
+                      <option value="hard">{t('hard')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="repetitions" className="block text-sm font-semibold text-gray-700 mb-2">
-                    გამეორებები
+                    {t('repetitions')}
                   </label>
                   <div className="relative">
                     <input
@@ -713,17 +740,17 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                         handleInputChange('repetitions', e.target.value);
                       }}
                       className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 ${formErrors.repetitions ? 'border-red-500' : ''}`}
-                      placeholder="მაგ: 10-15"
+                      placeholder={t('example1015')}
                     />
                     {formErrors.repetitions && (
-                      <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="sets" className="block text-sm font-semibold text-gray-700 mb-2">
-                    სეტები
+                    {t('sets')}
                   </label>
                   <div className="relative">
                     <input
@@ -736,17 +763,17 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                         handleInputChange('sets', e.target.value);
                       }}
                       className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 ${formErrors.sets ? 'border-red-500' : ''}`}
-                      placeholder="მაგ: 3"
+                      placeholder={t('example3')}
                     />
                     {formErrors.sets && (
-                      <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="restTime" className="block text-sm font-semibold text-gray-700 mb-2">
-                    დასვენების დრო
+                    {t('restTime')}
                   </label>
                   <div className="relative">
                     <input
@@ -762,14 +789,14 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                       className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 ${formErrors.restTime ? 'border-red-500' : ''}`}
                     />
                     {formErrors.restTime && (
-                      <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="videoDuration" className="block text-sm font-semibold text-gray-700 mb-2">
-                    ვიდეოს ხანგრძლივობა
+                    {t('videoDuration')}
                   </label>
                   <div className="relative">
                     <input
@@ -785,7 +812,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                       className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 ${formErrors.videoDuration ? 'border-red-500' : ''}`}
                     />
                     {formErrors.videoDuration && (
-                      <p className="mt-1 text-xs text-red-500">სავალდებულო ველი</p>
+                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
                     )}
                   </div>
                 </div>
@@ -798,7 +825,9 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="p-2 bg-indigo-100 rounded-lg">
                   <CogIcon className="h-5 w-5 text-indigo-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">სტატუსი</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {t('status')}
+                </h2>
               </div>
               
               <div className="space-y-4">
@@ -812,7 +841,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                     className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="is-active" className="block text-sm font-semibold leading-6 text-gray-900">
-                    აქტიური
+                    {t('active')}
                   </label>
                 </div>
 
@@ -826,7 +855,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                     className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="is-published" className="block text-sm font-semibold leading-6 text-gray-900">
-                    გამოქვეყნებული
+                    {t('published')}
                   </label>
                 </div>
               </div>
@@ -841,7 +870,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"
               >
-                გაუქმება
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -852,10 +881,10 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ინახება...
+                    {t('saving')}...
                   </div>
                 ) : (
-                  'სავარჯიშოს დამატება'
+                  t('addExercise')
                 )}
               </Button>
             </div>

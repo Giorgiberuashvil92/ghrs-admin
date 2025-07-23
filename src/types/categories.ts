@@ -103,7 +103,8 @@ export interface Exercise {
   // სტატუსები
   isActive: boolean;
   isPublished: boolean;
-  sortOrder: string;
+  isPopular?: boolean; // 💖 Manual popular flag for admin
+  sortOrder: any;
   
   // კავშირები
   setId: string;
@@ -150,7 +151,7 @@ export interface SubCategory {
   image?: string;
   isActive: boolean;
   isPublished: boolean;
-  sortOrder: number;
+  sortOrder: any;
   createdAt: string;
   updatedAt: string;
   complexes: Complex[];
@@ -163,7 +164,7 @@ export interface Category {
   image?: string;
   isActive: boolean;
   isPublished: boolean;
-  sortOrder: number;
+  sortOrder: any;
   createdAt: string;
   updatedAt: string;
   subcategories: SubCategory[];
@@ -206,7 +207,8 @@ export interface ExerciseFormData {
   restTime: string;
   isActive: boolean;
   isPublished: boolean;
-  sortOrder: string;
+  isPopular?: boolean; // 💖 Manual popular flag for forms
+  sortOrder: any;
   setId: string;
   categoryId: string;
   subCategoryId?: string;

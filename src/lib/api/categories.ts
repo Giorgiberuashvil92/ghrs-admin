@@ -107,7 +107,12 @@ export async function createCategory(data: CreateCategoryData) {
 
 export async function getAllCategories(): Promise<Category[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories`);
+    const response = await fetch(`${API_BASE_URL}/categories`, {
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

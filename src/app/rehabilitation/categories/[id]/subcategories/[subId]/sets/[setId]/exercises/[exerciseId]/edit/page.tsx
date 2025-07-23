@@ -10,6 +10,7 @@ import { getExerciseById, updateExercise } from '@/lib/api/exercises';
 import { getCategoryById, getSubCategoryById } from '@/lib/api/categories';
 import { getSetById } from '@/lib/api/sets';
 import { TrashIcon, PhotoIcon, LinkIcon, VideoCameraIcon, ClockIcon, ChartBarIcon, CogIcon } from '@heroicons/react/24/outline';
+import { useLanguage } from '@/i18n/language-context';
 
 interface SubCategoryEditExercisePageProps {
   params: Promise<{
@@ -41,6 +42,7 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 
 export default function SubCategoryEditExercisePage({ params }: SubCategoryEditExercisePageProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const resolvedParams = use(params);
   
   // Build redirect path for subcategory
@@ -141,7 +143,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('მონაცემების ჩატვირთვისას შეცდომა');
+      alert(t('errorLoadingData'));
     } finally {
       setFetchLoading(false);
     }
@@ -165,7 +167,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
     setFormErrors(errors);
 
     if (!isValidObjectId(formData.setId) || !isValidObjectId(formData.categoryId)) {
-      alert('სეტის ან კატეგორიის ID არასწორია');
+      alert(t('categorySubSetNotFound'));
       return false;
     }
     
@@ -235,7 +237,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       setIsThumbnailUrlInput(false);
       handleMediaChange();
     } else {
-      alert('გთხოვთ შეიყვანოთ სურათის URL');
+      alert(t('pleaseEnterImageUrl'));
     }
   };
 
@@ -246,7 +248,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       setIsVideoUrlInput(false);
       handleMediaChange();
     } else {
-      alert('გთხოვთ შეიყვანოთ ვიდეოს URL');
+      alert(t('pleaseEnterVideoUrl'));
     }
   };
 
@@ -257,12 +259,12 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
     try {
       if (!validateForm()) {
         setIsLoading(false);
-        alert('გთხოვთ შეავსოთ ყველა სავალდებულო ველი');
+        alert(t('pleaseEnterGeorgianName'));
         return;
       }
 
       if (formData.name.ka.includes('http') || formData.description.ka.includes('http')) {
-        alert('გთხოვთ შეიყვანოთ ტექსტი, არა URL-ები სახელისა და აღწერის ველებში');
+        alert(t('pleaseEnterGeorgianName'));
         setIsLoading(false);
         return;
       }
@@ -312,12 +314,12 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       }
 
       await updateExercise(resolvedParams.exerciseId, formDataToSend);
-      alert('სავარჯიშო წარმატებით განახლდა');
+      alert(t('exerciseUpdatedSuccess'));
       router.push(redirectPath);
       router.refresh();
     } catch (error) {
       console.error('Error updating exercise:', error);
-      alert('შეცდომა სავარჯიშოს განახლებისას');
+      alert(t('errorUpdatingExercise'));
     } finally {
       setIsLoading(false);
     }
@@ -334,7 +336,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
   if (!exercise || !category || !subcategory || !set) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-500">სავარჯიშო, კატეგორია, საბ კატეგორია ან სეტი ვერ მოიძებნა</div>
+        <div className="text-red-500">{t('categorySubSetNotFound')}</div>
       </div>
     );
   }
@@ -344,7 +346,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-2xl rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
-            <h1 className="text-3xl font-bold text-white">სავარჯიშოს რედაქტირება</h1>
+            <h1 className="text-3xl font-bold text-white">{t('editExercise')}</h1>
             <p className="text-blue-100 mt-2">
               {category.name.ka} › {subcategory.name.ka} › {set.name.ka}
             </p>
@@ -360,7 +362,7 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"
               >
-                გაუქმება
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -371,10 +373,10 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ინახება...
+                    {t('updating')}
                   </div>
                 ) : (
-                  'სავარჯიშოს განახლება'
+                  t('updateExercise')
                 )}
               </Button>
             </div>

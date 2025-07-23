@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Category } from '@/lib/api/categories';
 import { SubCategory } from '@/types/categories';
@@ -12,7 +12,26 @@ import { Button } from '@/components/ui/button';
 import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { CreateSetData } from '@/types/sets';
-import { UploadIcon } from '@/assets/icons';
+import { TrashIcon, PhotoIcon, LinkIcon } from '@heroicons/react/24/outline';
+
+const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
+  if (src.startsWith('data:')) {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className="h-24 w-24 object-cover rounded-lg"
+      />
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="h-24 w-24 object-cover rounded-lg"
+    />
+  );
+};
 
 interface AddSetClientProps {
   category: Category;
@@ -28,8 +47,10 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
     ? `/rehabilitation/categories/${category._id}/subcategories/${subcategory._id}/sets`
     : `/rehabilitation/categories/${category._id}/sets`;
   const [isLoading, setIsLoading] = useState(false);
-  const [imageType, setImageType] = useState<'url' | 'file'>('url');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isImageUrlInput, setIsImageUrlInput] = useState(false);
+  const imageFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Omit<CreateSetData, 'categoryId'>>({
     name: {
       ka: '',
@@ -41,7 +62,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
       en: '',
       ru: '',
     },
-    thumbnailImage: '',
+    image: '',
     price: {
       monthly: 0,
       threeMonths: 0,
@@ -66,72 +87,89 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
     isPublished: false,
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        setImageFile(file);
+        setFormData(prev => ({ ...prev, image: "" })); // Clear URL input if file is chosen
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageDelete = () => {
+    setImagePreview(null);
+    setImageFile(null);
+    setFormData(prev => ({ ...prev, image: "" }));
+    if (imageFileRef.current) {
+      imageFileRef.current.value = '';
+    }
+  };
+
+  const handleImageUrlSubmit = () => {
+    if (formData.image.trim()) {
+      setImagePreview(formData.image);
+      setImageFile(null); // Clear file input if URL is chosen
+      setIsImageUrlInput(false);
+    } else {
+      alert(t('pleaseEnterImageUrl'));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const setData: CreateSetData = {
-        ...formData,
-        categoryId: category._id,
-        subCategoryId: subcategory?._id,
-      };
-
-      if (imageType === 'file' && imageFile) {
+      // ფაილი თუ არის, FormData-ს გამოვიყენოთ
+      if (imageFile || (formData.image && formData.image.trim())) {
         const formDataToSend = new FormData();
         
-        // დავამატოთ ყველა ველი FormData-ში
-        formDataToSend.append('thumbnailImage', imageFile);
+        // JSON ველები
+        formDataToSend.append('name', JSON.stringify(formData.name));
+        formDataToSend.append('description', JSON.stringify(formData.description));
+        formDataToSend.append('price', JSON.stringify(formData.price));
+        formDataToSend.append('levels', JSON.stringify(formData.levels));
+        formDataToSend.append('isActive', formData.isActive.toString());
+        formDataToSend.append('isPublished', formData.isPublished.toString());
         formDataToSend.append('categoryId', category._id);
         if (subcategory) {
           formDataToSend.append('subCategoryId', subcategory._id);
         }
-        
-        // ლოკალიზებული ველები
-        if (formData.name) {
-          Object.entries(formData.name).forEach(([lang, value]) => {
-            formDataToSend.append(`name[${lang}]`, value);
-          });
+
+        if (imageFile) {
+          formDataToSend.append('image', imageFile);
+        } else if (formData.image && formData.image.trim() && /^https?:\/\//.test(formData.image)) {
+          formDataToSend.append('imageUrl', formData.image);
         }
-        
-        if (formData.description) {
-          Object.entries(formData.description).forEach(([lang, value]) => {
-            formDataToSend.append(`description[${lang}]`, value);
-          });
-        }
-        
-        // ფასები
-        Object.entries(formData.price).forEach(([period, value]) => {
-          formDataToSend.append(`price[${period}]`, String(value));
-        });
-        
-        // დონეები
-        Object.entries(formData.levels).forEach(([level, data]) => {
-          formDataToSend.append(`levels[${level}][exerciseCount]`, String(data.exerciseCount));
-          formDataToSend.append(`levels[${level}][isLocked]`, String(data.isLocked));
-        });
-        
-        // სტატუსები
-        formDataToSend.append('isActive', String(formData.isActive));
-        formDataToSend.append('isPublished', String(formData.isPublished));
-        
+
         await createSet({
           formData: formDataToSend,
           isFormData: true
         });
       } else {
+        // ფაილი არ არის, JSON ობიექტი გავაგზავნოთ
+        const setData: CreateSetData = {
+          ...formData,
+          categoryId: category._id,
+          subCategoryId: subcategory?._id,
+        };
+
         await createSet({
           formData: setData,
           isFormData: false
         });
       }
 
-      toast.success('სეტი წარმატებით დაემატა');
+      toast.success(t('setAddedSuccessfully'));
       router.push(redirectPath);
       router.refresh();
     } catch (error) {
       console.error('Error creating set:', error);
-      toast.error('შეცდომა სეტის დამატებისას');
+      toast.error(t('errorAddingSet'));
     } finally {
       setIsLoading(false);
     }
@@ -142,8 +180,8 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
       <div className="mx-auto max-w-270">
         <Breadcrumb pageName={
           subcategory 
-            ? `სეტის დამატება - ${category.name[language]} › ${subcategory.name[language]}`
-            : `სეტის დამატება - ${category.name[language]}`
+            ? `${t('addSet')} - ${category.name[language]} › ${subcategory.name[language]}`
+            : `${t('addSet')} - ${category.name[language]}`
         } />
 
         <div className="grid grid-cols-12 gap-4">
@@ -152,129 +190,106 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
               <div className="border-b border-stroke px-7 py-4 dark:border-strokedark">
                 <h3 className="font-medium text-black dark:text-white">
-                  სეტის დეტალები
+                  {t('setDescription')}
                 </h3>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="p-7">
                   {/* სურათი */}
                   <div className="mb-5.5">
-                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
-                      სურათი
-                    </h4>
-                    <div className="flex gap-4 mb-4">
-                      <Button
-                        type="button"
-                        variant={imageType === 'url' ? 'default' : 'outline'}
-                        onClick={() => setImageType('url')}
-                      >
-                        URL ბმული
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={imageType === 'file' ? 'default' : 'outline'}
-                        onClick={() => setImageType('file')}
-                      >
-                        ფაილის ატვირთვა
-                      </Button>
-                    </div>
-                    
-                    {imageType === 'url' ? (
-                      <div className="w-full">
-                        <InputGroup
-                          label="სურათის URL"
-                          name="thumbnailImage"
-                          type="text"
-                          placeholder="https://example.com/image.jpg"
-                          value={formData.thumbnailImage}
-                          handleChange={(e) =>
-                            setFormData(prev => ({
-                              ...prev,
-                              thumbnailImage: e.target.value
-                            }))
-                          }
-                          required={imageType === 'url'}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-full">
-                        <div className="mt-1 flex justify-center rounded-lg border-2 border-dashed border-stroke px-6 py-10 dark:border-strokedark">
-                          <div className="text-center">
-                            {!imageFile ? (
-                              <>
-                                <UploadIcon className="mx-auto h-12 w-12 text-gray-400" />
-                                <div className="mt-4 flex text-sm text-gray-600 dark:text-gray-400">
-                                  <label className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80">
-                                    <span>აირჩიეთ ფაილი</span>
-                                    <input
-                                      type="file"
-                                      className="sr-only"
-                                      accept="image/*"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          setImageFile(file);
-                                          setFormData(prev => ({
-                                            ...prev,
-                                            thumbnailImage: ''
-                                          }));
-                                        }
-                                      }}
-                                    />
-                                  </label>
-                                  <p className="pl-1">ან ჩააგდეთ</p>
-                                </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  PNG, JPG, GIF მაქსიმუმ 10MB
-                                </p>
-                              </>
-                            ) : (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-center">
-                                  <img
-                                    src={URL.createObjectURL(imageFile)}
-                                    alt="Preview"
-                                    className="max-h-40 rounded-lg object-contain"
-                                  />
-                                </div>
-                                <div className="flex justify-center gap-2">
-                                  <p className="text-sm text-gray-500">
-                                    {imageFile.name}
-                                  </p>
-                                  <button
-                                    type="button"
-                                    className="text-sm text-red-500 hover:text-red-700"
-                                    onClick={() => {
-                                      setImageFile(null);
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        thumbnailImage: ''
-                                      }));
-                                    }}
-                                  >
-                                    წაშლა
-                                  </button>
-                                </div>
-                              </div>
-                            )}
+                    <div className="bg-gray-50 rounded-xl p-6 dark:bg-boxdark">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center dark:text-white">
+                        <PhotoIcon className="h-5 w-5 mr-2" />
+                        {t('setImage')}
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          {t('uploadImage')}
+                        </label>
+                        
+                        {imagePreview ? (
+                          <div className="relative">
+                            <ImageComponent src={imagePreview} alt={t('thumbnailAlt')} />
+                            <button
+                              type="button"
+                              onClick={handleImageDelete}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
                           </div>
+                        ) : (
+                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center dark:border-strokedark">
+                            <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('noImageUploaded')}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2">
+                          <input
+                            ref={imageFileRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => imageFileRef.current?.click()}
+                            className="flex-1"
+                          >
+                            <PhotoIcon className="h-4 w-4 mr-1" />
+                            {t('file')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setIsImageUrlInput(!isImageUrlInput)}
+                            className="flex-1"
+                          >
+                            <LinkIcon className="h-4 w-4 mr-1" />
+                            {t('url')}
+                          </Button>
                         </div>
+                        
+                        {isImageUrlInput && (
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              value={formData.image}
+                              onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+                              placeholder={t('enterImageUrl')}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:border-strokedark dark:bg-boxdark"
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleImageUrlSubmit}
+                              size="sm"
+                            >
+                              {t('add')}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* სახელები */}
                   <div className="mb-5.5">
                     <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
-                      დასახელება
+                      {t('name')}
                     </h4>
                     <div className="flex flex-col gap-5.5">
                       <div className="w-full">
                         <InputGroup
-                          label="სახელი (ქართულად)"
+                          label={t('nameInGeorgian')}
                           name="name_ka"
                           type="text"
-                          placeholder="მაგ: ორთოპედიული სეტი"
+                          placeholder={t('enterGeorgianName')}
                           value={formData.name.ka}
                           handleChange={(e) =>
                             setFormData(prev => ({
@@ -287,10 +302,10 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                       </div>
                       <div className="w-full">
                         <InputGroup
-                          label="Name (English)"
+                          label={t('nameInEnglish')}
                           name="name_en"
                           type="text"
-                          placeholder="e.g. Orthopedic Set"
+                          placeholder={t('enterEnglishName')}
                           value={formData.name.en}
                           handleChange={(e) =>
                             setFormData(prev => ({
@@ -303,10 +318,10 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                       </div>
                       <div className="w-full">
                         <InputGroup
-                          label="Название (Русский)"
+                          label={t('nameInRussian')}
                           name="name_ru"
                           type="text"
-                          placeholder="например: Ортопедический набор"
+                          placeholder={t('enterRussianName')}
                           value={formData.name.ru}
                           handleChange={(e) =>
                             setFormData(prev => ({
@@ -323,13 +338,13 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                   {/* აღწერები */}
                   <div className="mb-5.5">
                     <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
-                      აღწერა
+                      {t('description')}
                     </h4>
                     <div className="flex flex-col gap-5.5">
                       <div className="w-full">
                         <TextAreaGroup
-                          label="აღწერა (ქართულად)"
-                          placeholder="დეტალური აღწერა..."
+                          label={t('descriptionInGeorgian')}
+                          placeholder={t('enterGeorgianDescription')}
                           value={formData.description?.ka || ''}
                           onChange={(e) =>
                             setFormData(prev => ({
@@ -380,12 +395,12 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                   {/* დონეები */}
                   <div className="mb-5.5">
                     <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
-                      დონეები
+                      {t('levels')}
                     </h4>
                     <div className="flex flex-col gap-5.5">
                       {/* დამწყები */}
                       <div className="rounded-sm border border-stroke bg-gray-50 p-4 dark:border-strokedark dark:bg-boxdark">
-                        <h5 className="mb-3 font-medium">დამწყები</h5>
+                        <h5 className="mb-3 font-medium">{t('easy')}</h5>
                         <div className="flex items-center gap-4">
                           <label className="cursor-pointer">
                             <div className="relative flex items-center pt-0.5">
@@ -406,7 +421,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                                 }
                                 className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
                               />
-                              <p className="ml-3 font-medium">ხელმისაწვდომი</p>
+                              <p className="ml-3 font-medium">{t('available')}</p>
                             </div>
                           </label>
                         </div>
@@ -414,7 +429,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
 
                       {/* საშუალო */}
                       <div className="rounded-sm border border-stroke bg-gray-50 p-4 dark:border-strokedark dark:bg-boxdark">
-                        <h5 className="mb-3 font-medium">საშუალო</h5>
+                        <h5 className="mb-3 font-medium">{t('medium')}</h5>
                         <div className="flex items-center gap-4">
                           <label className="cursor-pointer">
                             <div className="relative flex items-center pt-0.5">
@@ -426,7 +441,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                                     ...prev,
                                     levels: {
                                       ...prev.levels,
-                                      intermediate: {
+                                                                              intermediate: {
                                         ...prev.levels.intermediate,
                                         isLocked: !e.target.checked
                                       }
@@ -435,7 +450,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                                 }
                                 className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
                               />
-                              <p className="ml-3 font-medium">ხელმისაწვდომი</p>
+                              <p className="ml-3 font-medium">{t('available')}</p>
                             </div>
                           </label>
                         </div>
@@ -443,7 +458,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
 
                       {/* რთული */}
                       <div className="rounded-sm border border-stroke bg-gray-50 p-4 dark:border-strokedark dark:bg-boxdark">
-                        <h5 className="mb-3 font-medium">რთული</h5>
+                        <h5 className="mb-3 font-medium">{t('hard')}</h5>
                         <div className="flex items-center gap-4">
                           <label className="cursor-pointer">
                             <div className="relative flex items-center pt-0.5">
@@ -455,7 +470,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                                     ...prev,
                                     levels: {
                                       ...prev.levels,
-                                      advanced: {
+                                                                              advanced: {
                                         ...prev.levels.advanced,
                                         isLocked: !e.target.checked
                                       }
@@ -464,7 +479,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                                 }
                                 className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
                               />
-                              <p className="ml-3 font-medium">ხელმისაწვდომი</p>
+                              <p className="ml-3 font-medium">{t('available')}</p>
                             </div>
                           </label>
                         </div>
@@ -481,19 +496,19 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
               <div className="border-b border-stroke px-7 py-4 dark:border-strokedark">
                 <h3 className="font-medium text-black dark:text-white">
-                  ფასები და სტატუსი
+                  {t('pricingAndStatus')}
                 </h3>
               </div>
               <div className="p-7">
                 {/* ფასები */}
                 <div className="mb-5.5">
                   <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
-                    ფასები
+                    {t('pricing')}
                   </h4>
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-24 flex-shrink-0">
-                        <span className="text-sm font-medium">1 თვე:</span>
+                        <span className="text-sm font-medium">{t('oneMonth')}:</span>
                       </div>
                       <input
                         type="number"
@@ -513,7 +528,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-24 flex-shrink-0">
-                        <span className="text-sm font-medium">3 თვე:</span>
+                        <span className="text-sm font-medium">{t('threeMonths')}:</span>
                       </div>
                       <input
                         type="number"
@@ -533,7 +548,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-24 flex-shrink-0">
-                        <span className="text-sm font-medium">6 თვე:</span>
+                        <span className="text-sm font-medium">{t('sixMonths')}:</span>
                       </div>
                       <input
                         type="number"
@@ -553,7 +568,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-24 flex-shrink-0">
-                        <span className="text-sm font-medium">12 თვე:</span>
+                        <span className="text-sm font-medium">{t('yearly')}:</span>
                       </div>
                       <input
                         type="number"
@@ -590,7 +605,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                           }
                           className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
                         />
-                        <p className="ml-3 font-medium">აქტიური</p>
+                        <p className="ml-3 font-medium">{t('active')}</p>
                       </div>
                     </label>
                     <label className="cursor-pointer">
@@ -603,7 +618,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                           }
                           className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
                         />
-                        <p className="ml-3 font-medium">გამოქვეყნებული</p>
+                        <p className="ml-3 font-medium">{t('published')}</p>
                       </div>
                     </label>
                   </div>
@@ -619,7 +634,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     size="lg"
                     className="w-full"
                   >
-                    {isLoading ? 'იტვირთება...' : 'დამატება'}
+                    {isLoading ? t('addingSet') : t('create')}
                   </Button>
                   <Button
                     type="button"
@@ -628,7 +643,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     disabled={isLoading}
                     className="w-full"
                   >
-                    გაუქმება
+                    {t('cancel')}
                   </Button>
                 </div>
               </div>

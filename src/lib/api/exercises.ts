@@ -302,4 +302,220 @@ export async function deleteExercise(id: string): Promise<void> {
     const error = await response.json().catch(() => ({ message: 'Failed to delete exercise' }));
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }
+}
+
+// Get all exercises
+export async function getAllExercises(): Promise<Exercise[]> {
+  try {
+    console.log('📤 Fetching all exercises...');
+    const response = await fetch(constructApiUrl('exercises'));
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Fetched all exercises:', data.length);
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching all exercises:', error);
+    throw error;
+  }
+}
+
+// Get popular exercises with filtering and sorting
+export async function getPopularExercises(filters?: {
+  category?: string;
+  subcategory?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  duration?: string;
+  search?: string;
+  limit?: number;
+}): Promise<Exercise[]> {
+  try {
+    console.log('📤 Fetching popular exercises with filters:', filters);
+    
+    // Get all exercises first
+    const allExercises = await getAllExercises();
+    
+    // Filter only published and active exercises
+    let filteredExercises = allExercises.filter(exercise => 
+      exercise.isActive && exercise.isPublished
+    );
+    
+    // Apply filters
+    if (filters?.category) {
+      filteredExercises = filteredExercises.filter(exercise => 
+        exercise.categoryId === filters.category
+      );
+    }
+    
+    if (filters?.subcategory) {
+      filteredExercises = filteredExercises.filter(exercise => 
+        exercise.subCategoryId === filters.subcategory
+      );
+    }
+    
+    if (filters?.difficulty) {
+      filteredExercises = filteredExercises.filter(exercise => 
+        exercise.difficulty === filters.difficulty
+      );
+    }
+    
+    if (filters?.duration) {
+      filteredExercises = filteredExercises.filter(exercise => 
+        exercise.duration?.includes(filters.duration!) ||
+        exercise.videoDuration?.includes(filters.duration!)
+      );
+    }
+    
+    if (filters?.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filteredExercises = filteredExercises.filter(exercise => 
+        exercise.name?.ka?.toLowerCase().includes(searchTerm) ||
+        exercise.description?.ka?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    // Calculate popularity score and sort by popularity
+    const exercisesWithPopularity = filteredExercises.map(exercise => {
+      // Popularity calculation:
+      // - Base score from existing fields (if any)
+      // - Views weight: 1 point per view
+      // - Likes weight: 5 points per like
+      // - Rating weight: rating * 10
+      // - Completion rate: completions * 3
+      
+      const views = (exercise as any).views || Math.floor(Math.random() * 1000) + 100; // Mock views for now
+      const likes = (exercise as any).likes || Math.floor(Math.random() * 50) + 10; // Mock likes for now
+      const rating = (exercise as any).rating || (4.0 + Math.random() * 1.0); // Mock rating 4.0-5.0
+      const completions = (exercise as any).completions || Math.floor(Math.random() * 200) + 50; // Mock completions
+      
+      const popularityScore = (views * 1) + (likes * 5) + (rating * 10) + (completions * 3);
+      
+      return {
+        ...exercise,
+        views,
+        likes,
+        rating: Math.round(rating * 10) / 10, // Round to 1 decimal
+        completions,
+        popularityScore
+      };
+    });
+    
+    // Sort by popularity score (highest first)
+    exercisesWithPopularity.sort((a, b) => b.popularityScore - a.popularityScore);
+    
+    // Apply limit
+    const limit = filters?.limit || 50;
+    const popularExercises = exercisesWithPopularity.slice(0, limit);
+    
+    console.log('✅ Popular exercises calculated:', popularExercises.length);
+    console.log('📊 Top 3 popular exercises:', popularExercises.slice(0, 3).map(ex => ({
+      name: ex.name?.ka,
+      score: ex.popularityScore,
+      views: ex.views,
+      likes: ex.likes,
+      rating: ex.rating
+    })));
+    
+    return popularExercises;
+  } catch (error) {
+    console.error('❌ Error fetching popular exercises:', error);
+    throw error;
+  }
+} 
+
+// *** POPULAR EXERCISES API *** 
+
+// Toggle single exercise popularity 💖
+export async function toggleExercisePopular(id: string, isPopular: boolean): Promise<Exercise> {
+  try {
+    console.log(`💖 Toggling exercise ${id} popular to:`, isPopular);
+    
+    const url = constructApiUrl(`/exercises/${id}/popular`);
+    const response = await fetch(url, { 
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ isPopular })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Exercise popularity updated successfully');
+    return data;
+  } catch (error) {
+    console.error('❌ Error updating exercise popularity:', error);
+    throw error;
+  }
+}
+
+// Bulk update exercises popularity 🔥
+export async function bulkUpdateExercisesPopular(exerciseIds: string[], isPopular: boolean): Promise<any> {
+  try {
+    console.log(`🔥 Bulk updating ${exerciseIds.length} exercises to popular:`, isPopular);
+    
+    const url = constructApiUrl('/exercises/bulk/popular');
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ exerciseIds, isPopular })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Bulk popular update successful');
+    return data;
+  } catch (error) {
+    console.error('❌ Error in bulk popular update:', error);
+    throw error;
+  }
+}
+
+// Get only popular exercises 🔥
+export async function getOnlyPopularExercises(filters?: {
+  category?: string;
+  subcategory?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  duration?: string;
+  search?: string;
+  limit?: number;
+  page?: number;
+}): Promise<Exercise[]> {
+  try {
+    console.log('🔥 Fetching only popular exercises with filters:', filters);
+    
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.subcategory) params.append('subcategory', filters.subcategory);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.duration) params.append('duration', filters.duration);
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.page) params.append('page', filters.page.toString());
+
+    const url = constructApiUrl(`/api/exercises/popular?${params.toString()}`);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`✅ Found ${data?.length || 0} popular exercises`);
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching popular exercises:', error);
+    throw error;
+  }
 } 
