@@ -244,7 +244,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       if (videoFileRef.current) {
         console.log('videoFileRef.current.files:', videoFileRef.current.files);
       }
-      for (let [key, value] of formDataToSend.entries()) {
+      for (const [key, value] of formDataToSend.entries()) {
         if (value instanceof File) {
           console.log(`${key}: [File]`, value.name, value.type, value.size + ' bytes');
         } else {

@@ -12,8 +12,8 @@ import { useLanguage } from "@/i18n/language-context";
 import { TrashIcon, PhotoIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 
-// const API_BASE_URL = 'http://localhost:4000';
-const API_BASE_URL = "https://grs-bkbc.onrender.com";
+const API_BASE_URL = 'http://localhost:4000';
+// const API_BASE_URL = "https://grs-bkbc.onrender.com";
 
 // ცალკე ფუნქცია ფაილების ატვირთვისთვის
 const createSubCategoryWithFile = async (

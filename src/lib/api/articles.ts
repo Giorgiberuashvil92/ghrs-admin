@@ -8,8 +8,8 @@ import {
   CreateArticleRequest,
 } from "@/types/articles";
 
-// const API_BASE_URL = 'http://localhost:4000';
-const API_BASE_URL = "https://grs-bkbc.onrender.com";
+const API_BASE_URL = 'http://localhost:4000';
+// const API_BASE_URL = "https://grs-bkbc.onrender.com";
 
 // Helper function to upload file to Cloudinary
 const uploadToCloudinary = async (
