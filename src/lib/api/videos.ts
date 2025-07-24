@@ -2,9 +2,10 @@
 // უკავშირდება რეალურ backend-ს, არა mock data-ს
 
 // *** API BASE CONFIG ***
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://grs-bkbc.onrender.com";
+  process.env.NODE_ENV === 'development'
+    ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+    : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
 // *** INTERFACES ***
 export interface Video {

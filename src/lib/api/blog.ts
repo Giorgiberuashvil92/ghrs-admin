@@ -91,8 +91,9 @@ export type CreateCommentData = {
   content: string;
 };
 
-// const API_BASE_URL = "http://localhost:4000/";
-const API_BASE_URL = "https://grs-bkbc.onrender.com/";
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+  : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
 // სტატიების CRUD ოპერაციები
 export async function getAllArticles(params?: {
@@ -131,7 +132,7 @@ export async function getAllArticles(params?: {
       {
         _id: "685ed0ba4989e9a0c797b716",
         title: "გიორგი",
-        excerpt: "გიორგიგიორგიგიორგიგიორგიგიორგიგიორგი",
+        excerpt: "გიორგიგიორგიგიორგიგიორგიგიორგიგიორგიგიორგი",
         slug: "giorgi",
         categoryId: "685e84c24b3e14102174ec48",
         authorId: "admin",

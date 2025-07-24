@@ -93,8 +93,9 @@ type CreateReviewData = {
   userId: string;
 };
 
-// const API_BASE_URL = "http://localhost:4000/api";
-const API_BASE_URL = "https://grs-bkbc.onrender.com/api";
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+  : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com/api';
 
 // Courses CRUD
 export async function getAllCourses(): Promise<Course[]> {

@@ -8,8 +8,9 @@ import {
   CreateArticleRequest,
 } from "@/types/articles";
 
-const API_BASE_URL = 'http://localhost:4000';
-// const API_BASE_URL = "https://grs-bkbc.onrender.com";
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+  : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
 // Helper function to upload file to Cloudinary
 const uploadToCloudinary = async (
@@ -77,7 +78,7 @@ export async function getArticles(
 ) {
   try {
     // let url = `http://localhost:4000/articles?page=${page}&limit=${limit}`;
-    let url = `http://https://grs-bkbc.onrender.com/articles?page=${page}&limit=${limit}`;
+    let url = `${API_BASE_URL}/articles?page=${page}&limit=${limit}`;
 
     // Add filters to URL if they exist
     if (filters) {
