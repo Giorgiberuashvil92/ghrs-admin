@@ -1,8 +1,9 @@
 import { CreateSetRequest, Set, UpdateSetData } from "@/types/sets";
 
 // Consistent API base URL
-// const API_BASE_URL = 'http://localhost:4000';
-const API_BASE_URL = "https://grs-bkbc.onrender.com";
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+  : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
 // Helper function to construct API URLs
 function constructApiUrl(path: string): string {
