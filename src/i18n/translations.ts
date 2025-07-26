@@ -1,5 +1,12 @@
 export const translations = {
   ka: {
+    additionalInformation: "დამატებითი ინფორმაცია",
+    demoVideo: "დემო ვიდეო",
+    demoVideoUrl: "დემო ვიდეოს URL",
+    discountedPrices: "ფასდაკლებები",
+    durationAndDifficulty: "ხანგრძლივობა და სირთულე",
+    equipment: "აღჭურვილობა",
+    warnings: "გაფრთხილებები",
     // Navigation & Breadcrumbs
     categories: "კატეგორიები",
     addCategory: "კატეგორიის დამატება",
@@ -258,6 +265,13 @@ export const translations = {
   },
   
   en: {
+    additionalInformation: "Additional Information",
+    demoVideo: "Demo Video",
+    demoVideoUrl: "Demo Video URL",
+    discountedPrices: "Discounted Prices",
+    durationAndDifficulty: "Duration and Difficulty",
+    equipment: "Equipment",
+    warnings: "Warnings",
     // Navigation & Breadcrumbs
     categories: "Categories",
     addCategory: "Add Category",
@@ -511,6 +525,13 @@ export const translations = {
   },
   
   ru: {
+    additionalInformation: "Дополнительная информация",
+    demoVideo: "Демо видео",
+    demoVideoUrl: "URL демо видео",
+    discountedPrices: "Скидки",
+    durationAndDifficulty: "Длительность и сложность",
+    equipment: "Оборудование",
+    warnings: "Предупреждения",
     // Navigation & Breadcrumbs
     categories: "Категории",
     addCategory: "Добавить категорию",

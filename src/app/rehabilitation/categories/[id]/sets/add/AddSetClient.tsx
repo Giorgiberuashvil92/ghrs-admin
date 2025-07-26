@@ -11,8 +11,9 @@ import Breadcrumb from '@/components/Breadcrumbs/Breadcrumb';
 import { Button } from '@/components/ui/button';
 import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { CreateSetData } from '@/types/sets';
-import { TrashIcon, PhotoIcon, LinkIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, PhotoIcon, LinkIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 
 const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
   if (src.startsWith('data:')) {
@@ -64,8 +65,29 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
       en: '',
       ru: '',
     },
+    additional: {
+      en: '',
+      ru: '',
+    },
     image: '',
+    demoVideoUrl: '',
+    duration: '',
+    difficulty: 'medium',
+    equipment: {
+      en: '',
+      ru: '',
+    },
+    warnings: {
+      en: '',
+      ru: '',
+    },
     price: {
+      monthly: 0,
+      threeMonths: 0,
+      sixMonths: 0,
+      yearly: 0,
+    },
+    discountedPrice: {
       monthly: 0,
       threeMonths: 0,
       sixMonths: 0,
@@ -134,7 +156,14 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
         formDataToSend.append('name', JSON.stringify(formData.name));
         formDataToSend.append('description', JSON.stringify(formData.description));
         formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
+        formDataToSend.append('additional', JSON.stringify(formData.additional));
+        formDataToSend.append('demoVideoUrl', formData.demoVideoUrl || '');
+        formDataToSend.append('duration', formData.duration);
+        formDataToSend.append('difficulty', formData.difficulty);
+        formDataToSend.append('equipment', JSON.stringify(formData.equipment));
+        formDataToSend.append('warnings', JSON.stringify(formData.warnings));
         formDataToSend.append('price', JSON.stringify(formData.price));
+        formDataToSend.append('discountedPrice', JSON.stringify(formData.discountedPrice));
         formDataToSend.append('levels', JSON.stringify(formData.levels));
         formDataToSend.append('isActive', formData.isActive.toString());
         formDataToSend.append('isPublished', formData.isPublished.toString());
@@ -363,6 +392,131 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     </div>
                   </div>
 
+                  {/* ხანგრძლივობა და სირთულე */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      Duration and Difficulty
+                    </h4>
+                    <div className="flex flex-col gap-5.5">
+                      <div className="w-full">
+                        <InputGroup
+                          label="Duration"
+                          name="duration"
+                          type="text"
+                          placeholder="e.g. 45 minutes"
+                          value={formData.duration}
+                          handleChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              duration: e.target.value
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="w-full">
+                        <label className="mb-2.5 block font-medium text-black dark:text-white">
+                          Difficulty
+                        </label>
+                        <select
+                          value={formData.difficulty}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              difficulty: e.target.value as "easy" | "medium" | "hard"
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                        >
+                          <option value="easy">Easy</option>
+                          <option value="medium">Medium</option>
+                          <option value="hard">Hard</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* აღჭურვილობა */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      Equipment
+                    </h4>
+                    <div className="flex flex-col gap-5.5">
+                      <div className="w-full">
+                        <TextAreaGroup
+                          label="Equipment (English)"
+                          placeholder="Required equipment..."
+                          value={formData.equipment?.en || ''}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              equipment: { 
+                                ...(prev.equipment || { en: '', ru: '' }), 
+                                en: e.target.value 
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="w-full">
+                        <TextAreaGroup
+                          label="Оборудование (Русский)"
+                          placeholder="Необходимое оборудование..."
+                          value={formData.equipment?.ru || ''}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              equipment: { 
+                                ...(prev.equipment || { en: '', ru: '' }), 
+                                ru: e.target.value 
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* გაფრთხილებები */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      Warnings
+                    </h4>
+                    <div className="flex flex-col gap-5.5">
+                      <div className="w-full">
+                        <TextAreaGroup
+                          label="Warnings (English)"
+                          placeholder="Health warnings and contraindications..."
+                          value={formData.warnings?.en || ''}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              warnings: { 
+                                ...(prev.warnings || { en: '', ru: '' }), 
+                                en: e.target.value 
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="w-full">
+                        <TextAreaGroup
+                          label="Предупреждения (Русский)"
+                          placeholder="Предупреждения о здоровье и противопоказания..."
+                          value={formData.warnings?.ru || ''}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              warnings: { 
+                                ...(prev.warnings || { en: '', ru: '' }), 
+                                ru: e.target.value 
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* რეკომენდაციები */}
                   <div className="mb-5.5">
                     <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
@@ -400,6 +554,192 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                             }))
                           }
                         />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* დამატებითი ინფორმაცია */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('additionalInformation')}
+                    </h4>
+                    <div className="flex flex-col gap-5.5">
+                      <div className="w-full">
+                        <label className="mb-2.5 block font-medium text-black dark:text-white">
+                          Additional Information (English)
+                        </label>
+                        <RichTextEditor
+                          value={formData.additional?.en || ''}
+                          onChange={(value) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              additional: {
+                                ...(prev.additional || { en: '', ru: '' }),
+                                en: value
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="w-full">
+                        <label className="mb-2.5 block font-medium text-black dark:text-white">
+                          Дополнительная информация (Русский)
+                        </label>
+                        <RichTextEditor
+                          value={formData.additional?.ru || ''}
+                          onChange={(value) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              additional: {
+                                ...(prev.additional || { en: '', ru: '' }),
+                                ru: value
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* დემო ვიდეო */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('demoVideo')}
+                    </h4>
+                    <div className="w-full">
+                      <InputGroup
+                        label={t('demoVideoUrl')}
+                        name="demo_video_url"
+                        type="url"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={formData.demoVideoUrl || ''}
+                        handleChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            demoVideoUrl: e.target.value
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* ფასდაკლებები */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('discountedPrices')}
+                    </h4>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('oneMonth')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPrice?.monthly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPrice: {
+                                ...(prev.discountedPrice || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                monthly: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('threeMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPrice?.threeMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPrice: {
+                                ...(prev.discountedPrice || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                threeMonths: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('sixMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPrice?.sixMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPrice: {
+                                ...(prev.discountedPrice || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                sixMonths: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('yearly')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPrice?.yearly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPrice: {
+                                ...(prev.discountedPrice || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                yearly: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
                       </div>
                     </div>
                   </div>

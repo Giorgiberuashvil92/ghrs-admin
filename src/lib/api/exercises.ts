@@ -11,10 +11,11 @@ function constructApiUrl(path: string): string {
 
 // ლოკალიზებული ველების ვალიდაცია
 function validateLocalizedFields(data: FormData): void {
-  const requiredFields = ["name", "description"];
+  const requiredFields = ["name"];
 
   console.group("🔍 ლოკალიზებული ველების ვალიდაცია");
   
+  // სავალდებულო ველების შემოწმება
   for (const field of requiredFields) {
     const value = data.get(field);
     console.log(`📝 მოწმდება ${field}:`, value);
@@ -38,6 +39,18 @@ function validateLocalizedFields(data: FormData): void {
     } catch (error) {
       console.error(`❌ JSON პარსინგის შეცდომა ${field}-ისთვის:`, error);
       throw new Error(`არასწორი JSON ფორმატი ${field}-ისთვის`);
+    }
+  }
+
+  // description-ის შემოწმება თუ გამოგზავნილია
+  const description = data.get('description');
+  if (description) {
+    try {
+      const localizedValue = JSON.parse(description as string) as LocalizedString;
+      console.log(`📋 დაპარსული description:`, localizedValue);
+    } catch (error) {
+      console.error(`❌ JSON პარსინგის შეცდომა description-ისთვის:`, error);
+      throw new Error(`არასწორი JSON ფორმატი description-ისთვის`);
     }
   }
   

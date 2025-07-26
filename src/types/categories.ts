@@ -37,6 +37,10 @@ export interface Set {
   totalDuration: string;
   difficultyLevels: number;
   thumbnailImage: string | null;
+  duration: string;
+  difficulty: "easy" | "medium" | "hard";
+  equipment: LocalizedString;
+  warnings: LocalizedString;
   price: {
     monthly: number;
     threeMonths: number;
@@ -68,6 +72,10 @@ export interface SetFormData {
   name: LocalizedString;
   description: LocalizedString;
   thumbnailImage: File | null;
+  duration: string;
+  difficulty: "easy" | "medium" | "hard";
+  equipment: LocalizedString;
+  warnings: LocalizedString;
   price: {
     monthly: string;
     threeMonths: string;

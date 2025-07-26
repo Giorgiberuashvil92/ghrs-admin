@@ -78,7 +78,6 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
 
   const [formErrors, setFormErrors] = useState<{
     name?: boolean;
-    description?: boolean;
     videoDuration?: boolean;
     duration?: boolean;
     repetitions?: boolean;
@@ -96,7 +95,6 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
     const hasVideo = !!formData.videoFile;
     const errors = {
       name: !formData.name.en.trim() || !formData.name.ru.trim(),
-      description: !formData.description.en.trim() || !formData.description.ru.trim(),
       videoDuration: !formData.videoDuration.trim(),
       duration: !formData.duration.trim(),
       repetitions: !formData.repetitions.trim(),
@@ -204,7 +202,10 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       }
       const formDataToSend = new FormData();
       formDataToSend.append('name', JSON.stringify(formData.name));
-      formDataToSend.append('description', JSON.stringify(formData.description));
+      // description-ს ვაგზავნით მხოლოდ თუ რომელიმე ენაზე მაინც შევსებულია
+      if (formData.description.en.trim() || formData.description.ru.trim()) {
+        formDataToSend.append('description', JSON.stringify(formData.description));
+      }
       formDataToSend.append('videoDuration', formData.videoDuration);
       formDataToSend.append('duration', formData.duration);
       formDataToSend.append('difficulty', formData.difficulty);
@@ -375,7 +376,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                 <div className="space-y-6">
                   <div>
                     <label htmlFor="description-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('descriptionEn')} *
+                      {t('descriptionEn')}
                     </label>
                     <div className="relative">
                       <textarea
@@ -391,21 +392,16 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                               en: e.target.value
                             }
                           });
-                          handleInputChange('description', e.target.value);
                         }}
-                        className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none ${formErrors.description ? 'border-red-500' : ''}`}
+                        className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none"
                         placeholder={t('writeExerciseDescription')}
-                        required
                       />
-                      {formErrors.description && (
-                        <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
-                      )}
                     </div>
                   </div>
 
                   <div>
                     <label htmlFor="description-ru" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('descriptionRu')} *
+                      {t('descriptionRu')}
                     </label>
                     <div className="relative">
                       <textarea
@@ -421,15 +417,10 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                               ru: e.target.value
                             }
                           });
-                          handleInputChange('description', e.target.value);
                         }}
-                        className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none ${formErrors.description ? 'border-red-500' : ''}`}
+                        className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none"
                         placeholder={t('writeExerciseDescription')}
-                        required
                       />
-                      {formErrors.description && (
-                        <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
-                      )}
                     </div>
                   </div>
                 </div>
