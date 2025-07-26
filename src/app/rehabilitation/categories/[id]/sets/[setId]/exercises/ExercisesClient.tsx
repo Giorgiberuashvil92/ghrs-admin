@@ -69,14 +69,14 @@ export default function ExercisesClient({ category, set, initialExercises, subca
   const addExercisePath = `${basePath}/sets/${set._id}/exercises/add`;
   
   const title = subcategory 
-    ? `${category.name.ka} › ${subcategory.name.ka} › ${set?.name?.ka}`
-    : `${category.name.ka} › ${set?.name?.ka}`;
+    ? `${category.name.en} › ${subcategory.name.en} › ${set?.name?.en}`
+    : `${category.name.en} › ${set?.name?.en}`;
     
   const description = t('exercisesList');
 
   const filteredExercises = initialExercises.filter(exercise =>
-    exercise.name.ka.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exercise.description?.ka?.toLowerCase().includes(searchTerm.toLowerCase())
+    exercise.name.en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exercise.description?.en.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   console.log(filteredExercises)
@@ -181,7 +181,7 @@ export default function ExercisesClient({ category, set, initialExercises, subca
                     {imageSrc && typeof imageSrc === 'string' ? (
                       <img 
                         src={imageSrc} 
-                        alt={exercise.name.ka} 
+                        alt={exercise.name.en} 
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -241,13 +241,13 @@ export default function ExercisesClient({ category, set, initialExercises, subca
 
                     {/* Title */}
                     <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                      {exercise.name.ka}
+                      {exercise.name.en}
                     </h3>
 
                     {/* Description */}
-                    {exercise.description?.ka && (
+                    {exercise.description?.en && (
                       <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {exercise.description.ka}
+                        {exercise.description.en}
                       </p>
                     )}
 

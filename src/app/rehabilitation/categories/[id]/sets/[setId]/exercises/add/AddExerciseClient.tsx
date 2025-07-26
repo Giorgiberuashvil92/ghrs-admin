@@ -53,9 +53,14 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ExerciseFormData>({
-    name: { ka: '', en: '', ru: '' },
-    description: { ka: '', en: '', ru: '' },
-    recommendations: { ka: '', en: '', ru: '' },
+    name: {
+      en: '',
+      ru: '',
+    },
+    description: {
+      en: '',
+      ru: '',
+    },
     videoFile: null,
     thumbnailImage: null,
     videoDuration: '',
@@ -74,7 +79,6 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
   const [formErrors, setFormErrors] = useState<{
     name?: boolean;
     description?: boolean;
-    recommendations?: boolean;
     videoDuration?: boolean;
     duration?: boolean;
     repetitions?: boolean;
@@ -91,9 +95,8 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
     const hasImage = !!formData.thumbnailImage;
     const hasVideo = !!formData.videoFile;
     const errors = {
-      name: !formData.name.ka.trim(),
-      description: !formData.description.ka.trim(),
-      recommendations: !formData.recommendations.ka.trim(),
+      name: !formData.name.en.trim() || !formData.name.ru.trim(),
+      description: !formData.description.en.trim() || !formData.description.ru.trim(),
       videoDuration: !formData.videoDuration.trim(),
       duration: !formData.duration.trim(),
       repetitions: !formData.repetitions.trim(),
@@ -194,7 +197,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
         alert(t('pleaseFillAllRequiredFields'));
         return;
       }
-      if (formData.name.ka.includes('http') || formData.description.ka.includes('http')) {
+      if (formData.name.en.includes('http') || formData.description.en.includes('http')) {
         alert(t('pleaseEnterTextNotUrl'));
         setIsLoading(false);
         return;
@@ -202,7 +205,6 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       const formDataToSend = new FormData();
       formDataToSend.append('name', JSON.stringify(formData.name));
       formDataToSend.append('description', JSON.stringify(formData.description));
-      formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
       formDataToSend.append('videoDuration', formData.videoDuration);
       formDataToSend.append('duration', formData.duration);
       formDataToSend.append('difficulty', formData.difficulty);
@@ -283,25 +285,25 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
               </h1>
               <p className="mt-2 text-lg text-gray-600">
                 {subcategory 
-                  ? `${category.name.ka} › ${subcategory.name.ka} › ${set.name.ka}`
-                  : `${category.name.ka} › ${set.name.ka}`
+                  ? `${category.name.en} › ${subcategory.name.en} › ${set.name.en}`
+                  : `${category.name.en} › ${set.name.en}`
                 }
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>{t('category')}:</span>
-            <span className="font-medium">{category.name.ka}</span>
+            <span className="font-medium">{category.name.en}</span>
             {subcategory && (
               <>
                 <span>•</span>
                 <span>{t('subCategory')}:</span>
-                <span className="font-medium">{subcategory.name.ka}</span>
+                <span className="font-medium">{subcategory.name.en}</span>
               </>
             )}
             <span>•</span>
             <span>{t('set')}:</span>
-            <span className="font-medium">{set.name.ka}</span>
+            <span className="font-medium">{set.name.en}</span>
           </div>
         </div>
 
@@ -322,21 +324,22 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="name-ka" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('nameKa')}
+                    <label htmlFor="name-en" className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t('nameEn')} *
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        name="name-ka"
-                        id="name-ka"
-                        value={formData.name.ka}
+                        name="name-en"
+                        id="name-en"
+                        value={formData.name.en}
                         onChange={(e) => {
-                          setFormData({ ...formData, name: { ...formData.name, ka: e.target.value } });
+                          setFormData({ ...formData, name: { ...formData.name, en: e.target.value } });
                           handleInputChange('name', e.target.value);
                         }}
                         className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-lg ${formErrors.name ? 'border-red-500' : ''}`}
                         placeholder={t('enterExerciseName')}
+                        required
                       />
                       {formErrors.name && (
                         <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
@@ -345,47 +348,54 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                   </div>
 
                   <div>
-                    <label htmlFor="name-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('nameEn')}
+                    <label htmlFor="name-ru" className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t('nameRu')} *
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        name="name-en"
-                        id="name-en"
-                        value={formData.name.en}
-                        onChange={(e) => setFormData({ ...formData, name: { ...formData.name, en: e.target.value } })}
-                        className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-lg"
+                        name="name-ru"
+                        id="name-ru"
+                        value={formData.name.ru}
+                        onChange={(e) => {
+                          setFormData({ ...formData, name: { ...formData.name, ru: e.target.value } });
+                          handleInputChange('name', e.target.value);
+                        }}
+                        className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-lg ${formErrors.name ? 'border-red-500' : ''}`}
                         placeholder={t('enterExerciseName')}
+                        required
                       />
+                      {formErrors.name && (
+                        <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="description-ka" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('descriptionKa')}
+                    <label htmlFor="description-en" className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t('descriptionEn')} *
                     </label>
                     <div className="relative">
                       <textarea
-                        id="description-ka"
-                        name="description-ka"
+                        id="description-en"
+                        name="description-en"
                         rows={4}
-                        value={formData.description.ka}
+                        value={formData.description.en}
                         onChange={(e) => {
                           setFormData({
                             ...formData,
                             description: {
-                              ka: e.target.value,
-                              en: formData.description?.en || '',
-                              ru: formData.description?.ru || '',
+                              ...formData.description,
+                              en: e.target.value
                             }
                           });
                           handleInputChange('description', e.target.value);
                         }}
                         className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none ${formErrors.description ? 'border-red-500' : ''}`}
                         placeholder={t('writeExerciseDescription')}
+                        required
                       />
                       {formErrors.description && (
                         <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
@@ -394,95 +404,33 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                   </div>
 
                   <div>
-                    <label htmlFor="description-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('descriptionEn')}
+                    <label htmlFor="description-ru" className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t('descriptionRu')} *
                     </label>
                     <div className="relative">
                       <textarea
-                        id="description-en"
-                        name="description-en"
+                        id="description-ru"
+                        name="description-ru"
                         rows={4}
-                        value={formData.description.en}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          description: {
-                            ka: formData.description?.ka || '',
-                            en: e.target.value,
-                            ru: formData.description?.ru || '',
-                          }
-                        })}
-                        className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none"
+                        value={formData.description.ru}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            description: {
+                              ...formData.description,
+                              ru: e.target.value
+                            }
+                          });
+                          handleInputChange('description', e.target.value);
+                        }}
+                        className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none ${formErrors.description ? 'border-red-500' : ''}`}
                         placeholder={t('writeExerciseDescription')}
+                        required
                       />
+                      {formErrors.description && (
+                        <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
+                      )}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* რეკომენდაციები */}
-            <div className="border-t border-gray-200 pt-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CogIcon className="h-5 w-5 text-green-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {t('recommendations')}
-                </h2>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div>
-                  <label htmlFor="recommendations-ka" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('recommendationsKa')}
-                  </label>
-                  <div className="relative">
-                    <textarea
-                      id="recommendations-ka"
-                      name="recommendations-ka"
-                      rows={4}
-                      value={formData.recommendations.ka}
-                      onChange={(e) => {
-                        setFormData({
-                          ...formData,
-                          recommendations: {
-                            ka: e.target.value,
-                            en: formData.recommendations?.en || '',
-                            ru: formData.recommendations?.ru || '',
-                          }
-                        });
-                        handleInputChange('recommendations', e.target.value);
-                      }}
-                      className={`block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 resize-none ${formErrors.recommendations ? 'border-red-500' : ''}`}
-                      placeholder={t('writeRecommendations')}
-                    />
-                    {formErrors.recommendations && (
-                      <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="recommendations-en" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('recommendationsEn')}
-                  </label>
-                  <div className="relative">
-                    <textarea
-                      id="recommendations-en"
-                      name="recommendations-en"
-                      rows={4}
-                      value={formData.recommendations.en}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        recommendations: {
-                          ka: formData.recommendations?.ka || '',
-                          en: e.target.value,
-                          ru: formData.recommendations?.ru || '',
-                        }
-                      })}
-                      className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 resize-none"
-                      placeholder={t('writeRecommendations')}
-                    />
                   </div>
                 </div>
               </div>

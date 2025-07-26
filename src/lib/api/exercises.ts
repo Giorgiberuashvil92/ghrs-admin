@@ -11,23 +11,37 @@ function constructApiUrl(path: string): string {
 
 // ლოკალიზებული ველების ვალიდაცია
 function validateLocalizedFields(data: FormData): void {
-  const requiredFields = ["name", "description", "recommendations"];
+  const requiredFields = ["name", "description"];
 
+  console.group("🔍 ლოკალიზებული ველების ვალიდაცია");
+  
   for (const field of requiredFields) {
     const value = data.get(field);
+    console.log(`📝 მოწმდება ${field}:`, value);
+    
     if (!value) {
+      console.error(`❌ ${field} არ არის მითითებული`);
       throw new Error(`${field} სავალდებულოა`);
     }
 
     try {
       const localizedValue = JSON.parse(value as string) as LocalizedString;
-      if (!localizedValue.ka) {
-        throw new Error(`${field}-ის ქართული (ka) თარგმანი სავალდებულოა`);
+      console.log(`📋 დაპარსული ${field}:`, localizedValue);
+      
+      // მხოლოდ en და ru არის სავალდებულო
+      if (!localizedValue.en || !localizedValue.ru) {
+        console.error(`❌ ${field}-ის en ან ru თარგმანი აკლია:`, { en: !!localizedValue.en, ru: !!localizedValue.ru });
+        throw new Error(`${field}-ის ინგლისური (en) და რუსული (ru) თარგმანები სავალდებულოა`);
       }
+      
+      console.log(`✅ ${field} ვალიდურია`);
     } catch (error) {
+      console.error(`❌ JSON პარსინგის შეცდომა ${field}-ისთვის:`, error);
       throw new Error(`არასწორი JSON ფორმატი ${field}-ისთვის`);
     }
   }
+  
+  console.groupEnd();
 }
 
 // სავალდებულო ველების ვალიდაცია
@@ -43,31 +57,49 @@ function validateRequiredFields(data: FormData): void {
     "categoryId",
   ];
 
+  console.group("🔍 სავალდებულო ველების ვალიდაცია");
+  
   for (const field of requiredFields) {
-    if (!data.get(field)) {
+    const value = data.get(field);
+    console.log(`📝 მოწმდება ${field}:`, value);
+    
+    if (!value) {
+      console.error(`❌ ${field} არ არის მითითებული`);
       throw new Error(`${field} სავალდებულოა`);
     }
+    
+    console.log(`✅ ${field} ვალიდურია`);
   }
 
   // სირთულის ვალიდაცია
   const difficulty = data.get("difficulty");
-  if (
-    difficulty &&
-    !["easy", "medium", "hard"].includes(difficulty as string)
-  ) {
+  console.log("📝 მოწმდება სირთულე:", difficulty);
+  
+  if (difficulty && !["easy", "medium", "hard"].includes(difficulty as string)) {
+    console.error(`❌ არასწორი სირთულის მნიშვნელობა:`, difficulty);
     throw new Error("სირთულე უნდა იყოს: easy, medium, ან hard");
   }
+  
+  console.log("✅ სირთულე ვალიდურია");
+  console.groupEnd();
 }
 
 // URL-ების ვალიდაცია
 function validateUrls(data: FormData): void {
+  console.group("🔍 URL-ების ვალიდაცია");
+  
   const videoUrl = data.get("videoUrl") as string;
   const thumbnailUrl = data.get("thumbnailUrl") as string;
+
+  console.log("📝 ვიდეოს URL:", videoUrl);
+  console.log("📝 თამბნეილის URL:", thumbnailUrl);
 
   if (videoUrl) {
     try {
       new URL(videoUrl);
+      console.log("✅ ვიდეოს URL ვალიდურია");
     } catch {
+      console.error("❌ არასწორი ვიდეოს URL ფორმატი:", videoUrl);
       throw new Error("არასწორი ვიდეოს URL ფორმატი");
     }
   }
@@ -75,45 +107,55 @@ function validateUrls(data: FormData): void {
   if (thumbnailUrl) {
     try {
       new URL(thumbnailUrl);
+      console.log("✅ თამბნეილის URL ვალიდურია");
     } catch {
+      console.error("❌ არასწორი თამბნეილის URL ფორმატი:", thumbnailUrl);
       throw new Error("არასწორი თამბნეილის URL ფორმატი");
     }
   }
+  
+  console.groupEnd();
 }
 
 // ფაილების ვალიდაცია
 function validateFiles(data: FormData): void {
+  console.group("🔍 ფაილების ვალიდაცია");
+  
   const files = data.getAll("files");
   const videoUrl = data.get("videoUrl");
   const thumbnailUrl = data.get("thumbnailUrl");
 
-  // თუ არც ფაილები გვაქვს და არც URL-ები
-  if (files.length === 0 && !videoUrl && !thumbnailUrl) {
-    throw new Error("საჭიროა ან ფაილების ან URL-ების მითითება");
-  }
+  console.log("📝 ფაილების რაოდენობა:", files.length);
+  console.log("📝 ვიდეოს URL:", videoUrl);
+  console.log("📝 თამბნეილის URL:", thumbnailUrl);
 
   // თუ ფაილები გვაქვს, შევამოწმოთ მათი ტიპები
   if (files.length > 0) {
     if (files.length !== 2) {
+      console.error("❌ არასწორი ფაილების რაოდენობა:", files.length);
       throw new Error("საჭიროა ორივე ფაილის (ვიდეო და თამბნეილი) მითითება");
     }
 
     const [videoFile, thumbnailFile] = files as File[];
 
+    console.log("📝 ვიდეო ფაილის ტიპი:", videoFile.type);
+    console.log("📝 თამბნეილის ფაილის ტიპი:", thumbnailFile.type);
+
     if (!videoFile.type.startsWith("video/")) {
+      console.error("❌ არასწორი ვიდეო ფაილის ტიპი:", videoFile.type);
       throw new Error("პირველი ფაილი უნდა იყოს ვიდეო");
     }
 
     if (!thumbnailFile.type.startsWith("image/")) {
+      console.error("❌ არასწორი თამბნეილის ფაილის ტიპი:", thumbnailFile.type);
       throw new Error("მეორე ფაილი უნდა იყოს სურათი");
     }
+    
+    console.log("✅ ფაილების ტიპები ვალიდურია");
   }
-  // თუ URL-ები გვაქვს, შევამოწმოთ ორივეს არსებობა
-  else if ((videoUrl && !thumbnailUrl) || (!videoUrl && thumbnailUrl)) {
-    throw new Error(
-      "URL-ების გამოყენებისას ორივე (ვიდეო და თამბნეილი) სავალდებულოა",
-    );
-  }
+  
+  console.log("✅ ფაილების ვალიდაცია წარმატებით დასრულდა");
+  console.groupEnd();
 }
 
 export async function getExercises(params?: {
@@ -212,12 +254,11 @@ export async function createExercise(data: FormData): Promise<Exercise> {
 
     // ლოკალიზებული ველების ლოგირება
     console.group("🌐 ლოკალიზებული ველები:");
-    ["name", "description", "recommendations"].forEach((field) => {
+    ["name", "description"].forEach((field) => {
       try {
         const value = data.get(field);
         const localizedValue = value ? JSON.parse(value as string) : {};
         console.log(`${field}:`, {
-          ka: localizedValue.ka || "❌ არ არის",
           en: localizedValue.en || "❌ არ არის",
           ru: localizedValue.ru || "❌ არ არის",
         });
@@ -285,6 +326,12 @@ export async function createExercise(data: FormData): Promise<Exercise> {
     console.log("თამბნეილის URL:", thumbnailUrl || "❌ არ არის მითითებული");
     console.groupEnd();
 
+    // ვალიდაციები
+    validateLocalizedFields(data);
+    validateRequiredFields(data);
+    validateUrls(data);
+    validateFiles(data);
+
     const response = await fetch(constructApiUrl("exercises"), {
       method: "POST",
       body: data,
@@ -298,9 +345,10 @@ export async function createExercise(data: FormData): Promise<Exercise> {
       );
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log("✅ სავარჯიშო წარმატებით შეიქმნა:", result);
+    return result;
   } catch (error: any) {
-    // Type the error as any since we know we'll check properties
     console.error("❌ შეცდომა createExercise-ში:");
     console.error("შეცდომის დეტალები:", error);
     console.error("შეცდომის მესიჯი:", error.message);
@@ -413,8 +461,8 @@ export async function getPopularExercises(filters?: {
       const searchTerm = filters.search.toLowerCase();
       filteredExercises = filteredExercises.filter(
         (exercise) =>
-          exercise.name?.ka?.toLowerCase().includes(searchTerm) ||
-          exercise.description?.ka?.toLowerCase().includes(searchTerm),
+          exercise.name?.en?.toLowerCase().includes(searchTerm) ||
+          exercise.description?.en?.toLowerCase().includes(searchTerm),
       );
     }
 
@@ -461,7 +509,7 @@ export async function getPopularExercises(filters?: {
     console.log(
       "📊 Top 3 popular exercises:",
       popularExercises.slice(0, 3).map((ex) => ({
-        name: ex.name?.ka,
+        name: ex.name?.en,
         score: ex.popularityScore,
         views: ex.views,
         likes: ex.likes,

@@ -53,12 +53,14 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
   const imageFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Omit<CreateSetData, 'categoryId'>>({
     name: {
-      ka: '',
       en: '',
       ru: '',
     },
     description: {
-      ka: '',
+      en: '',
+      ru: '',
+    },
+    recommendations: {
       en: '',
       ru: '',
     },
@@ -131,6 +133,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
         // JSON ველები
         formDataToSend.append('name', JSON.stringify(formData.name));
         formDataToSend.append('description', JSON.stringify(formData.description));
+        formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
         formDataToSend.append('price', JSON.stringify(formData.price));
         formDataToSend.append('levels', JSON.stringify(formData.levels));
         formDataToSend.append('isActive', formData.isActive.toString());
@@ -286,22 +289,6 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     <div className="flex flex-col gap-5.5">
                       <div className="w-full">
                         <InputGroup
-                          label={t('nameInGeorgian')}
-                          name="name_ka"
-                          type="text"
-                          placeholder={t('enterGeorgianName')}
-                          value={formData.name.ka}
-                          handleChange={(e) =>
-                            setFormData(prev => ({
-                              ...prev,
-                              name: { ...prev.name, ka: e.target.value }
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="w-full">
-                        <InputGroup
                           label={t('nameInEnglish')}
                           name="name_en"
                           type="text"
@@ -343,22 +330,6 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     <div className="flex flex-col gap-5.5">
                       <div className="w-full">
                         <TextAreaGroup
-                          label={t('descriptionInGeorgian')}
-                          placeholder={t('enterGeorgianDescription')}
-                          value={formData.description?.ka || ''}
-                          onChange={(e) =>
-                            setFormData(prev => ({
-                              ...prev,
-                              description: { 
-                                ...(prev.description || { ka: '', en: '', ru: '' }), 
-                                ka: e.target.value 
-                              }
-                            }))
-                          }
-                        />
-                      </div>
-                      <div className="w-full">
-                        <TextAreaGroup
                           label="Description (English)"
                           placeholder="Detailed description..."
                           value={formData.description?.en || ''}
@@ -366,7 +337,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                             setFormData(prev => ({
                               ...prev,
                               description: { 
-                                ...(prev.description || { ka: '', en: '', ru: '' }), 
+                                ...(prev.description || { en: '', ru: '' }), 
                                 en: e.target.value 
                               }
                             }))
@@ -382,7 +353,48 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                             setFormData(prev => ({
                               ...prev,
                               description: { 
-                                ...(prev.description || { ka: '', en: '', ru: '' }), 
+                                ...(prev.description || { en: '', ru: '' }), 
+                                ru: e.target.value 
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* რეკომენდაციები */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('recommendations')}
+                    </h4>
+                    <div className="flex flex-col gap-5.5">
+                      <div className="w-full">
+                        <TextAreaGroup
+                          label="Recommendations (English)"
+                          placeholder="Enter recommendations..."
+                          value={formData.recommendations?.en || ''}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              recommendations: { 
+                                ...(prev.recommendations || { en: '', ru: '' }), 
+                                en: e.target.value 
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="w-full">
+                        <TextAreaGroup
+                          label="Рекомендации (Русский)"
+                          placeholder="Введите рекомендации..."
+                          value={formData.recommendations?.ru || ''}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              recommendations: { 
+                                ...(prev.recommendations || { en: '', ru: '' }), 
                                 ru: e.target.value 
                               }
                             }))

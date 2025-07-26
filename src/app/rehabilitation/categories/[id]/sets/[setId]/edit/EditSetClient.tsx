@@ -84,6 +84,7 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
       await updateSet(set._id, {
         name: set.name,
         description: set.description,
+        recommendations: set.recommendations,
         thumbnailImage: set.thumbnailImage,
         price: set.price,
         levels: set.levels,
@@ -198,22 +199,6 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
               {/* სახელის სექცია */}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="name-ka" className="block text-sm font-medium text-gray-700">
-                    {t('nameInGeorgian')}
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="name-ka"
-                      id="name-ka"
-                      value={set.name.ka}
-                      onChange={(e) => setSet({ ...set, name: { ...set.name, ka: e.target.value } })}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div>
                   <label htmlFor="name-en" className="block text-sm font-medium text-gray-700">
                     {t('nameInEnglish')}
                   </label>
@@ -228,33 +213,26 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* აღწერის სექცია */}
-              <div className="space-y-4">
                 <div>
-                  <label htmlFor="description-ka" className="block text-sm font-medium text-gray-700">
-                    {t('descriptionInGeorgian')}
+                  <label htmlFor="name-ru" className="block text-sm font-medium text-gray-700">
+                    {t('nameInRussian')}
                   </label>
                   <div className="mt-1">
-                    <textarea
-                      id="description-ka"
-                      name="description-ka"
-                      rows={3}
-                      value={set.description?.ka || ''}
-                      onChange={(e) => setSet({
-                        ...set,
-                        description: {
-                          ka: e.target.value,
-                          en: set.description?.en || '',
-                          ru: set.description?.ru || '',
-                        }
-                      })}
+                    <input
+                      type="text"
+                      name="name-ru"
+                      id="name-ru"
+                      value={set.name.ru}
+                      onChange={(e) => setSet({ ...set, name: { ...set.name, ru: e.target.value } })}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
                   </div>
                 </div>
+              </div>
 
+              {/* აღწერის სექცია */}
+              <div className="space-y-4">
                 <div>
                   <label htmlFor="description-en" className="block text-sm font-medium text-gray-700">
                     {t('descriptionInEnglish')}
@@ -268,9 +246,80 @@ export default function EditSetClient({ category, initialSet }: EditSetClientPro
                       onChange={(e) => setSet({
                         ...set,
                         description: {
-                          ka: set.description?.ka || '',
                           en: e.target.value,
                           ru: set.description?.ru || '',
+                        }
+                      })}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="description-ru" className="block text-sm font-medium text-gray-700">
+                    {t('descriptionInRussian')}
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="description-ru"
+                      name="description-ru"
+                      rows={3}
+                      value={set.description?.ru || ''}
+                      onChange={(e) => setSet({
+                        ...set,
+                        description: {
+                          en: set.description?.en || '',
+                          ru: e.target.value,
+                        }
+                      })}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* რეკომენდაციების სექცია */}
+            <div className="border-t border-gray-200 pt-8">
+              <h3 className="text-base font-semibold leading-7 text-gray-900 mb-4">{t('recommendations')}</h3>
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="recommendations-en" className="block text-sm font-medium text-gray-700">
+                    {t('recommendationsInEnglish')}
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="recommendations-en"
+                      name="recommendations-en"
+                      rows={3}
+                      value={set.recommendations?.en || ''}
+                      onChange={(e) => setSet({
+                        ...set,
+                        recommendations: {
+                          en: e.target.value,
+                          ru: set.recommendations?.ru || '',
+                        }
+                      })}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="recommendations-ru" className="block text-sm font-medium text-gray-700">
+                    {t('recommendationsInRussian')}
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="recommendations-ru"
+                      name="recommendations-ru"
+                      rows={3}
+                      value={set.recommendations?.ru || ''}
+                      onChange={(e) => setSet({
+                        ...set,
+                        recommendations: {
+                          en: set.recommendations?.en || '',
+                          ru: e.target.value,
                         }
                       })}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"

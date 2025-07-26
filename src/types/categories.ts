@@ -1,8 +1,7 @@
 // ახალი ტიპები 4-დონიანი სისტემისთვის
 export interface LocalizedString {
-  ka: string;
-  en: string;
-  ru: string;
+  en?: string;
+  ru?: string;
 }
 
 export interface Category {
@@ -86,7 +85,6 @@ export interface Exercise {
   id?: string;
   name: LocalizedString;
   description: LocalizedString;
-  recommendations: LocalizedString;
   
   // ვიდეო და სურათი
   videoFile: File | string | null;
@@ -196,7 +194,6 @@ export type ComplexFormData = {
 export interface ExerciseFormData {
   name: LocalizedString;
   description: LocalizedString;
-  recommendations: LocalizedString;
   videoFile: File | null;
   thumbnailImage: File | null;
   videoDuration: string;

@@ -22,6 +22,7 @@ export interface Set {
   _id: string;
   name: LocalizedString;
   description?: LocalizedString;
+  recommendations?: LocalizedString;
   thumbnailImage: string;
   categoryId: string;
   price: SetPrice;
@@ -36,6 +37,7 @@ export interface Set {
 export interface CreateSetData {
   name: LocalizedString;
   description?: LocalizedString;
+  recommendations?: LocalizedString;
   image: string;
   categoryId: string;
   subCategoryId?: string;
@@ -54,6 +56,7 @@ export type CreateSetRequest = {
 export interface UpdateSetData {
   name?: LocalizedString;
   description?: LocalizedString;
+  recommendations?: LocalizedString;
   thumbnailImage?: string;
   price?: Partial<SetPrice>;
   levels?: Partial<SetLevels>;

@@ -57,9 +57,14 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ExerciseFormData>({
-    name: { ka: '', en: '', ru: '' },
-    description: { ka: '', en: '', ru: '' },
-    recommendations: { ka: '', en: '', ru: '' },
+    name: {
+      en: '',
+      ru: '',
+    },
+    description: {
+      en: '',
+      ru: '',
+    },
     videoFile: null,
     thumbnailImage: null,
     videoDuration: '',
@@ -78,7 +83,6 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
   const [formErrors, setFormErrors] = useState<{
     name?: boolean;
     description?: boolean;
-    recommendations?: boolean;
     videoDuration?: boolean;
     duration?: boolean;
     repetitions?: boolean;
@@ -91,7 +95,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     fetchData();
   }, [resolvedParams.id, resolvedParams.setId, resolvedParams.exerciseId]);
 
-    const fetchData = async () => {
+  const fetchData = async () => {
     try {
       setFetchLoading(true);
       const [exerciseData, categoryData, setData] = await Promise.all([
@@ -106,9 +110,8 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       
       // Pre-fill form data with existing exercise data
       setFormData({
-        name: exerciseData.name || { ka: '', en: '', ru: '' },
-        description: exerciseData.description || { ka: '', en: '', ru: '' },
-        recommendations: exerciseData.recommendations || { ka: '', en: '', ru: '' },
+        name: exerciseData.name || { en: '', ru: '' },
+        description: exerciseData.description || { en: '', ru: '' },
         videoFile: null,
         thumbnailImage: null,
         videoDuration: exerciseData.videoDuration || '',
@@ -145,9 +148,8 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     const isValidObjectId = (id: string) => /^[a-f\d]{24}$/i.test(id);
 
     const errors = {
-      name: !formData.name.ka.trim(),
-      description: !formData.description.ka.trim(),
-      recommendations: !formData.recommendations.ka.trim(),
+      name: !formData.name.en.trim() || !formData.name.ru.trim(),
+      description: !formData.description.en.trim() || !formData.description.ru.trim(),
       videoDuration: !formData.videoDuration.trim(),
       duration: !formData.duration.trim(),
       repetitions: !formData.repetitions.trim(),
@@ -266,8 +268,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       // ტექსტური ველები
       formDataToSend.append('name', JSON.stringify(formData.name));
       formDataToSend.append('description', JSON.stringify(formData.description));
-      formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
-      formDataToSend.append('videoDuration', formData.videoDuration);
+        formDataToSend.append('videoDuration', formData.videoDuration);
       formDataToSend.append('duration', formData.duration);
       formDataToSend.append('difficulty', formData.difficulty);
       formDataToSend.append('repetitions', formData.repetitions);
@@ -345,18 +346,18 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {/* სავარჯიშოს სახელი */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* სახელი */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseNameKa')} *
+                <label htmlFor="name-en" className="block text-sm font-semibold text-gray-700 mb-2">
+                  {t('nameEn')} *
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.name.ka}
+                  value={formData.name.en}
                   onChange={(e) => {
-                    setFormData({ ...formData, name: { ...formData.name, ka: e.target.value } });
+                    setFormData({ ...formData, name: { ...formData.name, en: e.target.value } });
                     handleInputChange('name', e.target.value);
                   }}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
@@ -364,128 +365,90 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                   }`}
                   placeholder={t('enterExerciseName')}
                 />
+                {formErrors.name && (
+                  <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseNameEn')}
+                <label htmlFor="name-ru" className="block text-sm font-semibold text-gray-700 mb-2">
+                  {t('nameRu')} *
                 </label>
                 <input
                   type="text"
-                  value={formData.name.en}
-                  onChange={(e) => setFormData({ ...formData, name: { ...formData.name, en: e.target.value } })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={t('enterExerciseNameEn')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseNameRu')}
-                </label>
-                <input
-                  type="text"
+                  required
                   value={formData.name.ru}
-                  onChange={(e) => setFormData({ ...formData, name: { ...formData.name, ru: e.target.value } })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={t('enterExerciseNameRu')}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: { ...formData.name, ru: e.target.value } });
+                    handleInputChange('name', e.target.value);
+                  }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    formErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                  }`}
+                  placeholder={t('enterExerciseName')}
                 />
+                {formErrors.name && (
+                  <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
+                )}
               </div>
             </div>
 
             {/* აღწერა */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseDescriptionKa')} *
+                <label htmlFor="description-en" className="block text-sm font-semibold text-gray-700 mb-2">
+                  {t('descriptionEn')} *
                 </label>
                 <textarea
                   required
                   rows={4}
-                  value={formData.description.ka}
+                  value={formData.description.en}
                   onChange={(e) => {
-                    setFormData({ ...formData, description: { ...formData.description, ka: e.target.value } });
+                    setFormData({
+                      ...formData,
+                      description: {
+                        ...formData.description,
+                        en: e.target.value
+                      }
+                    });
                     handleInputChange('description', e.target.value);
                   }}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
                     formErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
-                  placeholder={t('enterExerciseDescriptionKa')}
+                  placeholder={t('writeExerciseDescription')}
                 />
+                {formErrors.description && (
+                  <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseDescriptionEn')}
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description.en}
-                  onChange={(e) => setFormData({ ...formData, description: { ...formData.description, en: e.target.value } })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder={t('enterExerciseDescriptionEn')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseDescriptionRu')}
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description.ru}
-                  onChange={(e) => setFormData({ ...formData, description: { ...formData.description, ru: e.target.value } })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder={t('enterExerciseDescriptionRu')}
-                />
-              </div>
-            </div>
-
-            {/* რეკომენდაციები */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseRecommendationsKa')} *
+                <label htmlFor="description-ru" className="block text-sm font-semibold text-gray-700 mb-2">
+                  {t('descriptionRu')} *
                 </label>
                 <textarea
                   required
-                  rows={3}
-                  value={formData.recommendations.ka}
+                  rows={4}
+                  value={formData.description.ru}
                   onChange={(e) => {
-                    setFormData({ ...formData, recommendations: { ...formData.recommendations, ka: e.target.value } });
-                    handleInputChange('recommendations', e.target.value);
+                    setFormData({
+                      ...formData,
+                      description: {
+                        ...formData.description,
+                        ru: e.target.value
+                      }
+                    });
+                    handleInputChange('description', e.target.value);
                   }}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
-                    formErrors.recommendations ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    formErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
-                  placeholder={t('enterExerciseRecommendationsKa')}
+                  placeholder={t('writeExerciseDescription')}
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseRecommendationsEn')}
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.recommendations.en}
-                  onChange={(e) => setFormData({ ...formData, recommendations: { ...formData.recommendations, en: e.target.value } })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder={t('enterExerciseRecommendationsEn')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {t('exerciseRecommendationsRu')}
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.recommendations.ru}
-                  onChange={(e) => setFormData({ ...formData, recommendations: { ...formData.recommendations, ru: e.target.value } })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder={t('enterExerciseRecommendationsRu')}
-                />
+                {formErrors.description && (
+                  <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>
+                )}
               </div>
             </div>
 

@@ -121,6 +121,8 @@ export const translations = {
     statuses: "სტატუსები",
     createSubcategory: "საბ კატეგორიის შექმნა",
     nameInGeorgianRequired: "სახელი (ქართული) *",
+    nameRu: "სახელი (რუსულად)",
+    descriptionRu: "აღწერა (რუსულად)",
     
     // Sets
     addSet: "სეტის დამატება",
@@ -224,13 +226,13 @@ export const translations = {
     enterExerciseNameEn: "მაგ: Bicep Curl",
     enterExerciseNameRu: "напр. Сгибание бицепса",
     exerciseDescriptionKa: "აღწერა (ქართული)",
-    exerciseDescriptionEn: "აღწერა (ინგლისური)",
+    exerciseDescriptionEn: "აღწერა (ინგლისურად)",
     exerciseDescriptionRu: "აღწერა (რუსული)",
     enterExerciseDescriptionKa: "სავარჯიშოს დეტალური აღწერა...",
     enterExerciseDescriptionEn: "Detailed exercise description...",
     enterExerciseDescriptionRu: "Подробное описание упражнения...",
     exerciseRecommendationsKa: "რეკომენდაციები (ქართული)",
-    exerciseRecommendationsEn: "რეკომენდაციები (ინგლისური)",
+    exerciseRecommendationsEn: "რეკომენდაციები (ინგლისურად)",
     exerciseRecommendationsRu: "რეკომენდაციები (რუსული)",
     enterExerciseRecommendationsKa: "უსაფრთხოების რეკომენდაციები და რჩევები...",
     enterExerciseRecommendationsEn: "Safety recommendations and tips...",
@@ -248,7 +250,11 @@ export const translations = {
     enterSortOrder: "0",
     enterRepetitions: "10-15",
     enterSets: "3",
-    enterRestTime: "60 წამი"
+    enterRestTime: "60 წამი",
+    recommendations: "რეკომენდაციები",
+    recommendationsInEnglish: "რეკომენდაციები (ინგლისურად)",
+    recommendationsInRussian: "რეკომენდაციები (რუსულად)",
+    enterRecommendations: "შეიყვანეთ რეკომენდაციები..."
   },
   
   en: {
@@ -497,7 +503,11 @@ export const translations = {
     enterSortOrder: "0",
     enterRepetitions: "10-15",
     enterSets: "3",
-    enterRestTime: "60 seconds"
+    enterRestTime: "60 seconds",
+    recommendations: "Recommendations",
+    recommendationsInEnglish: "Recommendations (English)",
+    recommendationsInRussian: "Recommendations (Russian)",
+    enterRecommendations: "Enter recommendations..."
   },
   
   ru: {
@@ -746,7 +756,11 @@ export const translations = {
     enterSortOrder: "0",
     enterRepetitions: "10-15",
     enterSets: "3",
-    enterRestTime: "60 секунд"
+    enterRestTime: "60 секунд",
+    recommendations: "Рекомендации",
+    recommendationsInEnglish: "Рекомендации (английский)",
+    recommendationsInRussian: "Рекомендации (русский)",
+    enterRecommendations: "Ввести рекомендации..."
   }
 };
 

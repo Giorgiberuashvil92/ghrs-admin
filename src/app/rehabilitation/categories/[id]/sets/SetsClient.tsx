@@ -30,7 +30,7 @@ interface SetsClientProps {
 }
 
 export default function SetsClient({ initialSets, category, subcategory }: SetsClientProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   
   // Build paths dynamically based on whether we have a subcategory
@@ -41,16 +41,17 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
   const addSetPath = `${basePath}/sets/add`;
   
   const title = subcategory 
-    ? `${category.name.ka} › ${subcategory.name.ka}`
-    : category.name.ka;
+    ? `${category.name[language]} › ${subcategory.name[language]}`
+    : category.name[language];
     
   const description = subcategory
     ? t('subcategorySetsList')
     : t('categorySetsList');
 
   const filteredSets = initialSets.filter(set =>
-    set.name.ka.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    set.description?.ka?.toLowerCase().includes(searchTerm.toLowerCase())
+    set.name[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
+    set.description?.[language]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    set.recommendations?.en?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -171,13 +172,13 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                 <div className="p-6">
                   {/* Title */}
                   <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    {set.name.ka}
+                    {set.name[language]}
                   </h3>
 
                   {/* Description */}
-                  {set.description?.ka && (
+                  {set.description?.[language] && (
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {set.description.ka}
+                      {set.description[language]}
                     </p>
                   )}
 
