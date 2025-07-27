@@ -41,7 +41,15 @@ export const NAV_DATA = [
         icon: Icons.Alphabet,
         items: [
           {
-            title: "Courses",
+            title: "კურსების მართვა",
+            url: "/admin/courses",
+          },
+          {
+            title: "ინსტრუქტორების მართვა",
+            url: "/admin/instructors",
+          },
+          {
+            title: "კურსები",
             url: "/pages/courses",
           },
         ],

@@ -11,6 +11,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@tinymce/tinymce-react": "^6.2.1",
     "@tiptap/extension-color": "^3.0.7",
     "@tiptap/extension-image": "^3.0.7",
