@@ -39,10 +39,29 @@ export default function CoursesPage() {
       const data = await response.json();
       console.log('Fetched courses:', data);
       
-      // Extract courses array from response
-      setCourses(data.courses.map((course: any) => ({
+      // Extract courses array from response and add missing fields with defaults
+      const coursesData = data.courses || [];
+      setCourses(coursesData.map((course: any) => ({
         ...course,
-        id: course._id // მოდი _id გადავაკეთოთ id-ად ფრონტენდზე
+        id: course._id, // Convert _id to id for frontend
+        // Add default values for missing fields
+        advertisementImage: course.advertisementImage || '',
+        rating: course.rating || { averageRating: 0, totalReviews: 0 },
+        reviews: course.reviews || [],
+        videoReviews: course.videoReviews || [],
+        relatedCourses: course.relatedCourses || [],
+        startDate: course.startDate || new Date().toISOString(),
+        endDate: course.endDate || '',
+        studentsCount: course.studentsCount || 0,
+        // Ensure required fields have proper structure
+        shortDescription: course.shortDescription || course.description || { en: '', ru: '' },
+        announcements: course.announcements || [],
+        additionalImages: course.additionalImages || [],
+        certificateImages: course.certificateImages || [],
+        learningOutcomes: course.learningOutcomes || [],
+        syllabus: course.syllabus || [],
+        languages: course.languages || ['en'],
+        tags: course.tags || []
       })));
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -95,8 +114,14 @@ export default function CoursesPage() {
   };
 
   const filteredCourses = courses?.filter(course => {
-    const matchesSearch = course.title[language as keyof typeof course.title]
-      ?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    // Safe title access with fallback
+    const title = course.title?.[language as keyof typeof course.title] || 
+                  course.title?.en || 
+                  course.title?.ru || 
+                  '';
+    
+    const matchesSearch = !searchTerm || 
+      title.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filter === 'all' || 
       (filter === 'published' && course.isPublished) ||

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CreateBlogData } from '@/types/blogs';
+import { CreateBlogData, BlogLocalizedString } from '@/types/blogs';
 import { createBlog } from '@/lib/api/blogs';
 import { getAllCategories, type Category } from '@/lib/api/categories';
 import { useLanguage } from '@/i18n/language-context';
@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { 
   ArrowLeftIcon, 
   BookOpenIcon,
-  LinkIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
 
@@ -26,22 +25,18 @@ export default function NewBlogPage() {
   
   const [formData, setFormData] = useState<CreateBlogData>({
     title: {
-      ka: '',
       en: '',
       ru: ''
     },
     description: {
-      ka: '',
       en: '',
       ru: ''
     },
     excerpt: {
-      ka: '',
       en: '',
       ru: ''
     },
     imageUrl: '',
-    link: '',
     categoryId: '',
     tags: [],
     isPublished: false,
@@ -76,21 +71,12 @@ export default function NewBlogPage() {
 
   const validateLocalizedFields = (data: CreateBlogData) => {
     // Check if required fields are present
-    if (!data.title.ka || !data.description.ka || !data.excerpt.ka) {
-      throw new Error('ქართული სათაური, აღწერა და მოკლე აღწერა სავალდებულოა');
+    if (!data.title.en || !data.description.en || !data.excerpt.en) {
+      throw new Error('English title, description and excerpt are required');
     }
 
-    // Check if English and Russian translations are provided
-    if (!data.title.en || !data.title.ru) {
-      throw new Error('სათაურის ინგლისური და რუსული თარგმანი სავალდებულოა');
-    }
-
-    if (!data.description.en || !data.description.ru) {
-      throw new Error('აღწერის ინგლისური და რუსული თარგმანი სავალდებულოა');
-    }
-
-    if (!data.excerpt.en || !data.excerpt.ru) {
-      throw new Error('მოკლე აღწერის ინგლისური და რუსული თარგმანი სავალდებულოა');
+    if (!data.title.ru || !data.description.ru || !data.excerpt.ru) {
+      throw new Error('Russian title, description and excerpt are required');
     }
   };
 
@@ -106,11 +92,6 @@ export default function NewBlogPage() {
         throw new Error('კატეგორიის არჩევა სავალდებულოა');
       }
 
-      // Validate link
-      if (!formData.link) {
-        throw new Error('კონტენტის ლინკი სავალდებულოა');
-      }
-
       setLoading(true);
 
       // If we have a data URL image, use FormData
@@ -121,7 +102,6 @@ export default function NewBlogPage() {
         formDataToSend.append('title', JSON.stringify(formData.title));
         formDataToSend.append('description', JSON.stringify(formData.description));
         formDataToSend.append('excerpt', JSON.stringify(formData.excerpt));
-        formDataToSend.append('link', formData.link);
         formDataToSend.append('categoryId', formData.categoryId);
         
         if (formData.tags && formData.tags.length > 0) {
@@ -145,7 +125,6 @@ export default function NewBlogPage() {
             title: formData.title,
             description: formData.description,
             excerpt: formData.excerpt,
-            link: formData.link,
             categoryId: formData.categoryId,
             imageUrl: formData.imageUrl || '',
             tags: formData.tags,
@@ -236,6 +215,7 @@ export default function NewBlogPage() {
                     onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
                     required
                     maxLength={200}
+                    languages={['en', 'ru']}
                   />
 
                   <MultilingualInput
@@ -246,6 +226,7 @@ export default function NewBlogPage() {
                     type="textarea"
                     maxLength={1000}
                     rows={6}
+                    languages={['en', 'ru']}
                   />
 
                   <MultilingualInput
@@ -256,6 +237,7 @@ export default function NewBlogPage() {
                     type="textarea"
                     maxLength={300}
                     rows={3}
+                    languages={['en', 'ru']}
                   />
                 </div>
               </div>
@@ -269,30 +251,6 @@ export default function NewBlogPage() {
                   maxSize={5}
                   required
                 />
-              </div>
-
-              {/* Content Link */}
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                  <LinkIcon className="h-5 w-5" />
-                  Content Link
-                </h2>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Link to Full Content *
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.link}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
-                    placeholder="https://example.com/full-article"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Link to the full article or blog post content
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -319,7 +277,10 @@ export default function NewBlogPage() {
                       <option value="">აირჩიეთ კატეგორია</option>
                       {categories.map(category => (
                         <option key={category._id} value={category._id}>
-                          {category.name.ka}
+                          {typeof category.name === 'object' 
+                            ? (category.name.ka || category.name.en || category.name.ru)
+                            : category.name
+                          }
                         </option>
                       ))}
                     </select>

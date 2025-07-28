@@ -96,7 +96,7 @@ export const getBlogById = async (id: string): Promise<Blog> => {
 // Create new blog
 export const createBlog = async (request: CreateBlogRequest): Promise<Blog> => {
   try {
-    const endpoint = request.isFormData ? "/blogs" : "/blogs/json";
+    const endpoint = "/blogs";
     const headers = request.isFormData
       ? undefined
       : {
@@ -130,13 +130,19 @@ export const updateBlog = async (
   request: CreateBlogRequest,
 ): Promise<Blog> => {
   try {
-    const endpoint = request.isFormData ? `/blogs/${id}` : `/blogs/${id}/json`;
+    const endpoint = `/blogs/${id}`;
     const headers = request.isFormData
       ? undefined
       : {
           "Content-Type": "application/json",
           Accept: "application/json",
         };
+
+    console.log(`Updating blog ${id} with:`, {
+      endpoint: `${API_BASE_URL}${endpoint}`,
+      isFormData: request.isFormData,
+      data: request.isFormData ? 'FormData object' : request.formData
+    });
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "PATCH",
@@ -147,11 +153,18 @@ export const updateBlog = async (
         : JSON.stringify(request.formData),
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return (await response.json()) as Blog;
+    const result = await response.json();
+    console.log('Update successful, result:', result);
+    return result as Blog;
   } catch (error) {
     console.error("Error updating blog:", error);
     throw error;

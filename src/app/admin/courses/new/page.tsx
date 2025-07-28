@@ -200,9 +200,17 @@ export default function NewCoursePage() {
       setLoading(true);
       
       const courseData = {
-        title: formData.title,
+        title: {
+          en: formData.title.en || '',
+          ru: formData.title.ru || formData.title.en || ''
+        },
         description: {
-          en: formData.description.en || ''
+          en: formData.description.en || '',
+          ru: formData.description.ru || formData.description.en || ''
+        },
+        shortDescription: {
+          en: formData.shortDescription.en || '',
+          ru: formData.shortDescription.ru || formData.shortDescription.en || ''
         },
         price: formData.price,
         thumbnail: formData.thumbnail,
@@ -210,23 +218,48 @@ export default function NewCoursePage() {
         instructor: {
           name: formData.instructor.name
         },
+        prerequisites: {
+          en: formData.prerequisites.en || '',
+          ru: formData.prerequisites.ru || formData.prerequisites.en || ''
+        },
+        certificateDescription: {
+          en: formData.certificateDescription.en || '',
+          ru: formData.certificateDescription.ru || formData.certificateDescription.en || ''
+        },
         languages: formData.languages,
         categoryId: formData.categoryId,
+        additionalImages: formData.additionalImages,
+        certificateImages: formData.certificateImages,
+        learningOutcomes: formData.learningOutcomes,
+        tags: formData.tags,
+        announcements: formData.announcements.map(announcement => ({
+          title: {
+            en: announcement.title.en || '',
+            ru: announcement.title.ru || announcement.title.en || ''
+          },
+          content: {
+            en: announcement.content.en || '',
+            ru: announcement.content.ru || announcement.content.en || ''
+          },
+          isActive: announcement.isActive
+        })),
+        syllabus: formData.syllabus.map(item => ({
+          title: { 
+            en: item.title.en || '',
+            ru: item.title.ru || item.title.en || ''
+          },
+          description: { 
+            en: item.description.en || '',
+            ru: item.description.ru || item.description.en || ''
+          },
+          duration: item.duration || 0
+        })),
         ...(formData.subcategoryId && { subcategoryId: formData.subcategoryId }),
         ...(formData.duration && { duration: formData.duration }),
         ...(formData.startDate && { startDate: formData.startDate }),
         ...(formData.endDate && { endDate: formData.endDate }),
         ...(formData.previewVideoUrl && { previewVideoUrl: formData.previewVideoUrl }),
-        ...(formData.additionalImages.length > 0 && { additionalImages: formData.additionalImages }),
-        ...(formData.advertisementImage && { advertisementImage: formData.advertisementImage }),
-        ...(formData.certificateImages?.length > 0 && { certificateImages: formData.certificateImages }),
-        ...(formData.syllabus.length > 0 && {
-          syllabus: formData.syllabus.map(item => ({
-            title: { en: item.title.en || '' },
-            description: { en: item.description.en || '' },
-            ...(item.duration && { duration: item.duration })
-          }))
-        })
+        ...(formData.advertisementImage && { advertisementImage: formData.advertisementImage })
       };
 
       console.log('Course data to create:', courseData);

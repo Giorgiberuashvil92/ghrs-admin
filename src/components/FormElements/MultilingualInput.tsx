@@ -1,22 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { LocalizedString } from '@/types/categories';
 import { Button } from '@/components/ui/button';
 import dynamic from 'next/dynamic';
 
 const RichTextEditor = dynamic(() => import('@/components/ui/rich-text-editor'), { ssr: false });
 
+// Flexible type that can work with both LocalizedString and BlogLocalizedString
+interface FlexibleLocalizedString {
+  ka?: string;
+  en: string;
+  ru: string;
+}
+
 interface MultilingualInputProps {
   label: string;
-  value: LocalizedString;
-  onChange: (value: LocalizedString) => void;
+  value: FlexibleLocalizedString;
+  onChange: (value: FlexibleLocalizedString) => void;
   type?: 'text' | 'textarea' | 'richtext';
   required?: boolean;
   maxLength?: number;
   rows?: number;
   placeholder?: string;
   className?: string;
+  // Optional prop to specify which languages to show (defaults to all available)
+  languages?: ('ka' | 'en' | 'ru')[];
 }
 
 export default function MultilingualInput({
@@ -28,15 +36,33 @@ export default function MultilingualInput({
   maxLength,
   rows = 3,
   placeholder,
-  className = ''
+  className = '',
+  languages
 }: MultilingualInputProps) {
-  const [activeTab, setActiveTab] = useState<'en' | 'ru'>('en');
+  // Determine available languages based on the value structure and languages prop
+  const availableLanguages = languages || (value && typeof value === 'object' ? Object.keys(value).filter(key => 
+    ['ka', 'en', 'ru'].includes(key)
+  ) : ['en', 'ru']) as ('ka' | 'en' | 'ru')[];
+  
+  const [activeTab, setActiveTab] = useState<'ka' | 'en' | 'ru'>(
+    availableLanguages.includes('en') ? 'en' : availableLanguages[0]
+  );
 
-  const handleChange = (lang: 'en' | 'ru', newValue: string) => {
+  const handleChange = (lang: 'ka' | 'en' | 'ru', newValue: string) => {
+    const currentValue = value || { en: '', ru: '' };
     onChange({
-      ...value,
+      ...currentValue,
       [lang]: newValue
     });
+  };
+
+  const getLanguageLabel = (lang: 'ka' | 'en' | 'ru') => {
+    switch (lang) {
+      case 'ka': return 'ქართული';
+      case 'en': return 'English';
+      case 'ru': return 'Русский';
+      default: return lang;
+    }
   };
 
   return (
@@ -48,34 +74,29 @@ export default function MultilingualInput({
 
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Button
-            type="button"
-            variant={activeTab === 'en' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('en')}
-            size="sm"
-          >
-            English
-          </Button>
-          <Button
-            type="button"
-            variant={activeTab === 'ru' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('ru')}
-            size="sm"
-          >
-            Русский
-          </Button>
+          {availableLanguages.map(lang => (
+            <Button
+              key={lang}
+              type="button"
+              variant={activeTab === lang ? 'default' : 'outline'}
+              onClick={() => setActiveTab(lang)}
+              size="sm"
+            >
+              {getLanguageLabel(lang)}
+            </Button>
+          ))}
         </div>
 
         <div>
           {type === 'richtext' ? (
             <RichTextEditor
-              value={value[activeTab]}
+              value={(value && value[activeTab]) || ''}
               onChange={(newValue) => handleChange(activeTab, newValue)}
               placeholder={placeholder}
             />
           ) : type === 'textarea' ? (
             <textarea
-              value={value[activeTab]}
+              value={(value && value[activeTab]) || ''}
               onChange={(e) => handleChange(activeTab, e.target.value)}
               rows={rows}
               maxLength={maxLength}
@@ -85,7 +106,7 @@ export default function MultilingualInput({
           ) : (
             <input
               type="text"
-              value={value[activeTab]}
+              value={(value && value[activeTab]) || ''}
               onChange={(e) => handleChange(activeTab, e.target.value)}
               maxLength={maxLength}
               placeholder={placeholder}

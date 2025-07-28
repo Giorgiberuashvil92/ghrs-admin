@@ -1,13 +1,18 @@
 import { LocalizedString } from "./categories";
 
+// Updated LocalizedString for blogs (only English and Russian)
+export interface BlogLocalizedString {
+  en: string;
+  ru: string;
+}
+
 // Blog interface for main entity
 export interface Blog {
   _id: string;
-  title: LocalizedString;
-  description: LocalizedString;
-  excerpt: LocalizedString;
+  title: BlogLocalizedString;
+  description: BlogLocalizedString;
+  excerpt: BlogLocalizedString;
   imageUrl: string; // Single image URL
-  link: string; // URL to full content/article (renamed from contentLink)
   categoryId: string;
   tags: string[];
   isPublished: boolean;
@@ -21,11 +26,10 @@ export interface Blog {
 
 // Create Blog Data for API
 export interface CreateBlogData {
-  title: LocalizedString;
-  description: LocalizedString;
-  excerpt: LocalizedString;
+  title: BlogLocalizedString;
+  description: BlogLocalizedString;
+  excerpt: BlogLocalizedString;
   imageUrl?: string;
-  link: string; // renamed from contentLink
   categoryId: string;
   tags?: string[];
   isPublished?: boolean;
@@ -35,11 +39,10 @@ export interface CreateBlogData {
 
 // Update Blog Data for API
 export interface UpdateBlogData {
-  title?: LocalizedString;
-  description?: LocalizedString;
-  excerpt?: LocalizedString;
+  title?: BlogLocalizedString;
+  description?: BlogLocalizedString;
+  excerpt?: BlogLocalizedString;
   imageUrl?: string;
-  link?: string; // renamed from contentLink
   categoryId?: string;
   tags?: string[];
   isPublished?: boolean;

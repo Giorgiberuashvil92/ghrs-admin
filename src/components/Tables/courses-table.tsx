@@ -48,6 +48,17 @@ export default function CoursesTable({
     return rating.averageRating.toFixed(1);
   };
 
+  const truncateText = (text: string, maxLength: number = 50) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const stripHtml = (html: string) => {
+    if (!html) return '';
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  };
+
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -159,13 +170,16 @@ export default function CoursesTable({
                       }}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium text-gray-900 truncate">
-                        {course.title[language as keyof typeof course.title] || course.title.en}
+                      <div className="font-medium text-gray-900" title={course.title[language as keyof typeof course.title] || course.title.en}>
+                        {truncateText(course.title[language as keyof typeof course.title] || course.title.en, 40)}
                       </div>
-                      <div className="text-sm text-gray-500 truncate">
-                        {course.shortDescription?.[language as keyof typeof course.shortDescription] || 
-                         course.shortDescription?.en || 
-                         'აღწერა არ არის მითითებული'}
+                      <div className="text-sm text-gray-500" title={stripHtml(course.shortDescription?.[language as keyof typeof course.shortDescription] || course.shortDescription?.en || '')}>
+                        {truncateText(
+                          stripHtml(course.shortDescription?.[language as keyof typeof course.shortDescription] || 
+                                   course.shortDescription?.en || 
+                                   'აღწერა არ არის მითითებული'), 
+                          60
+                        )}
                       </div>
                     </div>
                   </div>
@@ -297,11 +311,19 @@ export default function CoursesTable({
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 truncate">
-                        {course.title[language as keyof typeof course.title] || course.title.en}
+                      <h4 className="font-medium text-gray-900" title={course.title[language as keyof typeof course.title] || course.title.en}>
+                        {truncateText(course.title[language as keyof typeof course.title] || course.title.en, 35)}
                       </h4>
                       <p className="text-sm text-gray-500 truncate">
                         {course.instructor.name}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1" title={stripHtml(course.shortDescription?.[language as keyof typeof course.shortDescription] || course.shortDescription?.en || '')}>
+                        {truncateText(
+                          stripHtml(course.shortDescription?.[language as keyof typeof course.shortDescription] || 
+                                   course.shortDescription?.en || 
+                                   'აღწერა არ არის მითითებული'), 
+                          45
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 ml-2">
@@ -398,9 +420,11 @@ export default function CoursesTable({
                   <h4 className="font-semibold text-gray-900 mb-2">
                     {selectedCourse.title[language as keyof typeof selectedCourse.title] || selectedCourse.title.en}
                   </h4>
-                  <p className="text-gray-600">
-                    {selectedCourse.description[language as keyof typeof selectedCourse.description] || selectedCourse.description.en}
-                  </p>
+                  <div className="text-gray-600 prose prose-sm max-w-none" 
+                       dangerouslySetInnerHTML={{
+                         __html: selectedCourse.description[language as keyof typeof selectedCourse.description] || selectedCourse.description.en
+                       }}>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">

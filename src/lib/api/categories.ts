@@ -32,6 +32,7 @@ export interface Category {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  parentId?: string;
 }
 
 interface CreateCategoryData {

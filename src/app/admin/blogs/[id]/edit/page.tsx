@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Blog, UpdateBlogData } from '@/types/blogs';
+import { Blog, UpdateBlogData, BlogLocalizedString } from '@/types/blogs';
 import { getBlogById, updateBlog } from '@/lib/api/blogs';
+import { getAllCategories, type Category } from '@/lib/api/categories';
 import { useLanguage } from '@/i18n/language-context';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
 import ImageUpload from '@/components/FormElements/ImageUpload';
@@ -12,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { 
   ArrowLeftIcon, 
   BookOpenIcon,
-  LinkIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
 
@@ -29,13 +29,14 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [blog, setBlog] = useState<Blog | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryError, setCategoryError] = useState<string>('');
   
   const [formData, setFormData] = useState<UpdateBlogData>({
-    title: { ka: '', en: '', ru: '' },
-    description: { ka: '', en: '', ru: '' },
-    excerpt: { ka: '', en: '', ru: '' },
+    title: { en: '', ru: '' },
+    description: { en: '', ru: '' },
+    excerpt: { en: '', ru: '' },
     imageUrl: '',
-    link: '',
     categoryId: '',
     tags: [],
     isPublished: false,
@@ -47,7 +48,26 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
 
   useEffect(() => {
     fetchBlog();
+    fetchCategories();
   }, [resolvedParams.id]);
+
+  const fetchCategories = async () => {
+    try {
+      console.log('Fetching categories...');
+      const categoriesData = await getAllCategories();
+      console.log('Categories API raw response:', categoriesData);
+      if (!Array.isArray(categoriesData)) {
+        console.error('Categories data is not an array:', categoriesData);
+        setCategoryError('Invalid data format');
+        return;
+      }
+      setCategories(categoriesData || []);
+      setCategoryError('');
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategoryError('Failed to load categories. Please refresh the page.');
+    }
+  };
 
   const fetchBlog = async () => {
     try {
@@ -55,22 +75,41 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
       const blogData = await getBlogById(resolvedParams.id);
       setBlog(blogData);
       
+      console.log('Fetched blog data:', blogData);
+      
+      // Clean up the data by removing _id fields from localized strings
+      const cleanLocalizedString = (obj: any) => {
+        if (obj && typeof obj === 'object') {
+          const cleaned: any = {};
+          if (obj.en) cleaned.en = obj.en;
+          if (obj.ru) cleaned.ru = obj.ru;
+          if (obj.ka) cleaned.ka = obj.ka;
+          return cleaned;
+        }
+        return obj;
+      };
+      
       // Populate form with existing data
       setFormData({
-        title: blogData.title,
-        description: blogData.description,
-        excerpt: blogData.excerpt,
+        title: cleanLocalizedString(blogData.title),
+        description: cleanLocalizedString(blogData.description),
+        excerpt: cleanLocalizedString(blogData.excerpt),
         imageUrl: blogData.imageUrl,
-        link: blogData.link,
         categoryId: blogData.categoryId,
         tags: blogData.tags,
         isPublished: blogData.isPublished,
         isFeatured: blogData.isFeatured,
         sortOrder: blogData.sortOrder
       });
+      
+      console.log('Cleaned form data:', {
+        title: cleanLocalizedString(blogData.title),
+        description: cleanLocalizedString(blogData.description),
+        excerpt: cleanLocalizedString(blogData.excerpt)
+      });
     } catch (error) {
       console.error('Error fetching blog:', error);
-      alert('შეცდომა ბლოგის ჩატვირთვისას');
+      alert('Error loading blog data');
       router.push('/admin/blogs');
     } finally {
       setPageLoading(false);
@@ -80,33 +119,48 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title?.ka || !formData.excerpt?.ka || !formData.description?.ka) {
-      alert('ქართული სათაური, მოკლე აღწერა და აღწერა სავალდებულოა');
+    if (!formData.title?.en || !formData.excerpt?.en || !formData.description?.en) {
+      alert('English title, excerpt and description are required');
       return;
     }
 
-    if (!formData.link) {
-      alert('კონტენტის ლინკი სავალდებულოა');
+    if (!formData.title?.ru || !formData.excerpt?.ru || !formData.description?.ru) {
+      alert('Russian title, excerpt and description are required');
       return;
     }
 
     if (!formData.categoryId) {
-      alert('კატეგორიის არჩევა სავალდებულოა');
+      alert('Category selection is required');
       return;
     }
 
     setLoading(true);
 
     try {
+      console.log('Submitting blog update with data:', formData);
+      
       // If we have a data URL image, use FormData
       if (formData.imageUrl?.startsWith('data:')) {
         const formDataToSend = new FormData();
         
+        // Ensure proper JSON serialization for multilingual fields
+        const titleData = {
+          en: formData.title?.en || '',
+          ru: formData.title?.ru || ''
+        };
+        const descriptionData = {
+          en: formData.description?.en || '',
+          ru: formData.description?.ru || ''
+        };
+        const excerptData = {
+          en: formData.excerpt?.en || '',
+          ru: formData.excerpt?.ru || ''
+        };
+        
         // JSON fields
-        formDataToSend.append('title', JSON.stringify(formData.title));
-        formDataToSend.append('description', JSON.stringify(formData.description));
-        formDataToSend.append('excerpt', JSON.stringify(formData.excerpt));
-        formDataToSend.append('link', formData.link);
+        formDataToSend.append('title', JSON.stringify(titleData));
+        formDataToSend.append('description', JSON.stringify(descriptionData));
+        formDataToSend.append('excerpt', JSON.stringify(excerptData));
         formDataToSend.append('categoryId', formData.categoryId!);
         
         if (formData.tags && formData.tags.length > 0) {
@@ -122,31 +176,61 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
         const blob = await response.blob();
         formDataToSend.append('image', blob, 'featured-image.jpg');
 
+        console.log('Sending FormData request');
+        console.log('Title data:', titleData);
+        console.log('Description data:', descriptionData);
+        console.log('Excerpt data:', excerptData);
+        
         await updateBlog(resolvedParams.id, { formData: formDataToSend, isFormData: true });
       } else {
-        // For JSON data (including image URLs), use /blogs/json endpoint
+        // For JSON data (including image URLs)
+        const jsonData = {
+          title: {
+            en: formData.title?.en || '',
+            ru: formData.title?.ru || ''
+          },
+          description: {
+            en: formData.description?.en || '',
+            ru: formData.description?.ru || ''
+          },
+          excerpt: {
+            en: formData.excerpt?.en || '',
+            ru: formData.excerpt?.ru || ''
+          },
+          categoryId: formData.categoryId!,
+          imageUrl: formData.imageUrl || '',
+          tags: formData.tags || [],
+          isPublished: formData.isPublished || false,
+          isFeatured: formData.isFeatured || false,
+          sortOrder: formData.sortOrder || 0
+        };
+        
+        console.log('Sending JSON request with data:', jsonData);
+        console.log('JSON stringified:', JSON.stringify(jsonData, null, 2));
+        console.log('Data types check:', {
+          title: typeof jsonData.title,
+          titleEn: typeof jsonData.title.en,
+          titleRu: typeof jsonData.title.ru,
+          description: typeof jsonData.description,
+          excerpt: typeof jsonData.excerpt,
+          categoryId: typeof jsonData.categoryId,
+          tags: Array.isArray(jsonData.tags),
+          isPublished: typeof jsonData.isPublished,
+          isFeatured: typeof jsonData.isFeatured,
+          sortOrder: typeof jsonData.sortOrder
+        });
+        
         await updateBlog(resolvedParams.id, { 
-          formData: {
-            title: formData.title!,
-            description: formData.description!,
-            excerpt: formData.excerpt!,
-            link: formData.link!,
-            categoryId: formData.categoryId!,
-            imageUrl: formData.imageUrl || '',
-            tags: formData.tags,
-            isPublished: formData.isPublished,
-            isFeatured: formData.isFeatured,
-            sortOrder: formData.sortOrder
-          }, 
+          formData: jsonData, 
           isFormData: false 
         });
       }
 
-      alert('ბლოგი წარმატებით განახლდა');
+      alert('Blog updated successfully');
       router.push('/admin/blogs');
     } catch (error) {
       console.error('Error updating blog:', error);
-      alert('შეცდომა ბლოგის განახლებისას');
+      alert('Error updating blog');
     } finally {
       setLoading(false);
     }
@@ -233,30 +317,33 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
                 <div className="space-y-6">
                   <MultilingualInput
                     label="Title"
-                    value={formData.title || { ka: '', en: '', ru: '' }}
+                    value={formData.title || { en: '', ru: '' }}
                     onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
                     required
                     maxLength={200}
+                    languages={['en', 'ru']}
                   />
 
                   <MultilingualInput
                     label="Description"
-                    value={formData.description || { ka: '', en: '', ru: '' }}
+                    value={formData.description || { en: '', ru: '' }}
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
                     required
                     type="textarea"
                     maxLength={1000}
                     rows={6}
+                    languages={['en', 'ru']}
                   />
 
                   <MultilingualInput
                     label="Excerpt"
-                    value={formData.excerpt || { ka: '', en: '', ru: '' }}
+                    value={formData.excerpt || { en: '', ru: '' }}
                     onChange={(value) => setFormData(prev => ({ ...prev, excerpt: value }))}
                     required
                     type="textarea"
                     maxLength={300}
                     rows={3}
+                    languages={['en', 'ru']}
                   />
                 </div>
               </div>
@@ -270,30 +357,6 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
                   maxSize={5}
                   required
                 />
-              </div>
-
-              {/* Content Link */}
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                  <LinkIcon className="h-5 w-5" />
-                  Content Link
-                </h2>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Link to Full Content *
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.link || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
-                    placeholder="https://example.com/full-article"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Link to the full article or blog post content
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -316,10 +379,22 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Select Category</option>
-                      <option value="ortho">Orthopedics</option>
-                      <option value="neuro">Neurology</option>
-                      <option value="cardio">Cardiology</option>
+                      {categories
+                        .filter(category => !category?.parentId)
+                        .map(category => (
+                          <option key={category._id} value={category._id}>
+                            {typeof category.name === 'object' 
+                              ? (category.name.ka || category.name.en || category.name.ru)
+                              : category.name
+                            }
+                          </option>
+                        ))}
                     </select>
+                    {categoryError && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {categoryError}
+                      </p>
+                    )}
                   </div>
 
                   {/* Sort Order */}
