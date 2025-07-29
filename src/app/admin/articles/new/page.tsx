@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { CreateArticleData } from '@/types/articles';
 import { getBlogs } from '@/lib/api/blogs';
 import { getAllCategories } from '@/lib/api/categories';
+import { createArticle } from '@/lib/api/articles';
 import { useLanguage } from '@/i18n/language-context';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
 import ImageUpload from '@/components/FormElements/ImageUpload';
@@ -43,7 +44,7 @@ export default function NewArticlePage() {
       ru: ''
     },
     blogId: '',
-    categoryId: '',
+    categoryIds: [], // Change from categoryId to categoryIds array
     readTime: '',
     authorName: '',
     authorBio: '',
@@ -69,8 +70,17 @@ export default function NewArticlePage() {
 
     const fetchCategories = async () => {
       try {
+        console.log('Fetching categories...');
         const categoriesData = await getAllCategories();
-        setCategories(categoriesData || []);
+        console.log('Categories API raw response:', categoriesData);
+        if (!Array.isArray(categoriesData)) {
+          console.error('Categories data is not an array:', categoriesData);
+          return;
+        }
+        // Filter out subcategories (categories that have parentId)
+        const mainCategories = categoriesData.filter(category => !category.parentId);
+        console.log('Main categories:', mainCategories);
+        setCategories(mainCategories || []);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -90,8 +100,8 @@ export default function NewArticlePage() {
       return;
     }
 
-    if (!formData.categoryId) {
-      alert('კატეგორიის არჩევა სავალდებულოა');
+    if (!formData.categoryIds.length) {
+      alert('მინიმუმ ერთი კატეგორიის არჩევა სავალდებულოა');
       return;
     }
 
@@ -113,11 +123,12 @@ export default function NewArticlePage() {
 
       // Add all images to FormData
       if (formData.featuredImages && formData.featuredImages.length > 0) {
-        for (const [index, imageUrl] of formData.featuredImages.entries()) {
+        for (const imageUrl of formData.featuredImages) {
           if (imageUrl.startsWith('data:')) {
             // Convert base64 to blob and append
-            const blob = await fetch(imageUrl).then(r => r.blob());
-            formDataToSend.append('images', blob, `image-${index}.jpg`);
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            formDataToSend.append('images', blob, 'featured-image.jpg');
           }
         }
       }
@@ -128,7 +139,7 @@ export default function NewArticlePage() {
         excerpt: formData.excerpt,
         content: formData.content,
         blogId: formData.blogId,
-        categoryId: formData.categoryId,
+        categoryIds: formData.categoryIds,
         readTime: formData.readTime,
         author: {
           name: formData.authorName,
@@ -143,16 +154,16 @@ export default function NewArticlePage() {
 
       // Add stringified JSON data to FormData
       Object.entries(articleData).forEach(([key, value]) => {
-        // Don't stringify IDs and primitive values
-        if (key === 'blogId' || key === 'categoryId' || typeof value === 'boolean' || typeof value === 'number') {
-          formDataToSend.append(key, value as string);
+        if (key === 'blogId' || typeof value === 'boolean' || typeof value === 'number') {
+          formDataToSend.append(key, String(value));
         } else {
           formDataToSend.append(key, JSON.stringify(value));
         }
       });
 
       // Create article
-      // const article = await createArticle(formDataToSend);
+      const article = await createArticle(formDataToSend);
+      console.log('Created article:', article);
 
       alert('სტატია წარმატებით დაემატა');
       router.push('/admin/articles');
@@ -305,24 +316,44 @@ export default function NewArticlePage() {
                     </select>
                   </div>
 
-                  {/* Category */}
+                  {/* Categories */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category *
+                      Categories *
                     </label>
-                    <select
-                      value={formData.categoryId}
-                      onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Category</option>
+                    <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-300 rounded-lg p-3">
                       {categories.map(category => (
-                        <option key={category._id} value={category._id}>
-                          {category.name[language]}
-                        </option>
+                        <label key={category._id} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.categoryIds.includes(category._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  categoryIds: [...prev.categoryIds, category._id]
+                                }));
+                              } else {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  categoryIds: prev.categoryIds.filter(id => id !== category._id)
+                                }));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-900">{category.name[language]}</span>
+                        </label>
                       ))}
-                    </select>
+                    </div>
+                    {formData.categoryIds.length === 0 && (
+                      <p className="mt-1 text-sm text-red-500">
+                        გთხოვთ აირჩიოთ მინიმუმ ერთი კატეგორია
+                      </p>
+                    )}
+                    <p className="mt-1 text-sm text-gray-500">
+                      არჩეული კატეგორიები: {formData.categoryIds.length}
+                    </p>
                   </div>
 
                   {/* Read Time */}

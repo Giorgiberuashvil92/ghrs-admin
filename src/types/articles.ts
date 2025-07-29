@@ -7,7 +7,7 @@ export interface Article {
   excerpt: LocalizedString;
   content: LocalizedString;
   featuredImages: string[]; // Array of image URLs
-  categoryId: string;
+  categoryIds: string[]; // Array of category IDs
   blogId: string; // Reference to parent blog
   readTime: string; // e.g., "5 minutes"
   authorName: string;
@@ -35,7 +35,7 @@ export interface CreateArticleData {
   excerpt: LocalizedString;
   content: LocalizedString;
   featuredImages?: string[];
-  categoryId: string;
+  categoryIds: string[]; // Array of category IDs
   blogId: string; // Reference to parent blog
   readTime: string;
   authorName: string;
@@ -54,7 +54,7 @@ export interface UpdateArticleData {
   excerpt?: LocalizedString;
   content?: LocalizedString;
   featuredImages?: string[];
-  categoryId?: string;
+  categoryIds?: string[]; // Array of category IDs
   blogId?: string; // Reference to parent blog
   readTime?: string;
   authorName?: string;
