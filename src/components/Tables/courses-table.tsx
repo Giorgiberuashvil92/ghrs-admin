@@ -18,6 +18,70 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
+// Translation object for courses table
+const translations = {
+  en: {
+    confirmDelete: 'Are you sure you want to delete the course',
+    title: 'Title',
+    instructor: 'Instructor',
+    price: 'Price',
+    duration: 'Duration',
+    students: 'Students',
+    rating: 'Rating',
+    status: 'Status',
+    actions: 'Actions',
+    published: 'Published',
+    draft: 'Draft',
+    publish: 'Publish',
+    unpublish: 'Unpublish',
+    edit: 'Edit',
+    delete: 'Delete',
+    view: 'View',
+    noCourses: 'No courses found',
+    createFirst: 'Create your first course to get started',
+    minutes: 'min',
+    hours: 'hours',
+    free: 'Free',
+    dates: 'Dates',
+    coursesList: 'Courses List',
+    noDescription: 'No description provided',
+    until: 'until',
+    courseReview: 'Course Review',
+    learningOutcomes: 'Learning Outcomes',
+    close: 'Close'
+  },
+  ru: {
+    confirmDelete: 'Вы уверены, что хотите удалить курс',
+    title: 'Название',
+    instructor: 'Инструктор',
+    price: 'Цена',
+    duration: 'Продолжительность',
+    students: 'Студенты',
+    rating: 'Рейтинг',
+    status: 'Статус',
+    actions: 'Действия',
+    published: 'Опубликован',
+    draft: 'Черновик',
+    publish: 'Опубликовать',
+    unpublish: 'Снять с публикации',
+    edit: 'Редактировать',
+    delete: 'Удалить',
+    view: 'Просмотр',
+    noCourses: 'Курсы не найдены',
+    createFirst: 'Создайте свой первый курс для начала работы',
+    minutes: 'мин',
+    hours: 'часов',
+    free: 'Бесплатно',
+    dates: 'Даты',
+    coursesList: 'Список курсов',
+    noDescription: 'Описание не предоставлено',
+    until: 'до',
+    courseReview: 'Обзор курса',
+    learningOutcomes: 'Результаты обучения',
+    close: 'Закрыть'
+  }
+};
+
 interface CoursesTableProps {
   courses: Course[];
   loading?: boolean;
@@ -34,8 +98,13 @@ export default function CoursesTable({
   const { language } = useLanguage();
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
+  // Get current language translations
+  const currentLang = language === 'ru' ? 'ru' : 'en';
+  const tr = translations[currentLang];
+
   const handleDelete = (course: Course) => {
-    if (!confirm(`დარწმუნებული ხართ რომ გინდათ "${course.title[language as keyof typeof course.title] || course.title.en}" კურსის წაშლა?`)) return;
+    const courseTitle = course.title[language as keyof typeof course.title] || course.title.en;
+    if (!confirm(`${tr.confirmDelete} "${courseTitle}"?`)) return;
     onDelete?.(course.id);
   };
 
@@ -63,9 +132,9 @@ export default function CoursesTable({
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hours > 0) {
-      return `${hours}სთ ${mins}წთ`;
+      return `${hours}${tr.hours} ${mins}${tr.minutes}`;
     }
-    return `${mins}წთ`;
+    return `${mins}${tr.minutes}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -94,12 +163,12 @@ export default function CoursesTable({
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="text-center py-12">
           <AcademicCapIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg mb-2">კურსები არ მოიძებნა</p>
-          <p className="text-gray-400 mb-6">შექმენით თქვენი პირველი კურსი</p>
+          <p className="text-gray-500 text-lg mb-2">{tr.noCourses}</p>
+          <p className="text-gray-400 mb-6">{tr.createFirst}</p>
           <Link href="/admin/courses/new">
             <Button>
               <AcademicCapIcon className="h-4 w-4 mr-2" />
-              პირველი კურსის შექმნა
+              {tr.createFirst}
             </Button>
           </Link>
         </div>
@@ -113,16 +182,16 @@ export default function CoursesTable({
       <div className="px-6 py-4 border-b bg-gray-50">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900">
-            კურსების სია ({courses.length})
+            {tr.coursesList} ({courses.length})
           </h3>
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <span className="flex items-center gap-1">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              გამოქვეყნებული: {courses.filter(c => c.isPublished).length}
+              {tr.published}: {courses.filter(c => c.isPublished).length}
             </span>
             <span className="flex items-center gap-1">
               <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              მუშაობის რეჟიმში: {courses.filter(c => !c.isPublished).length}
+              {tr.draft}: {courses.filter(c => !c.isPublished).length}
             </span>
           </div>
         </div>
@@ -134,25 +203,25 @@ export default function CoursesTable({
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                კურსი
+                {tr.title}
               </th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ინსტრუქტორი
+                {tr.instructor}
               </th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ფასი/ხანგრძლივობა
+                {tr.price}/{tr.duration}
               </th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                სტატუსი
+                {tr.status}
               </th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                სტუდენტები/რეიტინგი
+                {tr.students}/{tr.rating}
               </th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                თარიღები
+                {tr.dates}
               </th>
               <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                მოქმედებები
+                {tr.actions}
               </th>
             </tr>
           </thead>
@@ -177,7 +246,7 @@ export default function CoursesTable({
                         {truncateText(
                           stripHtml(course.shortDescription?.[language as keyof typeof course.shortDescription] || 
                                    course.shortDescription?.en || 
-                                   'აღწერა არ არის მითითებული'), 
+                                   tr.noDescription), 
                           60
                         )}
                       </div>
@@ -224,7 +293,7 @@ export default function CoursesTable({
                         : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                     }`}
                   >
-                    {course.isPublished ? 'გამოქვეყნებული' : 'მუშაობის რეჟიმში'}
+                    {course.isPublished ? tr.published : tr.draft}
                   </button>
                 </td>
                 <td className="px-6 py-4">
@@ -258,7 +327,7 @@ export default function CoursesTable({
                     </div>
                     {course.endDate && (
                       <div className="text-xs text-gray-400">
-                        {formatDate(course.endDate)}-მდე
+                        {tr.until} {formatDate(course.endDate)}
                       </div>
                     )}
                   </div>
@@ -268,21 +337,21 @@ export default function CoursesTable({
                     <button
                       onClick={() => setSelectedCourse(course)}
                       className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
-                      title="ნახვა"
+                      title={tr.view}
                     >
                       <EyeIcon className="h-4 w-4" />
                     </button>
                     <Link
                       href={`/admin/courses/${course.id}/edit`}
                       className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
-                      title="რედაქტირება"
+                      title={tr.edit}
                     >
                       <PencilIcon className="h-4 w-4" />
                     </Link>
                     <button
                       onClick={() => handleDelete(course)}
                       className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
-                      title="წაშლა"
+                      title={tr.delete}
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -321,7 +390,7 @@ export default function CoursesTable({
                         {truncateText(
                           stripHtml(course.shortDescription?.[language as keyof typeof course.shortDescription] || 
                                    course.shortDescription?.en || 
-                                   'აღწერა არ არის მითითებული'), 
+                                   tr.noDescription), 
                           45
                         )}
                       </p>
@@ -366,7 +435,7 @@ export default function CoursesTable({
                           : 'bg-yellow-100 text-yellow-800'
                       }`}
                     >
-                      {course.isPublished ? 'გამოქვეყნებული' : 'მუშაობის რეჟიმში'}
+                      {course.isPublished ? tr.published : tr.draft}
                     </button>
                     
                     <div className="flex items-center">
@@ -399,7 +468,7 @@ export default function CoursesTable({
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  კურსის გადახედვა
+                  {tr.courseReview}
                 </h3>
                 <button
                   onClick={() => setSelectedCourse(null)}
@@ -429,26 +498,26 @@ export default function CoursesTable({
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">ინსტრუქტორი:</span>
+                    <span className="font-medium">{tr.instructor}:</span>
                     <p>{selectedCourse.instructor.name}</p>
                   </div>
                   <div>
-                    <span className="font-medium">ფასი:</span>
+                    <span className="font-medium">{tr.price}:</span>
                     <p>₾{selectedCourse.price}</p>
                   </div>
                   <div>
-                    <span className="font-medium">ხანგრძლივობა:</span>
+                    <span className="font-medium">{tr.duration}:</span>
                     <p>{formatDuration(selectedCourse.duration)}</p>
                   </div>
                   <div>
-                    <span className="font-medium">სტუდენტები:</span>
+                    <span className="font-medium">{tr.students}:</span>
                     <p>{selectedCourse.studentsCount || 0}</p>
                   </div>
                 </div>
                 
                 {selectedCourse.learningOutcomes.length > 0 && (
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">სწავლის შედეგები:</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">{tr.learningOutcomes}:</h5>
                     <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
                       {selectedCourse.learningOutcomes.map((outcome, index) => (
                         <li key={index}>
@@ -466,7 +535,7 @@ export default function CoursesTable({
                   className="flex-1"
                 >
                   <Button className="w-full">
-                    რედაქტირება
+                    {tr.edit}
                   </Button>
                 </Link>
                 <Button 
@@ -474,7 +543,7 @@ export default function CoursesTable({
                   onClick={() => setSelectedCourse(null)}
                   className="flex-1"
                 >
-                  დახურვა
+                  {tr.close}
                 </Button>
               </div>
             </div>

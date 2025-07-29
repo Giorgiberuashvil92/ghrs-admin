@@ -55,24 +55,38 @@ export async function updateSet(
     const url = constructApiUrl(`sets/${setId}`);
     console.log("📤 Updating set:", setId);
 
+    // Log the exact data being sent
+    const jsonData = JSON.stringify(data);
+    console.log("Request data:", jsonData);
+
     const response = await fetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json"
       },
-      body: JSON.stringify(data),
+      body: jsonData,
       credentials: "include",
     });
 
+    // Log the raw response
+    const responseText = await response.text();
+    console.log("Raw response:", responseText);
+
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch {
+        errorData = { message: responseText };
+      }
       console.error("Server error response:", errorData);
       throw new Error(
         errorData.message || `HTTP error! status: ${response.status}`,
       );
     }
 
-    const result = await response.json();
+    const result = JSON.parse(responseText);
     console.log("✅ Set updated");
     return result;
   } catch (error) {

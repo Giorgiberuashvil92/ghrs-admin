@@ -96,28 +96,40 @@ export const getBlogById = async (id: string): Promise<Blog> => {
 // Create new blog
 export const createBlog = async (request: CreateBlogRequest): Promise<Blog> => {
   try {
-    const endpoint = "/blogs";
-    const headers = request.isFormData
-      ? undefined
-      : {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        };
+    if (request.isFormData) {
+      // For FormData (with file upload), use /blogs endpoint
+      const response = await fetch(`${API_BASE_URL}/blogs`, {
+        method: "POST",
+        credentials: "include",
+        body: request.formData as FormData
+      });
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "POST",
-      credentials: "include",
-      headers,
-      body: request.isFormData
-        ? (request.formData as FormData)
-        : JSON.stringify(request.formData),
-    });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    } else {
+      // For JSON data, use /blogs/json endpoint (recommended)
+      const response = await fetch(`${API_BASE_URL}/blogs/json`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(request.formData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
     }
-
-    return (await response.json()) as Blog;
   } catch (error) {
     console.error("Error creating blog:", error);
     throw error;

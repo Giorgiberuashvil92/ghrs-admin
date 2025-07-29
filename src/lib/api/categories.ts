@@ -16,7 +16,7 @@ interface ApiWrapper<T> {
 }
 
 interface LocalizedString {
-  ka: string;
+  ka?: string;
   en: string;
   ru: string;
 }

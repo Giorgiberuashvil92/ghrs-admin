@@ -76,7 +76,7 @@ export interface BlogsState {
 
 // API Request/Response types
 export type CreateBlogRequest = {
-  formData: CreateBlogData | FormData;
+  formData: CreateBlogData | FormData | Record<string, string>;
   isFormData: boolean;
 };
 

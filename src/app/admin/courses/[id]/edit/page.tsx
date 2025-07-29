@@ -21,6 +21,149 @@ const API_URL = process.env.NODE_ENV === 'development'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
   : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
+// Translation object for course edit page
+const translations = {
+  en: {
+    editCourse: 'Edit Course',
+    backToCourses: 'Back to Courses',
+    saveDraft: 'Save Draft',
+    updateCourse: 'Update Course',
+    updating: 'Updating...',
+    basicInfo: 'Basic Information',
+    courseTitle: 'Course Title',
+    shortDescription: 'Short Description',
+    fullDescription: 'Full Description',
+    courseDetails: 'Course Details',
+    price: 'Price (₾)',
+    duration: 'Duration (minutes)',
+    instructor: 'Instructor',
+    selectInstructor: 'Select Instructor',
+    category: 'Category',
+    selectCategory: 'Select Category',
+    subcategory: 'Subcategory',
+    selectSubcategory: 'Select Subcategory',
+    media: 'Media',
+    thumbnail: 'Course Thumbnail',
+    additionalImages: 'Additional Images',
+    advertisementImage: 'Advertisement Image',
+    previewVideo: 'Preview Video URL',
+    syllabus: 'Course Syllabus',
+    addSection: 'Add Section',
+    sectionTitle: 'Section Title',
+    sectionDescription: 'Section Description',
+    sectionDuration: 'Duration (minutes)',
+    learningOutcomes: 'Learning Outcomes',
+    addOutcome: 'Add Learning Outcome',
+    prerequisites: 'Prerequisites',
+    certificateInfo: 'Certificate Information',
+    certificateDescription: 'Certificate Description',
+    certificateImages: 'Certificate Images',
+    courseSettings: 'Course Settings',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    languages: 'Languages',
+    english: 'English',
+    russian: 'Russian',
+    published: 'Published',
+    tags: 'Tags',
+    materials: 'Materials',
+    actions: 'Actions',
+    titleRequired: 'Title is required in at least one language',
+    descriptionRequired: 'Description is required in at least one language',
+    priceRequired: 'Price is required and must be greater than 0',
+    categoryRequired: 'Category is required',
+    thumbnailRequired: 'Course thumbnail is required',
+    instructorRequired: 'Instructor is required',
+    languagesRequired: 'At least one language must be selected',
+    courseUpdated: 'Course updated successfully',
+    updateError: 'Error updating course',
+    announcements: 'Announcements',
+    addAnnouncement: 'Add Announcement',
+    announcement: 'Announcement',
+    announcementTitle: 'Announcement Title',
+    announcementContent: 'Announcement Content',
+    publishAnnouncement: 'Publish Announcement',
+    noAnnouncementsAdded: 'No announcements added',
+    publication: 'Publication',
+    publishCourse: 'Publish Course',
+    images: 'Images',
+    mainImage: 'Main Image',
+    additionalImages: 'Additional Images',
+    certificates: 'Certificates',
+    certificateImage: 'Certificate Image',
+    cancel: 'Cancel'
+  },
+  ru: {
+    editCourse: 'Редактировать курс',
+    backToCourses: 'Назад к курсам',
+    saveDraft: 'Сохранить черновик',
+    updateCourse: 'Обновить курс',
+    updating: 'Обновление...',
+    basicInfo: 'Основная информация',
+    courseTitle: 'Название курса',
+    shortDescription: 'Краткое описание',
+    fullDescription: 'Полное описание',
+    courseDetails: 'Детали курса',
+    price: 'Цена (₾)',
+    duration: 'Продолжительность (минуты)',
+    instructor: 'Инструктор',
+    selectInstructor: 'Выберите инструктора',
+    category: 'Категория',
+    selectCategory: 'Выберите категорию',
+    subcategory: 'Подкатегория',
+    selectSubcategory: 'Выберите подкатегорию',
+    media: 'Медиа',
+    thumbnail: 'Миниатюра курса',
+    additionalImages: 'Дополнительные изображения',
+    advertisementImage: 'Рекламное изображение',
+    previewVideo: 'URL видео предпросмотра',
+    syllabus: 'Учебный план курса',
+    addSection: 'Добавить раздел',
+    sectionTitle: 'Название раздела',
+    sectionDescription: 'Описание раздела',
+    sectionDuration: 'Продолжительность (минуты)',
+    learningOutcomes: 'Результаты обучения',
+    addOutcome: 'Добавить результат обучения',
+    prerequisites: 'Предварительные требования',
+    certificateInfo: 'Информация о сертификате',
+    certificateDescription: 'Описание сертификата',
+    certificateImages: 'Изображения сертификата',
+    courseSettings: 'Настройки курса',
+    startDate: 'Дата начала',
+    endDate: 'Дата окончания',
+    languages: 'Языки',
+    english: 'Английский',
+    russian: 'Русский',
+    published: 'Опубликовано',
+    tags: 'Теги',
+    materials: 'Материалы',
+    actions: 'Действия',
+    titleRequired: 'Название требуется как минимум на одном языке',
+    descriptionRequired: 'Описание требуется как минимум на одном языке',
+    priceRequired: 'Цена обязательна и должна быть больше 0',
+    categoryRequired: 'Категория обязательна',
+    thumbnailRequired: 'Миниатюра курса обязательна',
+    instructorRequired: 'Инструктор обязателен',
+    languagesRequired: 'Должен быть выбран хотя бы один язык',
+    courseUpdated: 'Курс успешно обновлен',
+    updateError: 'Ошибка обновления курса',
+    announcements: 'Объявления',
+    addAnnouncement: 'Добавить объявление',
+    announcement: 'Объявление',
+    announcementTitle: 'Заголовок объявления',
+    announcementContent: 'Содержание объявления',
+    publishAnnouncement: 'Опубликовать объявление',
+    noAnnouncementsAdded: 'Объявления не добавлены',
+    publication: 'Публикация',
+    publishCourse: 'Опубликовать курс',
+    images: 'Изображения',
+    mainImage: 'Основное изображение',
+    certificates: 'Сертификаты',
+    certificateImage: 'Изображение сертификата',
+    cancel: 'Отмена'
+  }
+};
+
 interface EditCoursePageProps {
   params: Promise<{ id: string }>;
 }
@@ -29,6 +172,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
   const router = useRouter();
   const { language } = useLanguage();
   const resolvedParams = React.use(params);
+  
+  // Get current language translations
+  const currentLang = language === 'ru' ? 'ru' : 'en';
+  const tr = translations[currentLang];
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
@@ -224,13 +371,13 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.title.en && !formData.title.ru) newErrors.title = 'სათაური სავალდებულოა მინიმუმ ერთ ენაზე';
-    if (!formData.description.en && !formData.description.ru) newErrors.description = 'აღწერა სავალდებულოა მინიმუმ ერთ ენაზე';
-    if (!formData.price || formData.price <= 0) newErrors.price = 'ფასი სავალდებულოა და უნდა იყოს 0-ზე მეტი';
-    if (!formData.categoryId) newErrors.category = 'კატეგორია სავალდებულოა';
-    if (!formData.thumbnail) newErrors.thumbnail = 'მთავარი სურათი სავალდებულოა';
-    if (!formData.instructor.name) newErrors.instructor = 'ინსტრუქტორი სავალდებულოა';
-    if (formData.languages.length === 0) newErrors.languages = 'მინიმუმ ერთი ენა უნდა იყოს არჩეული';
+    if (!formData.title.en && !formData.title.ru) newErrors.title = tr.titleRequired;
+    if (!formData.description.en && !formData.description.ru) newErrors.description = tr.descriptionRequired;
+    if (!formData.price || formData.price <= 0) newErrors.price = tr.priceRequired;
+    if (!formData.categoryId) newErrors.category = tr.categoryRequired;
+    if (!formData.thumbnail) newErrors.thumbnail = tr.thumbnailRequired;
+    if (!formData.instructor.name) newErrors.instructor = tr.instructorRequired;
+    if (formData.languages.length === 0) newErrors.languages = tr.languagesRequired;
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -302,20 +449,12 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
       const updatedCourse = await response.json();
       console.log('Updated course:', updatedCourse);
 
-      alert(language === 'en' 
-        ? 'Course updated successfully!'
-        : language === 'ru'
-        ? 'Курс успешно обновлен!'
-        : 'კურსი წარმატებით განახლდა!');
+      alert(tr.courseUpdated);
       router.push('/admin/courses');
       
     } catch (error) {
       console.error('Error updating course:', error);
-      alert(language === 'en'
-        ? error instanceof Error ? error.message : 'Failed to update course'
-        : language === 'ru'
-        ? error instanceof Error ? error.message : 'Не удалось обновить курс'
-        : error instanceof Error ? error.message : 'კურსის განახლება ვერ მოხერხდა');
+      alert(error instanceof Error ? error.message : tr.updateError);
     } finally {
       setLoading(false);
     }
@@ -343,14 +482,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <AcademicCapIcon className="h-8 w-8 text-blue-600" />
-              {language === 'en' ? 'Edit Course' : language === 'ru' ? 'Редактировать курс' : 'კურსის რედაქტირება'}
+              {tr.editCourse}
             </h1>
             <p className="text-gray-600 mt-1">
-              {language === 'en' 
-                ? 'Update course information'
-                : language === 'ru'
-                ? 'Обновите информацию о курсе'
-                : 'განაახლეთ კურსის ინფორმაცია'}
+              Update course information
             </p>
           </div>
         </div>
@@ -362,11 +497,11 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
           <div className="lg:col-span-2 space-y-8">
             {/* Basic Information */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">ძირითადი ინფორმაცია</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.basicInfo}</h2>
               
               <div className="space-y-6">
                 <MultilingualInput
-                  label="კურსის სათაური"
+                  label={tr.courseTitle}
                   value={formData.title}
                   onChange={(value) => setFormData(prev => ({ ...prev, title: value as MultilingualContent }))}
                   required
@@ -376,7 +511,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
 
                 <MultilingualInput
-                  label="მოკლე აღწერა"
+                  label={tr.shortDescription}
                   value={formData.shortDescription}
                   onChange={(value) => setFormData(prev => ({ ...prev, shortDescription: value as MultilingualContent   }))}
                   type="textarea"
@@ -385,7 +520,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 />
 
                 <MultilingualInput
-                  label="სრული აღწერა"
+                  label={tr.fullDescription}
                   value={formData.description}
                   onChange={(value) => setFormData(prev => ({ ...prev, description: value as MultilingualContent }))}
                   required
@@ -399,19 +534,19 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
             {/* Course Details */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">კურსის დეტალები</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.courseDetails}</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ფასი (ლარი) <span className="text-red-500">*</span>
+                    {tr.price} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.price ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -422,13 +557,13 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ხანგრძლივობა (წუთები) <span className="text-red-500">*</span>
+                    {tr.duration} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="1"
                     value={formData.duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.duration ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -439,7 +574,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    კატეგორია <span className="text-red-500">*</span>
+                    {tr.category} <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.categoryId}
@@ -451,7 +586,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                       errors.category ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
-                    <option value="">აირჩიეთ კატეგორია</option>
+                    <option value="">{tr.selectCategory}</option>
                     {categories.map(category => (
                       <option key={category._id} value={category._id}>
                         {category.name.en || category.name.ru || category.name.ka}
@@ -463,7 +598,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ქვეკატეგორია
+                    {tr.subcategory}
                   </label>
                   <select
                     value={formData.subcategoryId}
@@ -471,7 +606,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={!formData.categoryId || loadingSubcategories}
                   >
-                    <option value="">აირჩიეთ ქვეკატეგორია</option>
+                    <option value="">{tr.selectSubcategory}</option>
                     {subcategories.map(subcategory => (
                       <option key={subcategory._id} value={subcategory._id}>
                         {subcategory.name.en || subcategory.name.ru || subcategory.name.ka}
@@ -485,10 +620,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
             {/* Learning Outcomes */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">სწავლის შედეგები</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tr.learningOutcomes}</h2>
                 <Button type="button" onClick={addLearningOutcome} size="sm">
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  შედეგის დამატება
+                  {tr.addOutcome}
                 </Button>
               </div>
               
@@ -496,7 +631,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 {formData.learningOutcomes.map((outcome, index) => (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-medium text-gray-900">შედეგი {index + 1}</h3>
+                      <h3 className="font-medium text-gray-900">{currentLang === 'ru' ? 'Результат' : 'Outcome'} {index + 1}</h3>
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({
@@ -517,14 +652,14 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                            i === index ? value as MultilingualContent : outcome
                          )
                        }))}
-                       placeholder="სწავლის შედეგი"
+                       placeholder={currentLang === 'ru' ? 'Результат обучения' : 'Learning outcome'}
                      />
                   </div>
                 ))}
                 
                 {formData.learningOutcomes.length === 0 && (
                   <p className="text-gray-500 text-center py-8">
-                    სწავლის შედეგები არ არის დამატებული
+                    {currentLang === 'ru' ? 'Результаты обучения не добавлены' : 'No learning outcomes added'}
                   </p>
                 )}
               </div>
@@ -533,10 +668,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
             {/* Syllabus */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">სილაბუსი</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tr.syllabus}</h2>
                 <Button type="button" onClick={addSyllabusItem} size="sm">
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  სილაბუსის წევრის დამატება
+                  {tr.addSection}
                 </Button>
               </div>
               
@@ -544,7 +679,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 {formData.syllabus.map((item, index) => (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-medium text-gray-900">წევრი {index + 1}</h3>
+                      <h3 className="font-medium text-gray-900">{currentLang === 'ru' ? 'Раздел' : 'Section'} {index + 1}</h3>
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({
@@ -557,7 +692,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                       </button>
                     </div>
                     <MultilingualInput
-                      label="სათაური"
+                      label={tr.sectionTitle}
                       value={item.title}
                       onChange={(value) => setFormData(prev => ({
                         ...prev,
@@ -572,7 +707,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                     {errors.syllabusTitle && <p className="text-red-500 text-sm mt-1">{errors.syllabusTitle}</p>}
 
                     <MultilingualInput
-                      label="აღწერა"
+                      label={tr.sectionDescription}
                       value={item.description}
                       onChange={(value) => setFormData(prev => ({
                         ...prev,
@@ -598,7 +733,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                           )
                         }))}
                         className="w-24 px-2 py-1 border rounded-lg text-sm"
-                        placeholder="ხანგრძლივობა (წუთები)"
+                        placeholder={tr.sectionDuration}
                       />
                     </div>
                   </div>
@@ -606,7 +741,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 
                 {formData.syllabus.length === 0 && (
                   <p className="text-gray-500 text-center py-8">
-                    სილაბუსი არ არის დამატებული
+                    {currentLang === 'ru' ? 'Учебный план не добавлен' : 'No syllabus added'}
                   </p>
                 )}
               </div>
@@ -615,10 +750,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
             {/* Announcements */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">განცხადებები</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tr.announcements}</h2>
                 <Button type="button" onClick={addAnnouncement} size="sm">
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  განცხადების დამატება
+                  {tr.addAnnouncement}
                 </Button>
               </div>
               
@@ -626,7 +761,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 {formData.announcements.map((announcement, index) => (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-medium text-gray-900">განცხადება {index + 1}</h3>
+                      <h3 className="font-medium text-gray-900">{tr.announcement} {index + 1}</h3>
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({
@@ -639,7 +774,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                       </button>
                     </div>
                     <MultilingualInput
-                      label="სათაური"
+                      label={tr.announcementTitle}
                       value={announcement.title}
                       onChange={(value) => setFormData(prev => ({
                         ...prev,
@@ -654,7 +789,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                     {errors.announcementTitle && <p className="text-red-500 text-sm mt-1">{errors.announcementTitle}</p>}
 
                     <MultilingualInput
-                      label="მასალა"
+                      label={tr.announcementContent}
                       value={announcement.content}
                       onChange={(value) => setFormData(prev => ({
                         ...prev,
@@ -681,7 +816,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">
-                        განცხადების გამოქვეყნება
+                        {tr.publishAnnouncement}
                       </span>
                     </label>
                   </div>
@@ -689,7 +824,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 
                 {formData.announcements.length === 0 && (
                   <p className="text-gray-500 text-center py-8">
-                    განცხადებები არ არის დამატებული
+                    {tr.noAnnouncementsAdded}
                   </p>
                 )}
               </div>
@@ -700,7 +835,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
           <div className="space-y-8">
             {/* Publication Settings */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">გამოქვეყნება</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.publication}</h2>
               
               <div className="space-y-4">
                 <label className="flex items-center">
@@ -711,14 +846,14 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    კურსის გამოქვეყნება
+                    {tr.publishCourse}
                   </span>
                 </label>
                 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      დაწყების თარიღი <span className="text-red-500">*</span>
+                      {tr.startDate} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="datetime-local"
@@ -733,7 +868,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      დასრულების თარიღი
+                      {tr.endDate}
                     </label>
                     <input
                       type="datetime-local"
@@ -748,11 +883,11 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
             {/* Course Images */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">სურათები</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.images}</h2>
               
               <div className="space-y-6">
                 <ImageUpload
-                  label="მთავარი სურათი"
+                  label={tr.mainImage}
                   required
                   value={formData.thumbnail}
                   onChange={(url) => setFormData(prev => ({ ...prev, thumbnail: url as string }))}
@@ -760,7 +895,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 {errors.thumbnail && <p className="text-red-500 text-sm">{errors.thumbnail}</p>}
                 
                 <ImageUpload
-                  label="დამატებითი სურათები"
+                  label={tr.additionalImages}
                   multiple
                   maxFiles={5}
                   value={formData.additionalImages}
@@ -771,11 +906,11 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
             {/* Certificate Images */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">სერტიფიკატები</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.certificates}</h2>
               
               <div className="space-y-6">
                 <ImageUpload
-                  label="სერტიფიკატის სურათი"
+                  label={tr.certificateImage}
                   multiple
                   maxFiles={3}
                   value={formData.certificateImages}
@@ -786,10 +921,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
             {/* Prerequisites */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">პრეფრექსები</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.prerequisites}</h2>
               
               <MultilingualInput
-                label="პრეფრექსები"
+                label={tr.prerequisites}
                 value={formData.prerequisites}
                 onChange={(value) => setFormData(prev => ({ ...prev, prerequisites: value as MultilingualContent }))}
                 type="textarea"
@@ -801,10 +936,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
             {/* Certificate Description */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">სერტიფიკატის აღწერა</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.certificateInfo}</h2>
               
               <MultilingualInput
-                label="სერტიფიკატის აღწერა"
+                label={tr.certificateDescription}
                 value={formData.certificateDescription}
                 onChange={(value) => setFormData(prev => ({ ...prev, certificateDescription: value as MultilingualContent }))}
                 type="richtext"
@@ -816,30 +951,16 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
             {/* Tags */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">ტეგები</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{tr.tags}</h2>
               
               <MultilingualInput
-                label="ტეგები"
-                value={formData.tags}
-                onChange={(value) => setFormData(prev => ({ ...prev, tags: value as string[] }))}
-                type="tags"
+                label={tr.tags}
+                value={formData.tags as unknown as MultilingualContent}
+                onChange={(value) => setFormData(prev => ({ ...prev, tags: value as unknown as MultilingualContent }))}
+                type="textarea"
                 className={errors.tags ? 'border-red-500' : ''}
               />
               {errors.tags && <p className="text-red-500 text-sm mt-1">{errors.tags}</p>}
-            </div>
-
-            {/* Materials */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">მასალები</h2>
-              
-              <MultilingualInput
-                label="მასალები"
-                value={formData.materials}
-                onChange={(value) => setFormData(prev => ({ ...prev, materials: value as string[] }))}
-                type="tags"
-                className={errors.materials ? 'border-red-500' : ''}
-              />
-              {errors.materials && <p className="text-red-500 text-sm mt-1">{errors.materials}</p>}
             </div>
 
             {/* Actions */}
@@ -850,12 +971,12 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                   disabled={loading}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
-                  {loading ? 'მუშავდება...' : 'კურსის განახლება'}
+                  {loading ? tr.updating : tr.updateCourse}
                 </Button>
                 
                 <Link href="/admin/courses">
                   <Button type="button" variant="outline" className="w-full">
-                    გაუქმება
+                    {tr.cancel}
                   </Button>
                 </Link>
               </div>

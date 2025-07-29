@@ -103,14 +103,10 @@ export default function NewBlogPage() {
         formDataToSend.append('description', JSON.stringify(formData.description));
         formDataToSend.append('excerpt', JSON.stringify(formData.excerpt));
         formDataToSend.append('categoryId', formData.categoryId);
-        
-        if (formData.tags && formData.tags.length > 0) {
-          formDataToSend.append('tags', JSON.stringify(formData.tags));
-        }
-
-        formDataToSend.append('isPublished', (formData.isPublished || false).toString());
-        formDataToSend.append('isFeatured', (formData.isFeatured || false).toString());
-        formDataToSend.append('sortOrder', (formData.sortOrder || 0).toString());
+        formDataToSend.append('tags', JSON.stringify(formData.tags || []));
+        formDataToSend.append('isPublished', String(formData.isPublished || false));
+        formDataToSend.append('isFeatured', String(formData.isFeatured || false));
+        formDataToSend.append('sortOrder', String(formData.sortOrder || 0));
 
         // Convert data URL to blob for file upload
         const response = await fetch(formData.imageUrl);
@@ -120,24 +116,28 @@ export default function NewBlogPage() {
         await createBlog({ formData: formDataToSend, isFormData: true });
       } else {
         // For JSON data (including image URLs), use /blogs/json endpoint
+        const jsonData = {
+          title: formData.title,  // Send as object
+          description: formData.description,  // Send as object
+          excerpt: formData.excerpt,  // Send as object
+          categoryId: formData.categoryId,
+          imageUrl: formData.imageUrl || '',
+          tags: formData.tags || [],  // Send as array
+          isPublished: Boolean(formData.isPublished),  // Send as boolean
+          isFeatured: Boolean(formData.isFeatured),  // Send as boolean
+          sortOrder: Number(formData.sortOrder || 0)  // Send as number
+        };
+
+        console.log('Sending JSON data:', jsonData);
+
         await createBlog({ 
-          formData: {
-            title: formData.title,
-            description: formData.description,
-            excerpt: formData.excerpt,
-            categoryId: formData.categoryId,
-            imageUrl: formData.imageUrl || '',
-            tags: formData.tags,
-            isPublished: formData.isPublished,
-            isFeatured: formData.isFeatured,
-            sortOrder: formData.sortOrder
-          }, 
+          formData: jsonData,
           isFormData: false 
         });
       }
 
       alert('ბლოგი წარმატებით დაემატა');
-      router.push('/admin/blogs');
+      router.push('/admin/blogs/');
     } catch (error) {
       console.error('Error creating blog:', error);
       alert(error instanceof Error ? error.message : 'შეცდომა ბლოგის შექმნისას');

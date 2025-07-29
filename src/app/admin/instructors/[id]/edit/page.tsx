@@ -158,8 +158,8 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
           <div>
             <MultilingualInput
               label="მოკლე ბიოგრაფია"
-              value={formData.bio}
-              onChange={(value) => setFormData({ ...formData, bio: value })}
+              value={formData.bio as unknown as MultilingualContent}
+              onChange={(value) => setFormData({ ...formData, bio: value as unknown as MultilingualContent })}
               type="textarea"
               placeholder="მოკლე ბიოგრაფია..."
               required

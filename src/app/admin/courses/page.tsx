@@ -16,12 +16,42 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
   : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
+// Translation object
+const translations = {
+  en: {
+    title: 'Course Management',
+    subtitle: 'Create and manage educational courses',
+    newCourse: 'New Course',
+    searchPlaceholder: 'Search courses...',
+    allCourses: 'All Courses',
+    published: 'Published',
+    draft: 'Draft',
+    deleteError: 'Failed to delete course',
+    statusError: 'Failed to change course status'
+  },
+  ru: {
+    title: 'Управление курсами',
+    subtitle: 'Создавайте и управляйте образовательными курсами',
+    newCourse: 'Новый курс',
+    searchPlaceholder: 'Поиск курсов...',
+    allCourses: 'Все курсы',
+    published: 'Опубликованные',
+    draft: 'Черновики',
+    deleteError: 'Не удалось удалить курс',
+    statusError: 'Не удалось изменить статус курса'
+  }
+};
+
 export default function CoursesPage() {
   const { language, t } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
+
+  // Get current language translations
+  const currentLang = language === 'ru' ? 'ru' : 'en';
+  const tr = translations[currentLang];
 
   useEffect(() => {
     fetchCourses();
@@ -84,7 +114,7 @@ export default function CoursesPage() {
       setCourses(courses.filter(course => course.id !== id));
     } catch (error) {
       console.error('Error deleting course:', error);
-      alert('კურსის წაშლა ვერ მოხერხდა');
+      alert(tr.deleteError);
     }
   };
 
@@ -109,7 +139,7 @@ export default function CoursesPage() {
       ));
     } catch (error) {
       console.error('Error toggling course publish status:', error);
-      alert('კურსის სტატუსის შეცვლა ვერ მოხერხდა');
+      alert(tr.statusError);
     }
   };
 
@@ -145,15 +175,15 @@ export default function CoursesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <AcademicCapIcon className="h-8 w-8 text-blue-600" />
-            კურსების მართვა
+            {tr.title}
           </h1>
-          <p className="text-gray-600 mt-1">შექმენით და მართავით სასწავლო კურსები</p>
+          <p className="text-gray-600 mt-1">{tr.subtitle}</p>
         </div>
         
         <Link href="/admin/courses/new">
           <Button className="bg-blue-600 hover:bg-blue-700">
             <PlusIcon className="h-4 w-4 mr-2" />
-            ახალი კურსი
+            {tr.newCourse}
           </Button>
         </Link>
       </div>
@@ -166,7 +196,7 @@ export default function CoursesPage() {
             <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="კურსების ძიება..."
+              placeholder={tr.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -179,9 +209,9 @@ export default function CoursesPage() {
             onChange={(e) => setFilter(e.target.value as any)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="all">ყველა კურსი</option>
-            <option value="published">გამოქვეყნებული</option>
-            <option value="draft">მუშაობის რეჟიმში</option>
+            <option value="all">{tr.allCourses}</option>
+            <option value="published">{tr.published}</option>
+            <option value="draft">{tr.draft}</option>
           </select>
         </div>
       </div>

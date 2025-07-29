@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  createSubCategory,
+  updateSubCategory,
+  getSubCategoryById,
   getCategoryById,
   type Category,
 } from "@/lib/api/categories";
@@ -17,20 +18,21 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
   : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
 
 // ცალკე ფუნქცია ფაილების ატვირთვისთვის
-const createSubCategoryWithFile = async (
+const updateSubCategoryWithFile = async (
   categoryId: string,
+  subCategoryId: string,
   formData: FormData,
 ) => {
   try {
-    console.log("Creating subcategory with file upload");
+    console.log("Updating subcategory with file upload");
     for (const [key, value] of Array.from(formData.entries())) {
       console.log(`${key}:`, value);
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories`,
+      `${API_BASE_URL}/categories/${categoryId}/subcategories/${subCategoryId}`,
       {
-        method: "POST",
+        method: "PATCH",
         credentials: "include",
         body: formData,
       },
@@ -56,7 +58,7 @@ const createSubCategoryWithFile = async (
 
     return await response.json();
   } catch (error) {
-    console.error("Error creating subcategory with file:", error);
+    console.error("Error updating subcategory with file:", error);
     throw error;
   }
 };
@@ -72,20 +74,22 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
   );
 };
 
-interface AddSubCategoryPageProps {
+interface EditSubCategoryPageProps {
   params: Promise<{
     id: string;
+    subId: string;
   }>;
 }
 
-export default function AddSubCategoryPage({
+export default function EditSubCategoryPage({
   params,
-}: AddSubCategoryPageProps) {
+}: EditSubCategoryPageProps) {
   const router = useRouter();
   const resolvedParams = React.use(params);
   const { t, language } = useLanguage();
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImageUrlInput, setIsImageUrlInput] = useState(false);
@@ -100,15 +104,48 @@ export default function AddSubCategoryPage({
   });
 
   useEffect(() => {
-    fetchCategory();
-  }, [resolvedParams.id]);
+    fetchData();
+  }, [resolvedParams.id, resolvedParams.subId]);
 
-  const fetchCategory = async () => {
+  const fetchData = async () => {
     try {
-      const categoryData = await getCategoryById(resolvedParams.id);
+      setInitialLoading(true);
+      
+      // Fetch both category and subcategory data
+      const [categoryData, subCategoryData] = await Promise.all([
+        getCategoryById(resolvedParams.id),
+        getSubCategoryById(resolvedParams.id, resolvedParams.subId)
+      ]);
+      
       setCategory(categoryData);
+      
+      // Populate form with subcategory data
+      setFormData({
+        name: {
+          en: subCategoryData.name?.en || "",
+          ru: subCategoryData.name?.ru || ""
+        },
+        description: {
+          en: subCategoryData.description?.en || "",
+          ru: subCategoryData.description?.ru || ""
+        },
+        imageUrl: subCategoryData.image || "",
+        isActive: subCategoryData.isActive ?? true,
+        isPublished: subCategoryData.isPublished ?? false,
+                 sortOrder: parseInt(subCategoryData.sortOrder) || 0,
+      });
+
+      // Set image preview if exists
+      if (subCategoryData.image) {
+        setImagePreview(subCategoryData.image);
+      }
+      
     } catch (error) {
-      console.error("Error fetching category:", error);
+      console.error("Error fetching data:", error);
+      alert("Failed to load data / Не удалось загрузить данные");
+      router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories`);
+    } finally {
+      setInitialLoading(false);
     }
   };
 
@@ -176,7 +213,7 @@ export default function AddSubCategoryPage({
           dataToSend.append("imageUrl", formData.imageUrl);
         }
 
-        await createSubCategoryWithFile(resolvedParams.id, dataToSend);
+        await updateSubCategoryWithFile(resolvedParams.id, resolvedParams.subId, dataToSend);
       } else {
         // ფაილი არ არის, JSON ობიექტი გავაგზავნოთ
         const jsonData = {
@@ -195,16 +232,16 @@ export default function AddSubCategoryPage({
           sortOrder: formData.sortOrder,
         };
 
-        await createSubCategory(resolvedParams.id, jsonData);
+        await updateSubCategory(resolvedParams.id, resolvedParams.subId, jsonData);
       }
 
-      alert(t("subcategoryAddedSuccessfully"));
+      alert("Subcategory updated successfully / Подкатегория успешно обновлена");
       router.push(
         `/rehabilitation/categories/${resolvedParams.id}/subcategories`,
       );
     } catch (error) {
-      console.error("Error creating subcategory:", error);
-      alert(t("errorCreatingSubcategory"));
+      console.error("Error updating subcategory:", error);
+      alert("Failed to update subcategory / Не удалось обновить подкатегорию");
     } finally {
       setLoading(false);
     }
@@ -224,10 +261,18 @@ export default function AddSubCategoryPage({
     }));
   };
 
-  if (!category) {
+  if (initialLoading) {
     return (
       <div className="p-8">
         <div className="animate-pulse">{t("loading")}</div>
+      </div>
+    );
+  }
+
+  if (!category) {
+    return (
+      <div className="p-8">
+        <div className="text-red-500">{t("categoryNotFound")}</div>
       </div>
     );
   }
@@ -248,10 +293,10 @@ export default function AddSubCategoryPage({
               ← {t("backToSubcategories")}
             </button>
             <h1 className="text-3xl font-bold text-white">
-              {t("addNewSubcategory")}
+              Edit Subcategory / Редактировать подкатегорию
             </h1>
             <p className="mt-2 text-purple-100">
-              {t("addSubcategoryInCategory") +
+              {"Edit subcategory in category / Редактировать подкатегорию в категории" +
                 " " +
                 (category.name[language] || category.name.en || category.name.ru)}
             </p>
@@ -504,10 +549,10 @@ export default function AddSubCategoryPage({
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                    {t("saving")}...
+                    Updating / Обновление...
                   </div>
                 ) : (
-                  t("createSubcategory")
+                  "Update Subcategory / Обновить подкатегорию"
                 )}
               </button>
             </div>
@@ -516,4 +561,4 @@ export default function AddSubCategoryPage({
       </div>
     </div>
   );
-}
+} 
