@@ -8,7 +8,6 @@ const RichTextEditor = dynamic(() => import('@/components/ui/rich-text-editor'),
 
 // Flexible type that can work with both LocalizedString and BlogLocalizedString
 interface FlexibleLocalizedString {
-  ka?: string;
   en: string;
   ru: string;
 }
@@ -24,7 +23,7 @@ interface MultilingualInputProps {
   placeholder?: string;
   className?: string;
   // Optional prop to specify which languages to show (defaults to all available)
-  languages?: ('ka' | 'en' | 'ru')[];
+  languages?: ('en' | 'ru')[];
 }
 
 export default function MultilingualInput({
@@ -40,15 +39,15 @@ export default function MultilingualInput({
   languages
 }: MultilingualInputProps) {
   // Determine available languages based on the value structure and languages prop
-  const availableLanguages = languages || (value && typeof value === 'object' ? Object.keys(value).filter(key => 
-    ['ka', 'en', 'ru'].includes(key)
-  ) : ['en', 'ru']) as ('ka' | 'en' | 'ru')[];
+  const availableLanguages = languages || (value && typeof value === 'object' && value !== null ? Object.keys(value).filter(key => 
+    ['en', 'ru'].includes(key)
+  ) : ['en', 'ru']) as ('en' | 'ru')[];
   
-  const [activeTab, setActiveTab] = useState<'ka' | 'en' | 'ru'>(
+  const [activeTab, setActiveTab] = useState<'en' | 'ru'>(
     availableLanguages.includes('en') ? 'en' : availableLanguages[0]
   );
 
-  const handleChange = (lang: 'ka' | 'en' | 'ru', newValue: string) => {
+  const handleChange = (lang: 'en' | 'ru', newValue: string) => {
     const currentValue = value || { en: '', ru: '' };
     onChange({
       ...currentValue,
@@ -56,9 +55,8 @@ export default function MultilingualInput({
     });
   };
 
-  const getLanguageLabel = (lang: 'ka' | 'en' | 'ru') => {
+  const getLanguageLabel = (lang: 'en' | 'ru') => {
     switch (lang) {
-      case 'ka': return 'ქართული';
       case 'en': return 'English';
       case 'ru': return 'Русский';
       default: return lang;

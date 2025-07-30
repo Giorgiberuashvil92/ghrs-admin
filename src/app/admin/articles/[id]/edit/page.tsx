@@ -42,7 +42,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
     excerpt: { ka: '', en: '', ru: '' },
     content: { ka: '', en: '', ru: '' },
     featuredImages: [],
-    categoryId: '',
+    categoryIds: [],
     blogId: '',
     readTime: '',
     authorName: '',
@@ -56,6 +56,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
   });
 
   const [currentTag, setCurrentTag] = useState('');
+  const [currentCategoryId, setCurrentCategoryId] = useState('');
 
   useEffect(() => {
     fetchArticle();
@@ -75,8 +76,8 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
         excerpt: articleData.excerpt,
         content: articleData.content,
         featuredImages: articleData.featuredImages,
-        categoryId: articleData.category?._id || articleData.categoryId,
-        blogId: articleData.blog?._id || articleData.blogId,
+        categoryIds: articleData.categoryIds || [],
+        blogId: articleData.blogId,
         readTime: articleData.readTime,
         authorName: articleData.authorName,
         authorBio: articleData.authorBio,
@@ -123,7 +124,8 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
       return;
     }
 
-    if (!formData.categoryId) {
+    const validCategoryIds = formData.categoryIds?.filter(id => id && id.trim() !== '') || [];
+    if (!validCategoryIds.length) {
       alert('კატეგორიის არჩევა სავალდებულოა');
       return;
     }
@@ -136,60 +138,75 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
     setLoading(true);
 
     try {
-      // Handle FormData for file uploads
-      if (imageFiles.length > 0 || (formData.authorAvatar && formData.authorAvatar.startsWith('data:'))) {
-        const formDataToSend = new FormData();
-        
-        // JSON fields
-        formDataToSend.append('title', JSON.stringify(formData.title));
-        formDataToSend.append('excerpt', JSON.stringify(formData.excerpt));
-        formDataToSend.append('content', JSON.stringify(formData.content));
-        formDataToSend.append('categoryId', formData.categoryId!);
-        formDataToSend.append('blogId', formData.blogId!);
-        formDataToSend.append('readTime', formData.readTime!);
-        formDataToSend.append('authorName', formData.authorName!);
-        
-        if (formData.authorBio) {
-          formDataToSend.append('authorBio', formData.authorBio);
-        }
-        
-        if (formData.tableOfContents && formData.tableOfContents.length > 0) {
-          formDataToSend.append('tableOfContents', JSON.stringify(formData.tableOfContents));
-        }
-        
-        if (formData.tags && formData.tags.length > 0) {
-          formDataToSend.append('tags', JSON.stringify(formData.tags));
-        }
+      const formDataToSend = new FormData();
+      
+      // JSON fields
+      formDataToSend.append('title', JSON.stringify(formData.title));
+      formDataToSend.append('excerpt', JSON.stringify(formData.excerpt));
+      formDataToSend.append('content', JSON.stringify(formData.content));
+      formDataToSend.append('categoryIds', JSON.stringify(validCategoryIds));
+      formDataToSend.append('blogId', formData.blogId!);
+      formDataToSend.append('readTime', formData.readTime!);
+      
+      // ავტორის ინფორმაცია
+      formDataToSend.append('author', JSON.stringify({
+        name: formData.authorName,
+        bio: formData.authorBio || '',
+        avatar: formData.authorAvatar || ''
+      }));
+      
+      if (formData.tableOfContents && formData.tableOfContents.length > 0) {
+        formDataToSend.append('tableOfContents', JSON.stringify(formData.tableOfContents));
+      }
+      
+      if (formData.tags && formData.tags.length > 0) {
+        formDataToSend.append('tags', JSON.stringify(formData.tags));
+      }
 
-        formDataToSend.append('isPublished', formData.isPublished!.toString());
-        formDataToSend.append('isFeatured', formData.isFeatured!.toString());
-        formDataToSend.append('sortOrder', formData.sortOrder!.toString());
+      formDataToSend.append('isPublished', formData.isPublished!.toString());
+      formDataToSend.append('isFeatured', formData.isFeatured!.toString());
+      formDataToSend.append('sortOrder', formData.sortOrder!.toString());
 
-        // Existing images URLs
-        if (formData.featuredImages && formData.featuredImages.length > 0) {
-          const existingUrls = formData.featuredImages.filter(img => !img.startsWith('data:'));
-          if (existingUrls.length > 0) {
-            formDataToSend.append('existingFeaturedImages', JSON.stringify(existingUrls));
-          }
+      // არსებული სურათების URL-ები
+      if (formData.featuredImages && formData.featuredImages.length > 0) {
+        console.log('Processing existing images:', formData.featuredImages);
+        const existingUrls = formData.featuredImages.filter(img => 
+          img.startsWith('http') && !img.startsWith('blob:')
+        );
+        console.log('Filtered existing URLs:', existingUrls);
+        if (existingUrls.length > 0) {
+          formDataToSend.append('existingFeaturedImages', JSON.stringify(existingUrls));
         }
+      }
 
-        // New file uploads
-        imageFiles.forEach((file) => {
-          formDataToSend.append(`featuredImages`, file);
+      // ახალი სურათების ფაილები
+      if (imageFiles.length > 0) {
+        console.log('Adding new image files:', imageFiles);
+        imageFiles.forEach((file, index) => {
+          formDataToSend.append('featuredImages', file);
         });
+      } else if (formData.featuredImages && formData.featuredImages.length > 0) {
+        // თუ ახალი ფაილები არ არის, მაგრამ გვაქვს არსებული URL-ები
+        formDataToSend.append('featuredImages', JSON.stringify(formData.featuredImages));
+      }
 
-        if (formData.authorAvatar && formData.authorAvatar.startsWith('data:')) {
+      // ავტორის ავატარი
+      if (formData.authorAvatar) {
+        if (formData.authorAvatar.startsWith('data:')) {
           const response = await fetch(formData.authorAvatar);
           const blob = await response.blob();
           formDataToSend.append('authorAvatar', blob, 'avatar.jpg');
-        } else if (formData.authorAvatar && formData.authorAvatar.startsWith('http')) {
+        } else if (formData.authorAvatar.startsWith('http')) {
           formDataToSend.append('authorAvatarUrl', formData.authorAvatar);
         }
+      }
 
-        await updateArticle(resolvedParams.id, { formData: formDataToSend, isFormData: true });
-      } else {
-        // Handle JSON data
-        await updateArticle(resolvedParams.id, { formData: formData as any, isFormData: false });
+      console.log('Sending FormData to API...');
+      const result = await updateArticle(resolvedParams.id, { formData: formDataToSend, isFormData: true });
+      console.log('API Response:', result);
+
+      if (!result.featuredImages || result.featuredImages.length === 0) {
+        console.warn('No featured images in response!');
       }
 
       alert('სტატია წარმატებით განახლდა');
@@ -216,6 +233,24 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags?.filter((_, i) => i !== index) || []
+    }));
+  };
+
+  const handleAddCategoryId = () => {
+    const trimmedId = currentCategoryId.trim();
+    if (trimmedId && !formData.categoryIds?.includes(trimmedId)) {
+      setFormData(prev => ({
+        ...prev,
+        categoryIds: [...(prev.categoryIds || []), trimmedId]
+      }));
+      setCurrentCategoryId('');
+    }
+  };
+
+  const handleRemoveCategoryId = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds?.filter((_, i) => i !== index) || []
     }));
   };
 
@@ -246,9 +281,32 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
     }));
   };
 
-  const handleFeaturedImagesChange = (urls: string | string[]) => {
+  const handleFeaturedImagesChange = (urls: string | string[] | File[]) => {
     const urlArray = Array.isArray(urls) ? urls : [urls];
-    setFormData(prev => ({ ...prev, featuredImages: urlArray }));
+    
+    console.log('handleFeaturedImagesChange received:', urlArray);
+    
+    // თუ ფაილებია, შევინახოთ imageFiles-ში
+    if (urlArray[0] instanceof File) {
+      console.log('Saving files:', urlArray);
+      setImageFiles(urlArray as File[]);
+    }
+    
+    // შევინახოთ URL-ები ან data URL-ები formData-ში
+    const processedUrls = urlArray.map(item => {
+      if (item instanceof File) {
+        console.log('Creating URL for file:', item.name);
+        return URL.createObjectURL(item);
+      }
+      console.log('Using existing URL:', item);
+      return item;
+    });
+    
+    console.log('Setting formData with URLs:', processedUrls);
+    setFormData(prev => ({ 
+      ...prev, 
+      featuredImages: processedUrls
+    }));
   };
 
   if (pageLoading) {
@@ -442,24 +500,110 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
                     </select>
                   </div>
 
-                  {/* Category */}
+                  {/* Categories */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category *
+                      Categories *
                     </label>
-                    <select
-                      value={formData.categoryId || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">აირჩიეთ კატეგორია</option>
+
+                    {/* Add Category ID manually */}
+                    <div className="mb-4">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={currentCategoryId}
+                          onChange={(e) => setCurrentCategoryId(e.target.value)}
+                          placeholder="Add category ID..."
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategoryId())}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddCategoryId}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                      
+                      {/* Display added category IDs */}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {(formData.categoryIds || []).map((categoryId, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                          >
+                            {categoryId}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCategoryId(index)}
+                              className="hover:text-green-600"
+                            >
+                              <TrashIcon className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-300 rounded-lg p-3">
+                      {/* Show existing categories */}
                       {categories.map(category => (
-                        <option key={category._id} value={category._id}>
-                          {category.name[language]}
-                        </option>
+                        <label key={category._id} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.categoryIds?.includes(category._id) || false}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  categoryIds: [...(prev.categoryIds || []), category._id]
+                                }));
+                              } else {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  categoryIds: (prev.categoryIds || []).filter(id => id !== category._id)
+                                }));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-900">{category.name[language]}</span>
+                        </label>
                       ))}
-                    </select>
+
+                      {/* Show manually added category IDs that are not in the categories list */}
+                      {(formData.categoryIds || [])
+                        .filter(categoryId => !categories.find(cat => cat._id === categoryId))
+                        .map(categoryId => (
+                          <label key={categoryId} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={true}
+                              onChange={(e) => {
+                                if (!e.target.checked) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    categoryIds: (prev.categoryIds || []).filter(id => id !== categoryId)
+                                  }));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-900 italic">
+                              {categoryId} <span className="text-gray-500">(Manual ID)</span>
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                    {(!formData.categoryIds || formData.categoryIds.length === 0) && (
+                      <p className="mt-1 text-sm text-red-500">
+                        გთხოვთ აირჩიოთ მინიმუმ ერთი კატეგორია
+                      </p>
+                    )}
+                    <p className="mt-1 text-sm text-gray-500">
+                      არჩეული კატეგორიები: {formData.categoryIds?.length || 0}
+                    </p>
                   </div>
 
                   {/* Read Time */}

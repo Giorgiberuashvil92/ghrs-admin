@@ -257,8 +257,9 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
         return;
       }
 
-      if (formData.name.ka.includes('http') || formData.description.ka.includes('http')) {
-        alert(t('pleaseEnterTextNotUrls'));
+      if (formData.name.en.includes('http') || formData.description.en.includes('http') ||
+          formData.name.ru.includes('http') || formData.description.ru.includes('http')) {
+        alert('Please enter text, not URLs');
         setIsLoading(false);
         return;
       }
@@ -290,7 +291,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       }
       
       if (formData.thumbnailImage instanceof File) {
-        formDataToSend.append('thumbnailFile', formData.thumbnailImage);
+        formDataToSend.append('file', formData.thumbnailImage);
       } else if (formData.thumbnailImage && typeof formData.thumbnailImage === 'string') {
         formDataToSend.append('thumbnailUrl', formData.thumbnailImage);
       } else if (thumbnailUrl) {

@@ -1,6 +1,5 @@
 // ახალი ტიპები 4-დონიანი სისტემისთვის
 export interface LocalizedString {
-  ka?: string;
   en: string;
   ru: string;
 }

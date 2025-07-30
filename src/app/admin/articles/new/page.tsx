@@ -8,6 +8,7 @@ import { CreateArticleData } from '@/types/articles';
 import { getBlogs } from '@/lib/api/blogs';
 import { getAllCategories } from '@/lib/api/categories';
 import { createArticle } from '@/lib/api/articles';
+
 import { useLanguage } from '@/i18n/language-context';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
 import ImageUpload from '@/components/FormElements/ImageUpload';
@@ -17,7 +18,8 @@ import {
   NewspaperIcon,
   TrashIcon,
   BookOpenIcon,
-  TagIcon
+  TagIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 
 export default function NewArticlePage() {
@@ -77,10 +79,9 @@ export default function NewArticlePage() {
           console.error('Categories data is not an array:', categoriesData);
           return;
         }
-        // Filter out subcategories (categories that have parentId)
-        const mainCategories = categoriesData.filter(category => !category.parentId);
-        console.log('Main categories:', mainCategories);
-        setCategories(mainCategories || []);
+        // Show all categories including subcategories
+        console.log('All categories:', categoriesData);
+        setCategories(categoriesData || []);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -91,6 +92,7 @@ export default function NewArticlePage() {
   }, []);
 
   const [currentTag, setCurrentTag] = useState('');
+  const [currentCategoryId, setCurrentCategoryId] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +102,8 @@ export default function NewArticlePage() {
       return;
     }
 
-    if (!formData.categoryIds.length) {
+    const validCategoryIds = formData.categoryIds.filter(id => id && id.trim() !== '');
+    if (!validCategoryIds.length) {
       alert('მინიმუმ ერთი კატეგორიის არჩევა სავალდებულოა');
       return;
     }
@@ -139,7 +142,7 @@ export default function NewArticlePage() {
         excerpt: formData.excerpt,
         content: formData.content,
         blogId: formData.blogId,
-        categoryIds: formData.categoryIds,
+        categoryIds: formData.categoryIds.filter(id => id && id.trim() !== ''), // Filter out empty strings
         readTime: formData.readTime,
         author: {
           name: formData.authorName,
@@ -161,6 +164,10 @@ export default function NewArticlePage() {
         }
       });
 
+      // Debug: Log the data being sent
+      console.log('Article data being sent:', articleData);
+      console.log('Category IDs:', articleData.categoryIds);
+      
       // Create article
       const article = await createArticle(formDataToSend);
       console.log('Created article:', article);
@@ -194,6 +201,24 @@ export default function NewArticlePage() {
     setFormData(prev => ({
       ...prev,
       tags: (prev.tags || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddCategoryId = () => {
+    const trimmedId = currentCategoryId.trim();
+    if (trimmedId && !formData.categoryIds.includes(trimmedId)) {
+      setFormData(prev => ({
+        ...prev,
+        categoryIds: [...prev.categoryIds, trimmedId]
+      }));
+      setCurrentCategoryId('');
+    }
+  };
+
+  const handleRemoveCategoryId = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds.filter((_, i) => i !== index)
     }));
   };
 
@@ -321,7 +346,49 @@ export default function NewArticlePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Categories *
                     </label>
+
+                    {/* Add Category ID manually */}
+                    <div className="mb-4">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={currentCategoryId}
+                          onChange={(e) => setCurrentCategoryId(e.target.value)}
+                          placeholder="Add category ID..."
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategoryId())}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddCategoryId}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                      
+                      {/* Display added category IDs */}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.categoryIds.map((categoryId, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                          >
+                            {categoryId}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCategoryId(index)}
+                              className="hover:text-green-600"
+                            >
+                              <TrashIcon className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-300 rounded-lg p-3">
+                      {/* Show existing categories */}
                       {categories.map(category => (
                         <label key={category._id} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
                           <input
@@ -345,6 +412,30 @@ export default function NewArticlePage() {
                           <span className="text-sm text-gray-900">{category.name[language]}</span>
                         </label>
                       ))}
+
+                      {/* Show manually added category IDs that are not in the categories list */}
+                      {formData.categoryIds
+                        .filter(categoryId => !categories.find(cat => cat._id === categoryId))
+                        .map(categoryId => (
+                          <label key={categoryId} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={true}
+                              onChange={(e) => {
+                                if (!e.target.checked) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    categoryIds: prev.categoryIds.filter(id => id !== categoryId)
+                                  }));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-900 italic">
+                              {categoryId} <span className="text-gray-500">(Manual ID)</span>
+                            </span>
+                          </label>
+                        ))}
                     </div>
                     {formData.categoryIds.length === 0 && (
                       <p className="mt-1 text-sm text-red-500">

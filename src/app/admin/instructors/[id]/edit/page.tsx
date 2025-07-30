@@ -57,11 +57,11 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (!formData.name.trim()) errors.name = 'სახელი სავალდებულოა';
-    if (!formData.email.trim()) errors.email = 'ელ-ფოსტა სავალდებულოა';
-    if (!formData.profession.trim()) errors.profession = 'პროფესია სავალდებულოა';
-    if (!formData.bio.ka.trim()) errors.bio = 'ბიოგრაფია სავალდებულოა ქართულ ენაზე';
-    if (!formData.htmlContent.ka.trim()) errors.htmlContent = 'დეტალური ბიოგრაფია სავალდებულოა ქართულ ენაზე';
+    if (!formData.name?.trim()) errors.name = 'სახელი სავალდებულოა';
+    if (!formData.email?.trim()) errors.email = 'ელ-ფოსტა სავალდებულოა';
+    if (!formData.profession?.trim()) errors.profession = 'პროფესია სავალდებულოა';
+    if (!formData.bio?.en?.trim() && !formData.bio?.ru?.trim()) errors.bio = 'ბიოგრაფია სავალდებულოა ინგლისურ ან რუსულ ენაზე';
+    if (!formData.htmlContent?.en?.trim() && !formData.htmlContent?.ru?.trim()) errors.htmlContent = 'დეტალური ბიოგრაფია სავალდებულოა ინგლისურ ან რუსულ ენაზე';
     if (!formData.profileImage) errors.profileImage = 'პროფილის სურათი სავალდებულოა';
 
     if (Object.keys(errors).length > 0) {
@@ -158,11 +158,22 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
           <div>
             <MultilingualInput
               label="მოკლე ბიოგრაფია"
-              value={formData.bio as unknown as MultilingualContent}
-              onChange={(value) => setFormData({ ...formData, bio: value as unknown as MultilingualContent })}
+              value={{
+                en: formData.bio?.en || '',
+                ru: formData.bio?.ru || ''
+              }}
+              onChange={(value) => setFormData({ 
+                ...formData, 
+                bio: {
+                  ka: formData.bio?.ka || '',
+                  en: value.en,
+                  ru: value.ru
+                }
+              })}
               type="textarea"
               placeholder="მოკლე ბიოგრაფია..."
               required
+              languages={['en', 'ru']}
             />
           </div>
 
@@ -170,11 +181,22 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
           <div>
             <MultilingualInput
               label="დეტალური ბიოგრაფია"
-              value={formData.htmlContent}
-              onChange={(value) => setFormData({ ...formData, htmlContent: value })}
+              value={{
+                en: formData.htmlContent?.en || '',
+                ru: formData.htmlContent?.ru || ''
+              }}
+              onChange={(value) => setFormData({ 
+                ...formData, 
+                htmlContent: {
+                  ka: formData.htmlContent?.ka || '',
+                  en: value.en,
+                  ru: value.ru
+                }
+              })}
               type="richtext"
               placeholder="დეტალური ბიოგრაფია..."
               required
+              languages={['en', 'ru']}
             />
           </div>
 

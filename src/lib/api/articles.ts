@@ -58,7 +58,7 @@ interface CreateArticlePayload {
     ru: string;
   };
   blogId: string;
-  categoryId: string;
+  categoryIds: string[]; // Changed from categoryId to categoryIds
   author: {
     name: string;
     bio?: string;
@@ -222,7 +222,7 @@ export const getArticleById = async (id: string): Promise<Article> => {
       title: data.title || { ka: "", en: "", ru: "" },
       excerpt: data.excerpt || { ka: "", en: "", ru: "" },
       content: data.content || { ka: "", en: "", ru: "" },
-      categoryId: categoryId,
+      categoryIds: [categoryId],
       blogId:
         typeof data.blogId === "string" ? data.blogId : data.blogId?._id || "",
       authorName: data.author?.name || "",
@@ -297,7 +297,63 @@ export const updateArticle = async (
 
     if (request.isFormData) {
       // If it's already FormData, just use it directly
-      return await sendFormDataRequest(id, request.formData as FormData);
+      const formData = request.formData as FormData;
+      
+      // Upload new images if any
+      const images = formData.getAll('featuredImages');
+      console.log('Found images to upload:', images);
+      
+      if (images.length > 0) {
+        const uploadedUrls = await Promise.all(
+          images.map(async (image: any) => {
+            if (image instanceof File) {
+              console.log('Uploading image file:', image.name);
+              const url = await uploadToCloudinary(image, 'articles');
+              console.log('Uploaded image URL:', url);
+              return url;
+            }
+            console.log('Using existing image URL:', image);
+            return image;
+          })
+        );
+        
+        console.log('All uploaded URLs:', uploadedUrls);
+        
+        // Remove old images field
+        formData.delete('featuredImages');
+        
+        // Add uploaded URLs
+        formData.append('featuredImages', JSON.stringify(uploadedUrls));
+      }
+
+      // Get existing images if any
+      const existingImages = formData.get('existingFeaturedImages');
+      if (existingImages) {
+        const existingUrls = JSON.parse(existingImages as string);
+        console.log('Existing image URLs:', existingUrls);
+        
+        // Combine with uploaded URLs if any
+        const allImages = images.length > 0 
+          ? [...existingUrls, ...JSON.parse(formData.get('featuredImages') as string)]
+          : existingUrls;
+        
+        // Update images with all URLs
+        formData.delete('featuredImages');
+        formData.delete('existingFeaturedImages');
+        formData.append('featuredImages', JSON.stringify(allImages));
+      }
+
+      // Log final FormData content
+      console.log('Final FormData content:');
+      const entries = Array.from(formData.entries());
+      for (const [key, value] of entries) {
+        console.log(`${key}:`, value);
+      }
+      
+      const response = await sendFormDataRequest(id, formData);
+      console.log('Server response:', response);
+      
+      return response;
     } else {
       // Convert JSON data to FormData
       const data = request.formData as any;
@@ -306,7 +362,7 @@ export const updateArticle = async (
       formDataToSend.append("title", JSON.stringify(data.title));
       formDataToSend.append("excerpt", JSON.stringify(data.excerpt));
       formDataToSend.append("content", JSON.stringify(data.content));
-      formDataToSend.append("categoryId", data.categoryId);
+      formDataToSend.append("categoryIds", JSON.stringify(data.categoryIds));
       formDataToSend.append("blogId", data.blogId);
       formDataToSend.append("readTime", data.readTime);
       formDataToSend.append(
@@ -340,7 +396,10 @@ export const updateArticle = async (
         );
       }
 
-      return await sendFormDataRequest(id, formDataToSend);
+      const response = await sendFormDataRequest(id, formDataToSend);
+      console.log('Server response:', response);
+      
+      return response;
     }
   } catch (error) {
     console.error("Error updating article:", error);
@@ -366,7 +425,13 @@ async function sendFormDataRequest(
   }
 
   const responseData = await response.json();
-  console.log("Server response:", responseData);
+  console.log("Server response in sendFormDataRequest:", responseData);
+  
+  // Ensure featuredImages is properly set in the response
+  if (responseData.featuredImages) {
+    console.log('Featured images in response:', responseData.featuredImages);
+  }
+  
   return responseData;
 }
 

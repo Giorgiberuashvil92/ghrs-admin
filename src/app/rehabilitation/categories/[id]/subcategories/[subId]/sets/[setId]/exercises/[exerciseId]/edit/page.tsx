@@ -63,9 +63,8 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ExerciseFormData>({
-    name: { ka: '', en: '', ru: '' },
-    description: { ka: '', en: '', ru: '' },
-    recommendations: { ka: '', en: '', ru: '' },
+    name: { en: '', ru: '' },
+    description: { en: '', ru: '' },
     videoFile: null,
     thumbnailImage: null,
     videoDuration: '',
@@ -114,9 +113,8 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       
       // Pre-fill form data with existing exercise data
       setFormData({
-        name: exerciseData.name || { ka: '', en: '', ru: '' },
-        description: exerciseData.description || { ka: '', en: '', ru: '' },
-        recommendations: exerciseData.recommendations || { ka: '', en: '', ru: '' },
+        name: exerciseData.name || { en: '', ru: '' },
+        description: exerciseData.description || { en: '', ru: '' },
         videoFile: null,
         thumbnailImage: null,
         videoDuration: exerciseData.videoDuration || '',
@@ -263,7 +261,8 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
         return;
       }
 
-      if (formData.name.ka.includes('http') || formData.description.ka.includes('http')) {
+      if (formData.name.en.includes('http') || formData.description.en.includes('http') ||
+          formData.name.ru.includes('http') || formData.description.ru.includes('http')) {
         alert(t('pleaseEnterGeorgianName'));
         setIsLoading(false);
         return;

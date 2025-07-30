@@ -80,7 +80,7 @@ export async function updateInstructor(id: string, data: UpdateInstructorData): 
     console.log("updateInstructor - sending data:", data);
 
     const response = await fetch(`${API_BASE_URL}/instructors/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
