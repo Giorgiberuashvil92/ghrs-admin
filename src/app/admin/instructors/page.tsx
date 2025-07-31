@@ -21,12 +21,68 @@ import {
   StarIcon as StarIconSolid 
 } from '@heroicons/react/24/solid';
 
+// Translation object
+const translations = {
+  ka: {
+    title: 'ინსტრუქტორების მართვა',
+    subtitle: 'მართავით და ამატებთ ახალ ინსტრუქტორებს',
+    newInstructor: 'ახალი ინსტრუქტორი',
+    searchPlaceholder: 'ძებნა ინსტრუქტორების მიხედვით...',
+    allInstructors: 'ყველა ინსტრუქტორი',
+    active: 'აქტიური',
+    inactive: 'არააქტიური',
+    verified: 'ვერიფიცირებული',
+    deleteError: 'ინსტრუქტორის წაშლა ვერ მოხერხდა',
+    totalInstructors: 'სულ ინსტრუქტორები',
+    activeInstructors: 'აქტიური ინსტრუქტორები',
+    verifiedInstructors: 'ვერიფიცირებული ინსტრუქტორები',
+    totalStudents: 'სულ სტუდენტები',
+    averageRating: 'საშუალო რეიტინგი'
+  },
+  en: {
+    title: 'Instructor Management',
+    subtitle: 'Manage and add new instructors',
+    newInstructor: 'New Instructor',
+    searchPlaceholder: 'Search instructors...',
+    allInstructors: 'All Instructors',
+    active: 'Active',
+    inactive: 'Inactive',
+    verified: 'Verified',
+    deleteError: 'Failed to delete instructor',
+    totalInstructors: 'Total Instructors',
+    activeInstructors: 'Active Instructors',
+    verifiedInstructors: 'Verified Instructors',
+    totalStudents: 'Total Students',
+    averageRating: 'Average Rating'
+  },
+  ru: {
+    title: 'Управление инструкторами',
+    subtitle: 'Управляйте и добавляйте новых инструкторов',
+    newInstructor: 'Новый инструктор',
+    searchPlaceholder: 'Поиск инструкторов...',
+    allInstructors: 'Все инструкторы',
+    active: 'Активные',
+    inactive: 'Неактивные',
+    verified: 'Верифицированные',
+    deleteError: 'Не удалось удалить инструктора',
+    totalInstructors: 'Всего инструкторов',
+    activeInstructors: 'Активные инструкторы',
+    verifiedInstructors: 'Верифицированные инструкторы',
+    totalStudents: 'Всего студентов',
+    averageRating: 'Средний рейтинг'
+  }
+};
+
 export default function InstructorsPage() {
   const { language } = useLanguage();
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'verified'>('all');
+
+  // Get current language translations
+  const currentLang = language === 'ka' ? 'ka' : language === 'ru' ? 'ru' : 'en';
+  const tr = translations[currentLang as keyof typeof translations];
 
   useEffect(() => {
     fetchInstructors();
@@ -114,15 +170,15 @@ export default function InstructorsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <UserGroupIcon className="h-8 w-8 text-blue-600" />
-            ინსტრუქტორების მართვა
+            {tr.title}
           </h1>
-          <p className="text-gray-600 mt-1">მართავით და ამატებთ ახალ ინსტრუქტორებს</p>
+          <p className="text-gray-600 mt-1">{tr.subtitle}</p>
         </div>
         
         <Link href="/admin/instructors/new">
           <Button className="bg-blue-600 hover:bg-blue-700">
             <PlusIcon className="h-4 w-4 mr-2" />
-            ახალი ინსტრუქტორი
+            {tr.newInstructor}
           </Button>
         </Link>
       </div>

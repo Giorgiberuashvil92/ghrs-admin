@@ -18,6 +18,17 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 
 // Translation object
 const translations = {
+  ka: {
+    title: 'კურსების მართვა',
+    subtitle: 'შექმენი და მართე საგანმანათლებლო კურსები',
+    newCourse: 'ახალი კურსი',
+    searchPlaceholder: 'ძებნა კურსების მიხედვით...',
+    allCourses: 'ყველა კურსი',
+    published: 'გამოქვეყნებული',
+    draft: 'დრაფტი',
+    deleteError: 'კურსის წაშლა ვერ მოხერხდა',
+    statusError: 'კურსის სტატუსის შეცვლა ვერ მოხერხდა'
+  },
   en: {
     title: 'Course Management',
     subtitle: 'Create and manage educational courses',
@@ -50,8 +61,8 @@ export default function CoursesPage() {
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
 
   // Get current language translations
-  const currentLang = language === 'ru' ? 'ru' : 'en';
-  const tr = translations[currentLang];
+  const currentLang = language === 'ka' ? 'ka' : language === 'ru' ? 'ru' : 'en';
+  const tr = translations[currentLang as keyof typeof translations];
 
   useEffect(() => {
     fetchCourses();

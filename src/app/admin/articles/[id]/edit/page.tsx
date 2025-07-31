@@ -38,9 +38,9 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
   const [categories, setCategories] = useState<any[]>([]);
   
   const [formData, setFormData] = useState<UpdateArticleData>({
-    title: { ka: '', en: '', ru: '' },
-    excerpt: { ka: '', en: '', ru: '' },
-    content: { ka: '', en: '', ru: '' },
+    title: { en: '', ru: '' },
+    excerpt: { en: '', ru: '' },
+    content: { en: '', ru: '' },
     featuredImages: [],
     categoryIds: [],
     blogId: '',
@@ -119,10 +119,6 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title?.ka || !formData.excerpt?.ka || !formData.content?.ka) {
-      alert('ქართული სათაური, მოკლე აღწერა და კონტენტი სავალდებულოა');
-      return;
-    }
 
     const validCategoryIds = formData.categoryIds?.filter(id => id && id.trim() !== '') || [];
     if (!validCategoryIds.length) {
@@ -256,7 +252,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
 
   const handleAddTOCItem = () => {
     const newItem: TOCItem = {
-      title: { ka: '', en: '', ru: '' },
+      title: { en: '', ru: '' },
       anchor: ''
     };
     setFormData(prev => ({
@@ -376,7 +372,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
                 <div className="space-y-6">
                   <MultilingualInput
                     label="Title"
-                    value={formData.title || { ka: '', en: '', ru: '' }}
+                    value={formData.title || { en: '', ru: '' }}
                     onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
                     required
                     maxLength={200}
@@ -384,7 +380,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
 
                   <MultilingualInput
                     label="Excerpt"
-                    value={formData.excerpt || { ka: '', en: '', ru: '' }}
+                    value={formData.excerpt || { en: '', ru: '' }}
                     onChange={(value) => setFormData(prev => ({ ...prev, excerpt: value }))}
                     required
                     type="textarea"
@@ -394,7 +390,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
 
                   <MultilingualInput
                     label="Content"
-                    value={formData.content || { ka: '', en: '', ru: '' }}
+                    value={formData.content || { en: '', ru: '' }}
                     onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                     required
                     type="richtext"

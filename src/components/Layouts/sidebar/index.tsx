@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/i18n/language-context";
 import { NAV_DATA } from "./data";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
 import { MenuItem } from "./menu-item";
@@ -13,6 +14,7 @@ import { useSidebarContext } from "./sidebar-context";
 export function Sidebar() {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
+  const { t } = useLanguage();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const toggleExpanded = (title: string) => {
@@ -134,7 +136,11 @@ export function Sidebar() {
                                       href={subItem.url}
                                       isActive={pathname === subItem.url}
                                     >
-                                      <span>{subItem.title}</span>
+                                      <span>
+                                        {(subItem as any).titleKey 
+                                          ? t((subItem as any).titleKey as any) 
+                                          : subItem.title}
+                                      </span>
                                     </MenuItem>
                                   </li>
                                 ))}

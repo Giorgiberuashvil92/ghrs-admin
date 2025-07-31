@@ -31,17 +31,14 @@ export default function NewArticlePage() {
   
   const [formData, setFormData] = useState<CreateArticleData>({
     title: {
-      ka: '',
       en: '',
       ru: ''
     },
     excerpt: {
-      ka: '',
       en: '',
       ru: ''
     },
     content: {
-      ka: '',
       en: '',
       ru: ''
     },
@@ -97,10 +94,7 @@ export default function NewArticlePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.ka || !formData.excerpt.ka || !formData.content.ka) {
-      alert('ქართული სათაური, მოკლე აღწერა და კონტენტი სავალდებულოა');
-      return;
-    }
+ 
 
     const validCategoryIds = formData.categoryIds.filter(id => id && id.trim() !== '');
     if (!validCategoryIds.length) {
@@ -114,7 +108,7 @@ export default function NewArticlePage() {
     }
 
     if (!formData.authorName) {
-      alert('ავტორის სახელი სავალდებულოა');
+      alert('ავტორის სახელი სავალდებულოა'); 
       return;
     }
 
@@ -124,16 +118,10 @@ export default function NewArticlePage() {
       // Create FormData for file upload
       const formDataToSend = new FormData();
 
-      // Add all images to FormData
+      // Add featured images URLs to FormData
       if (formData.featuredImages && formData.featuredImages.length > 0) {
-        for (const imageUrl of formData.featuredImages) {
-          if (imageUrl.startsWith('data:')) {
-            // Convert base64 to blob and append
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            formDataToSend.append('images', blob, 'featured-image.jpg');
-          }
-        }
+        console.log('Adding featured images:', formData.featuredImages);
+        formDataToSend.append('featuredImages', JSON.stringify(formData.featuredImages));
       }
 
       // Prepare article data
