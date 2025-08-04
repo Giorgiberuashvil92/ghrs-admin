@@ -34,7 +34,7 @@ function RichTextEditorContent({
   value,
   onChange,
   placeholder = 'Start writing...',
-  height = 400,
+  height = 800,
   className = ''
 }: RichTextEditorProps) {
   const editor = useEditor({

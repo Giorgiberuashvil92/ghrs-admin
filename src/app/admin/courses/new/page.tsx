@@ -440,6 +440,7 @@ export default function NewCoursePage() {
                       required
                       type="richtext"
                       rows={10}
+                      height={1000}
                       className={errors.description ? 'border-red-500' : ''}
                     />
                     {errors.description && <p className="text-red-500 text-sm">

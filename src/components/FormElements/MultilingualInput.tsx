@@ -20,6 +20,7 @@ interface MultilingualInputProps {
   required?: boolean;
   maxLength?: number;
   rows?: number;
+  height?: number;
   placeholder?: string;
   className?: string;
   // Optional prop to specify which languages to show (defaults to all available)
@@ -33,7 +34,8 @@ export default function MultilingualInput({
   type = 'text',
   required = false,
   maxLength,
-  rows = 3,
+  rows = 6,
+  height,
   placeholder,
   className = '',
   languages
@@ -91,6 +93,7 @@ export default function MultilingualInput({
               value={(value && value[activeTab]) || ''}
               onChange={(newValue) => handleChange(activeTab, newValue)}
               placeholder={placeholder}
+              height={height}
             />
           ) : type === 'textarea' ? (
             <textarea

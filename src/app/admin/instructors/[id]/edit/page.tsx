@@ -194,6 +194,7 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
                 }
               })}
               type="richtext"
+              height={1000}
               placeholder="დეტალური ბიოგრაფია..."
               required
               languages={['en', 'ru']}

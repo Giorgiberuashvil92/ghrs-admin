@@ -526,6 +526,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                   required
                   type="richtext"
                   rows={10}
+                  height={1000}
                   className={errors.description ? 'border-red-500' : ''}
                 />
                 {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
@@ -717,6 +718,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                       }))}
                       type="richtext"
                       rows={5}
+                      height={800}
                       className={errors.syllabusDescription ? 'border-red-500' : ''}
                     />
                     {errors.syllabusDescription && <p className="text-red-500 text-sm mt-1">{errors.syllabusDescription}</p>}
@@ -799,6 +801,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                       }))}
                       type="richtext"
                       rows={5}
+                      height={800}
                       className={errors.announcementContent ? 'border-red-500' : ''}
                     />
                     {errors.announcementContent && <p className="text-red-500 text-sm mt-1">{errors.announcementContent}</p>}
@@ -944,6 +947,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                 onChange={(value) => setFormData(prev => ({ ...prev, certificateDescription: value as MultilingualContent }))}
                 type="richtext"
                 rows={5}
+                height={800}
                 className={errors.certificateDescription ? 'border-red-500' : ''}
               />
               {errors.certificateDescription && <p className="text-red-500 text-sm mt-1">{errors.certificateDescription}</p>}

@@ -40,7 +40,7 @@ export function TextAreaGroup({
       <div className="relative mt-3 [&_svg]:pointer-events-none [&_svg]:absolute [&_svg]:left-5.5 [&_svg]:top-5.5">
         <textarea
           id={id}
-          rows={6}
+          rows={8}
           placeholder={placeholder}
           defaultValue={defaultValue}
           value={value}

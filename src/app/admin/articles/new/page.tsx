@@ -283,7 +283,7 @@ export default function NewArticlePage() {
                     onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                     required
                     type="richtext"
-                    rows={15}
+                    height={1000}
                   />
                 </div>
               </div>
