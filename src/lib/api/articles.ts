@@ -60,8 +60,8 @@ interface CreateArticlePayload {
   blogId: string;
   categoryIds: string[]; // Changed from categoryId to categoryIds
   author: {
-    name: string;
-    bio?: string;
+    name: { en: string; ru: string };
+    bio?: { en: string; ru: string };
     avatar?: string;
   };
   tags?: string[];
@@ -134,8 +134,20 @@ export async function getArticles(
           typeof article.blogId === "string"
             ? article.blogId
             : article.blogId?._id || "",
-        authorName: article.author?.name || "",
-        authorBio: article.author?.bio || "",
+        authorName: ((): { en: string; ru: string } => {
+          const n = article.author?.name;
+          if (n && typeof n === 'object') {
+            return { en: n.en || '', ru: n.ru || '' };
+          }
+          return { en: typeof n === 'string' ? n : '', ru: typeof n === 'string' ? n : '' };
+        })(),
+        authorBio: ((): { en: string; ru: string } => {
+          const b = article.author?.bio;
+          if (b && typeof b === 'object') {
+            return { en: b.en || '', ru: b.ru || '' };
+          }
+          return { en: typeof b === 'string' ? b : '', ru: typeof b === 'string' ? b : '' };
+        })(),
         authorAvatar: article.author?.avatar || "",
         isPublished: article.isPublished || false,
         isFeatured: article.isFeatured || false,
@@ -232,8 +244,20 @@ export const getArticleById = async (id: string): Promise<Article> => {
       categoryIds,
       blogId:
         typeof data.blogId === "string" ? data.blogId : data.blogId?._id || "",
-      authorName: data.author?.name || "",
-      authorBio: data.author?.bio || "",
+      authorName: ((): { en: string; ru: string } => {
+        const n = data.author?.name;
+        if (n && typeof n === 'object') {
+          return { en: n.en || '', ru: n.ru || '' };
+        }
+        return { en: typeof n === 'string' ? n : '', ru: typeof n === 'string' ? n : '' };
+      })(),
+      authorBio: ((): { en: string; ru: string } => {
+        const b = data.author?.bio;
+        if (b && typeof b === 'object') {
+          return { en: b.en || '', ru: b.ru || '' };
+        }
+        return { en: typeof b === 'string' ? b : '', ru: typeof b === 'string' ? b : '' };
+      })(),
       authorAvatar: data.author?.avatar || "",
       isPublished: data.isPublished || false,
       isFeatured: data.isFeatured || false,

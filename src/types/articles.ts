@@ -9,8 +9,8 @@ export interface Article {
   featuredImages: string[]; // Array of image URLs
   categoryIds: string[]; // Array of category IDs
   blogId: string; // Reference to parent blog
-  authorName: string;
-  authorBio?: string;
+  authorName: LocalizedString;
+  authorBio?: LocalizedString;
   authorAvatar?: string;
   tableOfContents: TOCItem[];
   tags: string[];
@@ -36,8 +36,8 @@ export interface CreateArticleData {
   featuredImages?: string[];
   categoryIds: string[]; // Array of category IDs
   blogId: string; // Reference to parent blog
-  authorName: string;
-  authorBio?: string;
+  authorName: LocalizedString;
+  authorBio?: LocalizedString;
   authorAvatar?: string;
   tableOfContents?: TOCItem[];
   tags?: string[];
@@ -54,8 +54,8 @@ export interface UpdateArticleData {
   featuredImages?: string[];
   categoryIds?: string[]; // Array of category IDs
   blogId?: string; // Reference to parent blog
-  authorName?: string;
-  authorBio?: string;
+  authorName?: LocalizedString;
+  authorBio?: LocalizedString;
   authorAvatar?: string;
   tableOfContents?: TOCItem[];
   tags?: string[];

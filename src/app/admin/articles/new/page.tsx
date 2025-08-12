@@ -44,8 +44,8 @@ export default function NewArticlePage() {
     },
     blogId: '',
     categoryIds: [], // Change from categoryId to categoryIds array
-    authorName: '',
-    authorBio: '',
+    authorName: { en: '', ru: '' },
+    authorBio: { en: '', ru: '' },
     authorAvatar: '',
     featuredImages: [],
     tags: [],
@@ -106,7 +106,7 @@ export default function NewArticlePage() {
       return;
     }
 
-    if (!formData.authorName) {
+  if (!formData.authorName?.en && !formData.authorName?.ru) {
       alert('ავტორის სახელი სავალდებულოა'); 
       return;
     }
@@ -131,8 +131,8 @@ export default function NewArticlePage() {
         blogId: formData.blogId,
         categoryIds: formData.categoryIds.filter(id => id && id.trim() !== ''), // Filter out empty strings
         author: {
-          name: formData.authorName,
-          bio: formData.authorBio || '',
+          name: { en: formData.authorName.en || '', ru: formData.authorName.ru || '' },
+          bio: { en: formData.authorBio?.en || '', ru: formData.authorBio?.ru || '' },
           avatar: formData.authorAvatar || ''
         },
         tags: formData.tags || [],
@@ -487,30 +487,20 @@ export default function NewArticlePage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Author Information</h3>
                 
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Author Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.authorName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, authorName: e.target.value }))}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  <MultilingualInput
+                    label="Author Name *"
+                    value={formData.authorName}
+                    onChange={(value) => setFormData(prev => ({ ...prev, authorName: value }))}
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Author Bio
-                    </label>
-                    <textarea
-                      value={formData.authorBio}
-                      onChange={(e) => setFormData(prev => ({ ...prev, authorBio: e.target.value }))}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  <MultilingualInput
+                    label="Author Bio"
+                    value={formData.authorBio}
+                    onChange={(value) => setFormData(prev => ({ ...prev, authorBio: value }))}
+                    type="textarea"
+                    rows={4}
+                  />
 
                   <ImageUpload
                     label="Author Avatar"
