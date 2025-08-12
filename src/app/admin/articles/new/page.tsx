@@ -44,7 +44,6 @@ export default function NewArticlePage() {
     },
     blogId: '',
     categoryIds: [], // Change from categoryId to categoryIds array
-    readTime: '',
     authorName: '',
     authorBio: '',
     authorAvatar: '',
@@ -125,13 +124,12 @@ export default function NewArticlePage() {
       }
 
       // Prepare article data
-      const articleData = {
+    const articleData = {
         title: formData.title,
         excerpt: formData.excerpt,
         content: formData.content,
         blogId: formData.blogId,
         categoryIds: formData.categoryIds.filter(id => id && id.trim() !== ''), // Filter out empty strings
-        readTime: formData.readTime,
         author: {
           name: formData.authorName,
           bio: formData.authorBio || '',
@@ -151,6 +149,11 @@ export default function NewArticlePage() {
           formDataToSend.append(key, JSON.stringify(value));
         }
       });
+
+      // Backend compatibility: also send single categoryId (first of the list)
+      if (validCategoryIds.length > 0) {
+        formDataToSend.append('categoryId', validCategoryIds[0]);
+      }
 
       // Debug: Log the data being sent
       console.log('Article data being sent:', articleData);
@@ -212,7 +215,7 @@ export default function NewArticlePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-none mx-auto py-8 px-2 sm:px-3 lg:px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -283,7 +286,7 @@ export default function NewArticlePage() {
                     onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                     required
                     type="richtext"
-                    height={1000}
+                    height={1500}
                   />
                 </div>
               </div>
@@ -377,33 +380,36 @@ export default function NewArticlePage() {
 
                     <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-300 rounded-lg p-3">
                       {/* Show existing categories */}
-                      {categories.map(category => (
-                        <label key={category._id} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.categoryIds.includes(category._id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  categoryIds: [...prev.categoryIds, category._id]
-                                }));
-                              } else {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  categoryIds: prev.categoryIds.filter(id => id !== category._id)
-                                }));
-                              }
-                            }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-900">{category.name[language]}</span>
-                        </label>
-                      ))}
+                      {categories.map(category => {
+                        const catId = (category as any)._id ?? (category as any).id;
+                        return (
+                          <label key={catId} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.categoryIds.includes(catId)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    categoryIds: [...prev.categoryIds, catId]
+                                  }));
+                                } else {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    categoryIds: prev.categoryIds.filter(id => id !== catId)
+                                  }));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-900">{category.name[language]}</span>
+                          </label>
+                        );
+                      })}
 
                       {/* Show manually added category IDs that are not in the categories list */}
                       {formData.categoryIds
-                        .filter(categoryId => !categories.find(cat => cat._id === categoryId))
+                        .filter(categoryId => !categories.find(cat => (((cat as any)._id ?? (cat as any).id) === categoryId)))
                         .map(categoryId => (
                           <label key={categoryId} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
                             <input
@@ -435,20 +441,7 @@ export default function NewArticlePage() {
                     </p>
                   </div>
 
-                  {/* Read Time */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Read Time *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.readTime}
-                      onChange={(e) => setFormData(prev => ({ ...prev, readTime: e.target.value }))}
-                      placeholder="5 minutes"
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  {/* Read Time removed */}
 
                   {/* Sort Order */}
                   <div>

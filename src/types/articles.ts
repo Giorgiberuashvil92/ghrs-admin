@@ -9,7 +9,6 @@ export interface Article {
   featuredImages: string[]; // Array of image URLs
   categoryIds: string[]; // Array of category IDs
   blogId: string; // Reference to parent blog
-  readTime: string; // e.g., "5 minutes"
   authorName: string;
   authorBio?: string;
   authorAvatar?: string;
@@ -37,7 +36,6 @@ export interface CreateArticleData {
   featuredImages?: string[];
   categoryIds: string[]; // Array of category IDs
   blogId: string; // Reference to parent blog
-  readTime: string;
   authorName: string;
   authorBio?: string;
   authorAvatar?: string;
@@ -56,7 +54,6 @@ export interface UpdateArticleData {
   featuredImages?: string[];
   categoryIds?: string[]; // Array of category IDs
   blogId?: string; // Reference to parent blog
-  readTime?: string;
   authorName?: string;
   authorBio?: string;
   authorAvatar?: string;

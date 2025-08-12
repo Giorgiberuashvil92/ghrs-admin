@@ -59,7 +59,7 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-blue-600 to-teal-600">
         <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="relative mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-white/20 backdrop-blur-sm rounded-full">

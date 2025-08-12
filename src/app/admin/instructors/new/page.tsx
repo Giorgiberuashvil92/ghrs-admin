@@ -277,7 +277,7 @@ export default function NewInstructorPage() {
                   required
                   type="richtext"
                   rows={12}
-                  height={1000}
+                  height={1500}
                   className={errors.detailedBio ? 'border-red-500' : ''}
                   placeholder="ინსტრუქტორის დეტალური ბიოგრაფია, განათლება, გამოცდილება..."
                 />
@@ -331,7 +331,7 @@ export default function NewInstructorPage() {
                           onChange={(value) => updateFAQItem(index, 'answer', value as MultilingualContent)}
                           type="richtext"
                           rows={4}
-                          height={600}
+                          height={1000}
                           placeholder="შეიყვანეთ პასუხი..."
                         />
                       </div>

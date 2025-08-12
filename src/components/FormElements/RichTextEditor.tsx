@@ -34,7 +34,7 @@ function RichTextEditorContent({
   value,
   onChange,
   placeholder = 'Start writing...',
-  height = 800,
+  height = 1500,
   className = ''
 }: RichTextEditorProps) {
   const editor = useEditor({
@@ -97,7 +97,7 @@ function RichTextEditorContent({
   }
 
   return (
-    <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+    <div className={`w-full border border-gray-300 rounded-lg overflow-hidden ${className}`}>
       {/* Toolbar */}
       <div className="border-b border-gray-200 bg-gray-50 p-2 flex flex-wrap gap-1">
         {/* Text Formatting */}

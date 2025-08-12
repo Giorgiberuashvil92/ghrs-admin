@@ -76,7 +76,7 @@ export default function CategoriesPage() {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600">
         <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="relative mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-white/20 backdrop-blur-sm rounded-full">
@@ -103,7 +103,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="relative">
           <input
             type="text"
@@ -117,7 +117,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Categories Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCategories.map((category) => (
             <div key={category._id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all group relative overflow-hidden">

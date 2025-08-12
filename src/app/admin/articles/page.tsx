@@ -78,7 +78,6 @@ interface APIArticle {
   viewsCount: number;
   commentsCount: number;
   likesCount: number;
-  readTime: string;
   publishDate: string;
   featuredImages: string[];
   tableOfContents: any[];

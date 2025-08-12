@@ -66,7 +66,7 @@ export default function MultilingualInput({
   };
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={`w-full space-y-2 ${className}`}>
       <label className="block text-sm font-medium text-gray-700">
         {label}
         {required && <span className="ml-1 text-red-500">*</span>}

@@ -64,7 +64,6 @@ interface CreateArticlePayload {
     bio?: string;
     avatar?: string;
   };
-  readTime: string;
   tags?: string[];
   isPublished?: boolean;
   isFeatured?: boolean;
@@ -144,7 +143,6 @@ export async function getArticles(
         featuredImages: article.featuredImages || [],
         tableOfContents: article.tableOfContents || [],
         tags: article.tags || [],
-        readTime: article.readTime || "",
         sortOrder: article.sortOrder || 0,
         createdAt: article.createdAt || new Date().toISOString(),
         updatedAt: article.updatedAt || new Date().toISOString(),
@@ -211,18 +209,27 @@ export const getArticleById = async (id: string): Promise<Article> => {
     const data = await response.json();
     console.log("Raw article data:", data);
 
-    // Keep the full category object if it exists
-    const categoryId =
-      typeof data.categoryId === "string"
-        ? data.categoryId
-        : data.categoryId?._id || "";
+    // Normalize category IDs from either categoryIds (array) or categoryId (single or array)
+    const categoryIds: string[] = Array.isArray((data as any).categoryIds)
+      ? (data as any).categoryIds
+          .map((c: any) => (typeof c === "string" ? c : c?._id))
+          .filter((v: any): v is string => Boolean(v))
+      : Array.isArray((data as any).categoryId)
+      ? (data as any).categoryId
+          .map((c: any) => (typeof c === "string" ? c : c?._id))
+          .filter((v: any): v is string => Boolean(v))
+      : typeof (data as any).categoryId === "string"
+      ? [(data as any).categoryId]
+      : (data as any).categoryId?._id
+      ? [(data as any).categoryId._id]
+      : [];
 
     return {
       _id: data._id,
       title: data.title || { ka: "", en: "", ru: "" },
       excerpt: data.excerpt || { ka: "", en: "", ru: "" },
       content: data.content || { ka: "", en: "", ru: "" },
-      categoryIds: [categoryId],
+      categoryIds,
       blogId:
         typeof data.blogId === "string" ? data.blogId : data.blogId?._id || "",
       authorName: data.author?.name || "",
@@ -234,7 +241,6 @@ export const getArticleById = async (id: string): Promise<Article> => {
       featuredImages: data.featuredImages || [],
       tableOfContents: data.tableOfContents || [],
       tags: data.tags || [],
-      readTime: data.readTime || "",
       sortOrder: data.sortOrder || 0,
       createdAt: data.createdAt || new Date().toISOString(),
       updatedAt: data.updatedAt || new Date().toISOString(),
@@ -364,7 +370,6 @@ export const updateArticle = async (
       formDataToSend.append("content", JSON.stringify(data.content));
       formDataToSend.append("categoryIds", JSON.stringify(data.categoryIds));
       formDataToSend.append("blogId", data.blogId);
-      formDataToSend.append("readTime", data.readTime);
       formDataToSend.append(
         "author",
         JSON.stringify({

@@ -18,7 +18,7 @@ export default function RichTextEditor({
   placeholder = "დაწყებული შეგიძლიათ ტექსტის ჩაწერა...",
   className = "",
   readOnly = false,
-  height = 800
+  height = 1500
 }: RichTextEditorProps) {
   const editorRef = useRef<any>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -62,6 +62,8 @@ export default function RichTextEditor({
         disabled={readOnly}
         init={{
           height: height,
+          width: '100%',
+          max_width: 'none',
           menubar: false,
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
