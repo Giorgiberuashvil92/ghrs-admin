@@ -52,8 +52,10 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [isThumbnailUrlInput, setIsThumbnailUrlInput] = useState(false);
   const [isVideoUrlInput, setIsVideoUrlInput] = useState(false);
+  const [isVideoUrlEnInput, setIsVideoUrlEnInput] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [videoUrlEn, setVideoUrlEn] = useState('');
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ExerciseFormData>({
@@ -79,6 +81,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     setId: '',
     categoryId: '',
   });
+  const [videoPreviewEn, setVideoPreviewEn] = useState<string | null>(null);
 
   const [formErrors, setFormErrors] = useState<{
     name?: boolean;
@@ -132,9 +135,17 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
         setThumbnailPreview(exerciseData.thumbnailImage);
         setThumbnailUrl(exerciseData.thumbnailImage);
       }
-      if (exerciseData.videoFile && typeof exerciseData.videoFile === 'string') {
-        setVideoPreview(exerciseData.videoFile);
-        setVideoUrl(exerciseData.videoFile);
+      // ვიდეოების ინიციალიზაცია
+      console.log('exerciseData:', exerciseData);
+      if (exerciseData.videoUrl) {
+        console.log('Setting videoUrl:', exerciseData.videoUrl);
+        setVideoPreview(exerciseData.videoUrl);
+        setVideoUrl(exerciseData.videoUrl);
+      }
+      if (exerciseData.videoUrlEn) {
+        console.log('Setting videoUrlEn:', exerciseData.videoUrlEn);
+        setVideoPreviewEn(exerciseData.videoUrlEn);
+        setVideoUrlEn(exerciseData.videoUrlEn);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -224,6 +235,11 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     }
   };
 
+  const handleVideoEnDelete = () => {
+    setVideoPreviewEn(null);
+    setVideoUrlEn('');
+  };
+
   const handleThumbnailUrlSubmit = () => {
     if (thumbnailUrl.trim()) {
       setThumbnailPreview(thumbnailUrl);
@@ -241,6 +257,15 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       setFormData({ ...formData, videoFile: videoUrl as unknown as File });
       setIsVideoUrlInput(false);
       handleMediaChange();
+    } else {
+      alert(t('pleaseEnterVideoUrl'));
+    }
+  };
+
+  const handleVideoUrlEnSubmit = () => {
+    if (videoUrlEn.trim()) {
+      setVideoPreviewEn(videoUrlEn);
+      setIsVideoUrlEnInput(false);
     } else {
       alert(t('pleaseEnterVideoUrl'));
     }
@@ -281,13 +306,17 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       formDataToSend.append('setId', formData.setId);
       formDataToSend.append('categoryId', formData.categoryId);
 
-      // ფაილები ან URL-ები
+      // ვიდეოების გაგზავნა
       if (formData.videoFile instanceof File) {
         formDataToSend.append('videoFile', formData.videoFile);
-      } else if (formData.videoFile && typeof formData.videoFile === 'string') {
-        formDataToSend.append('videoUrl', formData.videoFile);
-      } else if (videoUrl) {
+      }
+      // ძირითადი ვიდეო
+      if (videoUrl && videoUrl.trim()) {
         formDataToSend.append('videoUrl', videoUrl);
+      }
+      // ინგლისური ვიდეო
+      if (videoUrlEn && videoUrlEn.trim()) {
+        formDataToSend.append('videoUrlEn', videoUrlEn);
       }
       
       if (formData.thumbnailImage instanceof File) {
@@ -299,13 +328,13 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
       }
 
       console.log('Updating exercise with data:');
-      for (let [key, value] of formDataToSend.entries()) {
+      formDataToSend.forEach((value, key) => {
         if (value instanceof File) {
           console.log(`${key}:`, `File: ${value.name} (${value.type}), size: ${value.size} bytes`);
         } else {
-          console.log(`${key}:`, value);
+          console.log(`${key}:`, value as any);
         }
-      }
+      });
 
       await updateExercise(resolvedParams.exerciseId, formDataToSend);  
       alert(t('exerciseUpdatedSuccessfully'));
@@ -615,6 +644,66 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                       </Button>
                     </div>
                   )}
+                </div>
+
+                {/* ვიდეო (EN) მხოლოდ URL */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    {t('exerciseVideo')} (EN)
+                  </label>
+                  <div className="flex items-start gap-4">
+                    {videoPreviewEn ? (
+                      <div className="relative">
+                        <video className="h-24 w-24 object-cover rounded-lg" controls>
+                          <source src={videoPreviewEn} />
+                        </video>
+                        <button
+                          type="button"
+                          onClick={handleVideoEnDelete}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                        <VideoCameraIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-500">{t('noVideoUploaded')}</p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsVideoUrlEnInput(!isVideoUrlEnInput)}
+                        className="flex-1"
+                      >
+                        <LinkIcon className="h-4 w-4 mr-1" />
+                        {t('url')}
+                      </Button>
+                    </div>
+
+                    {isVideoUrlEnInput && (
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          value={videoUrlEn}
+                          onChange={(e) => setVideoUrlEn(e.target.value)}
+                          placeholder={t('enterVideoUrl')}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleVideoUrlEnSubmit}
+                          size="sm"
+                        >
+                          {t('add')}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

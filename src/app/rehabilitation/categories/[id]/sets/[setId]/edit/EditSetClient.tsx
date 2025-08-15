@@ -50,6 +50,14 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
   const [isImageUrlInput, setIsImageUrlInput] = useState(false);
   const imageFileRef = useRef<HTMLInputElement>(null);
   
+  const normalizeStringValue = (value: any): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') {
+      return value.en || value.ka || value.ru || '';
+    }
+    return '';
+  };
+
   const [formData, setFormData] = useState({
     name: initialSet.name || { en: '', ru: '' },
     description: initialSet.description || { en: '', ru: '' },
@@ -59,9 +67,18 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
     warnings: initialSet.warnings || { en: '', ru: '' },
     recommendations: initialSet.recommendations || { en: '', ru: '' },
     additional: initialSet.additional || { en: '', ru: '' },
-    demoVideoUrl: initialSet.demoVideoUrl || '',
+    demoVideoUrl: normalizeStringValue(initialSet.demoVideoUrl) || '',
+    // Prefill EN with default demo URL if EN-specific is missing
+    demoVideoUrlEn: normalizeStringValue(initialSet.demoVideoUrlEn) || normalizeStringValue(initialSet.demoVideoUrl) || '',
     price: initialSet.price || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
+    priceEn: initialSet.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
     discountedPrice: initialSet.discountedPrice || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
+    discountedPriceEn: initialSet.discountedPriceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
+    levels: initialSet.levels || {
+      beginner: { exerciseCount: 0, isLocked: false },
+      intermediate: { exerciseCount: 0, isLocked: true },
+      advanced: { exerciseCount: 0, isLocked: true }
+    },
     isActive: initialSet.isActive ?? true,
     isPublished: initialSet.isPublished ?? false,
     image: initialSet.thumbnailImage || ''
@@ -130,6 +147,7 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
           ru: String(formData.additional?.ru || '')
         },
         demoVideoUrl: String(formData.demoVideoUrl || ''),
+        demoVideoUrlEn: String(formData.demoVideoUrlEn || ''),
         thumbnailImage: String(formData.image || ''),
         price: {
           monthly: Number(formData.price.monthly) || 0,
@@ -137,11 +155,37 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
           sixMonths: Number(formData.price.sixMonths) || 0,
           yearly: Number(formData.price.yearly) || 0
         },
+        priceEn: {
+          monthly: Number(formData.priceEn?.monthly) || 0,
+          threeMonths: Number(formData.priceEn?.threeMonths) || 0,
+          sixMonths: Number(formData.priceEn?.sixMonths) || 0,
+          yearly: Number(formData.priceEn?.yearly) || 0
+        },
         discountedPrice: {
           monthly: Number(formData.discountedPrice.monthly) || 0,
           threeMonths: Number(formData.discountedPrice.threeMonths) || 0,
           sixMonths: Number(formData.discountedPrice.sixMonths) || 0,
           yearly: Number(formData.discountedPrice.yearly) || 0
+        },
+        discountedPriceEn: {
+          monthly: Number(formData.discountedPriceEn?.monthly) || 0,
+          threeMonths: Number(formData.discountedPriceEn?.threeMonths) || 0,
+          sixMonths: Number(formData.discountedPriceEn?.sixMonths) || 0,
+          yearly: Number(formData.discountedPriceEn?.yearly) || 0
+        },
+        levels: {
+          beginner: {
+            exerciseCount: Number(formData.levels?.beginner?.exerciseCount) || 0,
+            isLocked: Boolean(formData.levels?.beginner?.isLocked)
+          },
+          intermediate: {
+            exerciseCount: Number(formData.levels?.intermediate?.exerciseCount) || 0,
+            isLocked: Boolean(formData.levels?.intermediate?.isLocked)
+          },
+          advanced: {
+            exerciseCount: Number(formData.levels?.advanced?.exerciseCount) || 0,
+            isLocked: Boolean(formData.levels?.advanced?.isLocked)
+          }
         },
         isActive: Boolean(formData.isActive),
         isPublished: Boolean(formData.isPublished)
@@ -577,6 +621,21 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
                           }))
                         }
                       />
+                      <div className="mt-4">
+                        <InputGroup
+                          label="Demo Video URL (English)"
+                          name="demo_video_url_en"
+                          type="url"
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          value={formData.demoVideoUrlEn || ''}
+                          handleChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              demoVideoUrlEn: e.target.value
+                            }))
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -701,6 +760,190 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
                     </div>
                   </div>
 
+                  {/* ფასები (EN) */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('pricing')} (EN)
+                    </h4>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('oneMonth')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.priceEn?.monthly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), monthly: Number(e.target.value) }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('threeMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.priceEn?.threeMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), threeMonths: Number(e.target.value) }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('sixMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.priceEn?.sixMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), sixMonths: Number(e.target.value) }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('yearly')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.priceEn?.yearly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), yearly: Number(e.target.value) }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* დონეები */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('levels')}
+                    </h4>
+                    <div className="flex flex-col gap-5.5">
+                      {/* დამწყები */}
+                      <div className="rounded-sm border border-stroke bg-gray-50 p-4 dark:border-strokedark dark:bg-boxdark">
+                        <h5 className="mb-3 font-medium">{t('easy')}</h5>
+                        <div className="flex items-center gap-4">
+                          <label className="cursor-pointer">
+                            <div className="relative flex items-center pt-0.5">
+                              <input
+                                type="checkbox"
+                                checked={!formData.levels.beginner.isLocked}
+                                onChange={(e) =>
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    levels: {
+                                      ...prev.levels,
+                                      beginner: {
+                                        ...prev.levels.beginner,
+                                        isLocked: !e.target.checked
+                                      }
+                                    }
+                                  }))
+                                }
+                                className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
+                              />
+                              <p className="ml-3 font-medium">{t('available')}</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* საშუალო */}
+                      <div className="rounded-sm border border-stroke bg-gray-50 p-4 dark:border-strokedark dark:bg-boxdark">
+                        <h5 className="mb-3 font-medium">{t('medium')}</h5>
+                        <div className="flex items-center gap-4">
+                          <label className="cursor-pointer">
+                            <div className="relative flex items-center pt-0.5">
+                              <input
+                                type="checkbox"
+                                checked={!formData.levels.intermediate.isLocked}
+                                onChange={(e) =>
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    levels: {
+                                      ...prev.levels,
+                                      intermediate: {
+                                        ...prev.levels.intermediate,
+                                        isLocked: !e.target.checked
+                                      }
+                                    }
+                                  }))
+                                }
+                                className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
+                              />
+                              <p className="ml-3 font-medium">{t('available')}</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* რთული */}
+                      <div className="rounded-sm border border-stroke bg-gray-50 p-4 dark:border-strokedark dark:bg-boxdark">
+                        <h5 className="mb-3 font-medium">{t('hard')}</h5>
+                        <div className="flex items-center gap-4">
+                          <label className="cursor-pointer">
+                            <div className="relative flex items-center pt-0.5">
+                              <input
+                                type="checkbox"
+                                checked={!formData.levels.advanced.isLocked}
+                                onChange={(e) =>
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    levels: {
+                                      ...prev.levels,
+                                      advanced: {
+                                        ...prev.levels.advanced,
+                                        isLocked: !e.target.checked
+                                      }
+                                    }
+                                  }))
+                                }
+                                className="taskCheckbox h-5 w-5 cursor-pointer rounded-full border border-stroke bg-transparent after:invisible after:flex after:h-4 after:w-4 after:items-center after:justify-center after:text-white after:content-['\\2714'] checked:border-primary checked:bg-primary checked:after:visible dark:border-strokedark"
+                              />
+                              <p className="ml-3 font-medium">{t('available')}</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* ფასდაკლებები */}
                   <div className="mb-5.5">
                     <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
@@ -805,6 +1048,127 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
                               ...prev,
                               discountedPrice: {
                                 ...(prev.discountedPrice || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                yearly: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ფასდაკლებები (EN) */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('discountedPrices')} (EN)
+                    </h4>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('oneMonth')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.monthly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                monthly: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('threeMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.threeMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                threeMonths: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('sixMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.sixMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                sixMonths: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('yearly')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.yearly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
                                   monthly: 0,
                                   threeMonths: 0,
                                   sixMonths: 0,

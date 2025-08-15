@@ -102,9 +102,11 @@ function validateUrls(data: FormData): void {
   console.group("🔍 URL-ების ვალიდაცია");
   
   const videoUrl = data.get("videoUrl") as string;
+  const videoUrlEn = data.get("videoUrlEn") as string;
   const thumbnailUrl = data.get("thumbnailUrl") as string;
 
   console.log("📝 ვიდეოს URL:", videoUrl);
+  console.log("📝 ვიდეოს URL (EN):", videoUrlEn);
   console.log("📝 თამბნეილის URL:", thumbnailUrl);
 
   if (videoUrl) {
@@ -114,6 +116,16 @@ function validateUrls(data: FormData): void {
     } catch {
       console.error("❌ არასწორი ვიდეოს URL ფორმატი:", videoUrl);
       throw new Error("არასწორი ვიდეოს URL ფორმატი");
+    }
+  }
+
+  if (videoUrlEn) {
+    try {
+      new URL(videoUrlEn);
+      console.log("✅ ვიდეოს URL (EN) ვალიდურია");
+    } catch {
+      console.error("❌ არასწორი ვიდეოს URL (EN) ფორმატი:", videoUrlEn);
+      throw new Error("არასწორი ვიდეოს URL (EN) ფორმატი");
     }
   }
 

@@ -1,5 +1,6 @@
 // ახალი ტიპები 4-დონიანი სისტემისთვის
 export interface LocalizedString {
+  ka?: string;
   en: string;
   ru: string;
 }
@@ -96,6 +97,8 @@ export interface Exercise {
   
   // ვიდეო და სურათი
   videoFile: File | string | null;
+  videoUrl?: string;
+  videoUrlEn?: string;
   thumbnailImage: File | string | null;
   videoDuration: string; // format: "MM:SS"
   

@@ -46,10 +46,13 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoPreviewEn, setVideoPreviewEn] = useState<string | null>(null);
   const [isThumbnailUrlInput, setIsThumbnailUrlInput] = useState(false);
   const [isVideoUrlInput, setIsVideoUrlInput] = useState(false);
+  const [isVideoUrlEnInput, setIsVideoUrlEnInput] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [videoUrlEn, setVideoUrlEn] = useState('');
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ExerciseFormData>({
@@ -157,6 +160,11 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
     setFormData({ ...formData, videoFile: null });
   };
 
+  const handleVideoEnDelete = () => {
+    setVideoPreviewEn(null);
+    setVideoUrlEn('');
+  };
+
   const handleThumbnailUrlSubmit = () => {
     console.log('handleThumbnailUrlSubmit called with URL:', thumbnailUrl);
     if (thumbnailUrl.trim()) {
@@ -180,6 +188,16 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       setIsVideoUrlInput(false);
       setVideoUrl(''); // გაასუფთავე ველი
       handleMediaChange();
+    } else {
+      alert(t('pleaseEnterUrl'));
+    }
+  };
+
+  const handleVideoUrlEnSubmit = () => {
+    console.log('handleVideoUrlEnSubmit called with URL:', videoUrlEn);
+    if (videoUrlEn.trim()) {
+      setVideoPreviewEn(videoUrlEn);
+      setIsVideoUrlEnInput(false);
     } else {
       alert(t('pleaseEnterUrl'));
     }
@@ -237,6 +255,10 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
           formDataToSend.append('videoUrl', vidUrl);
         }
       }
+      // თუ ინგლისურის ვიდეოს URL-ი დაფიქსირდა, გადავცეთ
+      if (videoUrlEn.trim() && /^https?:\/\//.test(videoUrlEn)) {
+        formDataToSend.append('videoUrlEn', videoUrlEn);
+      }
       // Debug: დავინახოთ რა იგზავნება
       console.log('==== FormData to be sent ====');
       console.log('formData.thumbnailImage:', formData.thumbnailImage, typeof formData.thumbnailImage);
@@ -247,13 +269,13 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
       if (videoFileRef.current) {
         console.log('videoFileRef.current.files:', videoFileRef.current.files);
       }
-      for (const [key, value] of formDataToSend.entries()) {
+      formDataToSend.forEach((value, key) => {
         if (value instanceof File) {
           console.log(`${key}: [File]`, value.name, value.type, value.size + ' bytes');
         } else {
           console.log(`${key}:`, value);
         }
-      }
+      });
       const exercise = await createExercise(formDataToSend);
       router.push(redirectPath);
       router.refresh();
@@ -607,6 +629,67 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
                     />
                   </div>
                 </div>
+
+                {/* ვიდეო (EN) მხოლოდ URL */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    {t('exerciseVideo')} (EN)
+                  </label>
+                  <div className="flex items-start gap-4">
+                    {videoPreviewEn ? (
+                      <div className="relative">
+                        <video
+                          src={videoPreviewEn}
+                          className="h-24 w-24 object-cover rounded-xl"
+                          controls
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVideoEnDelete}
+                          className="absolute -top-2 -right-2 p-1.5 bg-red-100 rounded-full text-red-600 hover:bg-red-200 transition-colors"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-24 w-24 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:border-purple-400 transition-colors">
+                        <VideoCameraIcon className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsVideoUrlEnInput(true)}
+                        className="rounded-lg"
+                      >
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                        {t('enterUrl')}
+                      </Button>
+                    </div>
+
+                    {isVideoUrlEnInput && (
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          value={videoUrlEn}
+                          onChange={(e) => setVideoUrlEn(e.target.value)}
+                          placeholder={t('enterVideoUrl')}
+                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleVideoUrlEnSubmit}
+                          variant="default"
+                          className="whitespace-nowrap rounded-lg bg-purple-600 hover:bg-purple-700"
+                        >
+                          {t('add')}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -804,7 +887,7 @@ export default function AddExerciseClient({ category, set, subcategory }: AddExe
             <div className="border-t border-gray-200 pt-8 flex justify-end gap-4">
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 onClick={() => router.push(`/rehabilitation/categories/${category._id}/sets/${set._id}/exercises`)}
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"

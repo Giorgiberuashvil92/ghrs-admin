@@ -32,6 +32,9 @@ interface SetsClientProps {
 export default function SetsClient({ initialSets, category, subcategory }: SetsClientProps) {
   const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  type LangKey = 'ka' | 'en' | 'ru';
+  const getLocalized = (loc?: { ka?: string; en: string; ru: string }) =>
+    (loc?.[language as LangKey] || loc?.en || loc?.ru || '');
   
   // Build paths dynamically based on whether we have a subcategory
   const basePath = subcategory 
@@ -41,18 +44,20 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
   const addSetPath = `${basePath}/sets/add`;
   
   const title = subcategory 
-    ? `${category.name[language]} › ${subcategory.name[language]}`
-    : category.name[language];
+    ? `${getLocalized(category.name)} › ${getLocalized(subcategory.name)}`
+    : getLocalized(category.name);
     
   const description = subcategory
     ? t('subcategorySetsList')
     : t('categorySetsList');
 
-  const filteredSets = initialSets.filter(set =>
-    set.name[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
-    set.description?.[language]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    set.recommendations?.en?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSets = initialSets.filter((set) => {
+    const term = searchTerm.toLowerCase();
+    const name = getLocalized(set.name).toLowerCase();
+    const desc = getLocalized(set.description as any).toLowerCase();
+    const rec = getLocalized(set.recommendations as any).toLowerCase();
+    return name.includes(term) || desc.includes(term) || rec.includes(term);
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -135,7 +140,7 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                   {set.thumbnailImage ? (
                     <img 
                       src={set.thumbnailImage} 
-                      alt={set.name.ka} 
+                      alt={getLocalized(set.name)}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
@@ -172,13 +177,13 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                 <div className="p-6">
                   {/* Title */}
                   <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    {set.name[language]}
+                    {getLocalized(set.name)}
                   </h3>
 
                   {/* Description */}
-                  {set.description?.[language] && (
+                  {getLocalized(set.description as any) && (
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {set.description[language]}
+                      {getLocalized(set.description as any)}
                     </p>
                   )}
 
@@ -206,6 +211,33 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
 
                   {/* Action Buttons */}
                   <div className="space-y-3">
+                    {/* Demo Video (localized preference) */}
+                    {(() => {
+                      const demoUrl = language === 'en' ? (set.demoVideoUrlEn || set.demoVideoUrl) : set.demoVideoUrl;
+                      return demoUrl ? (
+                        <a
+                          href={demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                        >
+                          <PlayIcon className="h-4 w-4" />
+                          {t('demoVideo')}
+                        </a>
+                      ) : null;
+                    })()}
+                    {/* Second link for EN demo if both exist */}
+                    {language !== 'en' && set.demoVideoUrlEn && (
+                      <a
+                        href={set.demoVideoUrlEn}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                      >
+                        <PlayIcon className="h-4 w-4" />
+                        Demo Video (EN)
+                      </a>
+                    )}
                     {/* Primary Action */}
                     <Link
                       href={`${basePath}/sets/${set._id}/exercises`}

@@ -71,6 +71,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
     },
     image: '',
     demoVideoUrl: '',
+    demoVideoUrlEn: '',
     duration: '',
     difficulty: 'medium',
     equipment: {
@@ -87,7 +88,19 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
       sixMonths: 0,
       yearly: 0,
     },
+    priceEn: {
+      monthly: 0,
+      threeMonths: 0,
+      sixMonths: 0,
+      yearly: 0,
+    },
     discountedPrice: {
+      monthly: 0,
+      threeMonths: 0,
+      sixMonths: 0,
+      yearly: 0,
+    },
+    discountedPriceEn: {
       monthly: 0,
       threeMonths: 0,
       sixMonths: 0,
@@ -158,12 +171,15 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
         formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
         formDataToSend.append('additional', JSON.stringify(formData.additional));
         formDataToSend.append('demoVideoUrl', formData.demoVideoUrl || '');
+        formDataToSend.append('demoVideoUrlEn', formData.demoVideoUrlEn || '');
         formDataToSend.append('duration', formData.duration);
         formDataToSend.append('difficulty', formData.difficulty);
         formDataToSend.append('equipment', JSON.stringify(formData.equipment));
         formDataToSend.append('warnings', JSON.stringify(formData.warnings));
         formDataToSend.append('price', JSON.stringify(formData.price));
+        formDataToSend.append('priceEn', JSON.stringify(formData.priceEn));
         formDataToSend.append('discountedPrice', JSON.stringify(formData.discountedPrice));
+        formDataToSend.append('discountedPriceEn', JSON.stringify(formData.discountedPriceEn));
         formDataToSend.append('levels', JSON.stringify(formData.levels));
         formDataToSend.append('isActive', formData.isActive.toString());
         formDataToSend.append('isPublished', formData.isPublished.toString());
@@ -620,6 +636,21 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                           }))
                         }
                       />
+                      <div className="mt-4">
+                        <InputGroup
+                          label="Demo Video URL (English)"
+                          name="demo_video_url_en"
+                          type="url"
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          value={formData.demoVideoUrlEn || ''}
+                          handleChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              demoVideoUrlEn: e.target.value
+                            }))
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -727,6 +758,127 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                               ...prev,
                               discountedPrice: {
                                 ...(prev.discountedPrice || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                yearly: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ფასდაკლებები (EN) */}
+                  <div className="mb-5.5">
+                    <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                      {t('discountedPrices')} (EN)
+                    </h4>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('oneMonth')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.monthly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                monthly: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('threeMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.threeMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                threeMonths: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('sixMonths')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.sixMonths || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
+                                  monthly: 0,
+                                  threeMonths: 0,
+                                  sixMonths: 0,
+                                  yearly: 0
+                                }),
+                                sixMonths: Number(e.target.value)
+                              }
+                            }))
+                          }
+                          className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                          placeholder="0.00"
+                        />
+                        <span className="flex-shrink-0 text-sm">₾</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 flex-shrink-0">
+                          <span className="text-sm font-medium">{t('yearly')}:</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discountedPriceEn?.yearly || 0}
+                          onChange={(e) =>
+                            setFormData(prev => ({
+                              ...prev,
+                              discountedPriceEn: {
+                                ...(prev.discountedPriceEn || {
                                   monthly: 0,
                                   threeMonths: 0,
                                   sixMonths: 0,
@@ -941,6 +1093,95 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                   </div>
                 </div>
 
+                {/* ფასები (EN) */}
+                <div className="mb-5.5">
+                  <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
+                    {t('pricing')} (EN)
+                  </h4>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 flex-shrink-0">
+                        <span className="text-sm font-medium">{t('oneMonth')}:</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.priceEn?.monthly || 0}
+                        onChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), monthly: Number(e.target.value) }
+                          }))
+                        }
+                        className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                        placeholder="0.00"
+                      />
+                      <span className="flex-shrink-0 text-sm">₾</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 flex-shrink-0">
+                        <span className="text-sm font-medium">{t('threeMonths')}:</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.priceEn?.threeMonths || 0}
+                        onChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), threeMonths: Number(e.target.value) }
+                          }))
+                        }
+                        className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                        placeholder="0.00"
+                      />
+                      <span className="flex-shrink-0 text-sm">₾</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 flex-shrink-0">
+                        <span className="text-sm font-medium">{t('sixMonths')}:</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.priceEn?.sixMonths || 0}
+                        onChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), sixMonths: Number(e.target.value) }
+                          }))
+                        }
+                        className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                        placeholder="0.00"
+                      />
+                      <span className="flex-shrink-0 text-sm">₾</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 flex-shrink-0">
+                        <span className="text-sm font-medium">{t('yearly')}:</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.priceEn?.yearly || 0}
+                        onChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            priceEn: { ...(prev.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 }), yearly: Number(e.target.value) }
+                          }))
+                        }
+                        className="w-full rounded border border-stroke bg-transparent px-4 py-2 outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                        placeholder="0.00"
+                      />
+                      <span className="flex-shrink-0 text-sm">₾</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* სტატუსები */}
                 <div className="mb-5.5">
                   <h4 className="mb-4 text-lg font-medium text-black dark:text-white">
@@ -982,7 +1223,7 @@ export default function AddSetClient({ category, subcategory }: AddSetClientProp
                     type="submit"
                     onClick={handleSubmit}
                     disabled={isLoading}
-                    variant="add"
+                    variant="default"
                     size="lg"
                     className="w-full"
                   >
