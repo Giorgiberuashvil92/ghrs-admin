@@ -208,8 +208,11 @@ export default function ExercisesClient({ category, set, initialExercises, subca
                       </div>
                     </div>
 
-                    {/* Status Badge */}
-                    <div className="absolute top-4 left-4">
+                    {/* Exercise Number Badge */}
+                    <div className="absolute top-4 left-4 flex gap-2">
+                      <div className="bg-blue-600/90 backdrop-blur-sm text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                        {filteredExercises.indexOf(exercise) + 1}
+                      </div>
                       {exercise.isActive && exercise.isPublished ? (
                         <div className="bg-green-100/90 backdrop-blur-sm text-green-800 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
                           <CheckCircleIconSolid className="h-4 w-4" />

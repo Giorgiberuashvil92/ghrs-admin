@@ -36,6 +36,7 @@
     "react-apexcharts": "^1.7.0",
     "react-dom": "19.0.0",
     "react-hot-toast": "^2.5.2",
+    "react-image-crop": "^11.0.10",
     "react-player": "^3.0.0",
     "tailwind-merge": "^2.6.0"
   },
