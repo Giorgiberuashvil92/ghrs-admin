@@ -47,6 +47,36 @@ export async function createSet(request: CreateSetRequest): Promise<Set> {
   }
 }
 
+export async function duplicateSet(setId: string): Promise<Set> {
+  try {
+    const url = constructApiUrl(`sets/${setId}/duplicate`);
+    console.log("📤 Duplicating set:", setId);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json"
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Server error response:", errorData);
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`,
+      );
+    }
+
+    const result = await response.json();
+    console.log("✅ Set duplicated");
+    return result;
+  } catch (error) {
+    console.error("Error duplicating set:", error);
+    throw error;
+  }
+}
+
 export async function updateSet(
   setId: string,
   data: UpdateSetData,

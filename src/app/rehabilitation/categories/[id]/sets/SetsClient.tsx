@@ -7,6 +7,7 @@ import { Category } from '@/lib/api/categories';
 import { SubCategory } from '@/types/categories';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/language-context';
+import { duplicateSet } from '@/lib/api/sets';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -16,7 +17,8 @@ import {
   PlayIcon,
   PencilIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 import { 
   CheckCircleIcon as CheckCircleIconSolid,
@@ -32,6 +34,7 @@ interface SetsClientProps {
 export default function SetsClient({ initialSets, category, subcategory }: SetsClientProps) {
   const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [duplicatingSetId, setDuplicatingSetId] = useState<string | null>(null);
   type LangKey = 'ka' | 'en' | 'ru';
   const getLocalized = (loc?: { ka?: string; en: string; ru: string }) =>
     (loc?.[language as LangKey] || loc?.en || loc?.ru || '');
@@ -58,6 +61,21 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
     const rec = getLocalized(set.recommendations as any).toLowerCase();
     return name.includes(term) || desc.includes(term) || rec.includes(term);
   });
+
+  const handleDuplicateSet = async (setId: string) => {
+    try {
+      setDuplicatingSetId(setId);
+      const duplicatedSet = await duplicateSet(setId);
+      
+      // Refresh the page to show the new duplicated set
+      window.location.reload();
+    } catch (error) {
+      console.error('Error duplicating set:', error);
+      alert('შეცდომა სეტის დუპლიკატის შექმნისას');
+    } finally {
+      setDuplicatingSetId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -247,14 +265,29 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                       {t('exercises')}
                     </Link>
                     
-                    {/* Secondary Action */}
-                    <Link
-                      href={`${basePath}/sets/${set._id}/edit`}
-                      className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                      {t('edit')}
-                    </Link>
+                    {/* Secondary Actions */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <Link
+                        href={`${basePath}/sets/${set._id}/edit`}
+                        className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        {t('edit')}
+                      </Link>
+                      
+                      <button
+                        onClick={() => handleDuplicateSet(set._id)}
+                        disabled={duplicatingSetId === set._id}
+                        className="flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
+                      >
+                        {duplicatingSetId === set._id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        ) : (
+                          <DocumentDuplicateIcon className="h-4 w-4" />
+                        )}
+                        {t('duplicate')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

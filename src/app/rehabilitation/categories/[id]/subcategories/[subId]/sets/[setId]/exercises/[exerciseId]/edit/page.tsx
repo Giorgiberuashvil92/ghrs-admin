@@ -83,7 +83,6 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
   const [formErrors, setFormErrors] = useState<{
     name?: boolean;
     description?: boolean;
-    recommendations?: boolean;
     videoDuration?: boolean;
     duration?: boolean;
     repetitions?: boolean;
@@ -96,22 +95,61 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
     fetchData();
   }, [resolvedParams.id, resolvedParams.subId, resolvedParams.setId, resolvedParams.exerciseId]);
 
+  // Debug: watch key state changes
+  useEffect(() => {
+    console.group('🔎 EDIT STATE SNAPSHOT');
+    console.log('params:', resolvedParams);
+    console.log('has:', {
+      exercise: Boolean(exercise),
+      category: Boolean(category),
+      subcategory: Boolean(subcategory),
+      set: Boolean(set),
+    });
+    console.log('ids:', {
+      exerciseId: (exercise as any)?._id || (exercise as any)?.id,
+      categoryId: (category as any)?._id,
+      subcategoryId: (subcategory as any)?._id,
+      setId: (set as any)?._id,
+    });
+    console.log('formData:', formData);
+    console.groupEnd();
+  }, [resolvedParams, exercise, category, subcategory, set, formData]);
+
   const fetchData = async () => {
     try {
       setFetchLoading(true);
-      const [exerciseData, categoryData, subcategoryData, setData] = await Promise.all([
+      console.group('📥 Subcategory Edit: fetching data');
+      console.log('➡️ getSetById:', resolvedParams.setId);
+      const setData = await getSetById(resolvedParams.setId);
+      console.log('✅ setData:', setData);
+
+      const derivedCategoryId = ((): string => {
+        const raw = (setData as any)?.categoryId;
+        if (!raw) return resolvedParams.id;
+        if (typeof raw === 'string') return raw;
+        if (typeof raw === 'object') return raw._id || raw.id || resolvedParams.id;
+        return resolvedParams.id;
+      })();
+
+      if (derivedCategoryId !== resolvedParams.id) {
+        console.warn('⚠️ params.id და set.categoryId არ ემთხვევა', { paramsId: resolvedParams.id, setCategoryId: derivedCategoryId });
+      }
+
+      console.log('➡️ getExerciseById:', resolvedParams.exerciseId);
+      console.log('➡️ getCategoryById (effective):', derivedCategoryId);
+      console.log('➡️ getSubCategoryById:', resolvedParams.subId);
+
+      const [exerciseData, categoryData, subcategoryData] = await Promise.all([
         getExerciseById(resolvedParams.exerciseId),
-        getCategoryById(resolvedParams.id),
-        getSubCategoryById(resolvedParams.id, resolvedParams.subId),
-        getSetById(resolvedParams.setId)
+        getCategoryById(derivedCategoryId),
+        getSubCategoryById(derivedCategoryId, resolvedParams.subId)
       ]);
-      
+
       setExercise(exerciseData);
       setCategory(categoryData);
       setSubcategory(subcategoryData);
       setSet(setData);
-      
-      // Pre-fill form data with existing exercise data
+
       setFormData({
         name: exerciseData.name || { en: '', ru: '' },
         description: exerciseData.description || { en: '', ru: '' },
@@ -130,20 +168,22 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
         categoryId: categoryData._id,
       });
 
-      // Set previews for existing media
-      if (exerciseData.thumbnailImage && typeof exerciseData.thumbnailImage === 'string') {
-        setThumbnailPreview(exerciseData.thumbnailImage);
-        setThumbnailUrl(exerciseData.thumbnailImage);
+      const thumbSrc = (exerciseData as any).thumbnailImage || (exerciseData as any).thumbnailUrl;
+      if (thumbSrc && typeof thumbSrc === 'string') {
+        setThumbnailPreview(thumbSrc);
+        setThumbnailUrl(thumbSrc);
       }
-      if (exerciseData.videoFile && typeof exerciseData.videoFile === 'string') {
-        setVideoPreview(exerciseData.videoFile);
-        setVideoUrl(exerciseData.videoFile);
+      const vidUrl = (exerciseData as any).videoUrl || (exerciseData as any).videoFile;
+      if (vidUrl && typeof vidUrl === 'string') {
+        setVideoPreview(vidUrl);
+        setVideoUrl(vidUrl);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
       alert(t('errorLoadingData'));
     } finally {
       setFetchLoading(false);
+      console.groupEnd();
     }
   };
 
@@ -151,9 +191,8 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
     const isValidObjectId = (id: string) => /^[a-f\d]{24}$/i.test(id);
 
     const errors = {
-      name: !formData.name.ka.trim(),
-      description: !formData.description.ka.trim(),
-      recommendations: !formData.recommendations.ka.trim(),
+      name: !formData.name.en.trim() || !formData.name.ru.trim(),
+      description: !formData.description.en.trim() || !formData.description.ru.trim(),
       videoDuration: !formData.videoDuration.trim(),
       duration: !formData.duration.trim(),
       repetitions: !formData.repetitions.trim(),
@@ -273,7 +312,6 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       // ტექსტური ველები
       formDataToSend.append('name', JSON.stringify(formData.name));
       formDataToSend.append('description', JSON.stringify(formData.description));
-      formDataToSend.append('recommendations', JSON.stringify(formData.recommendations));
       formDataToSend.append('videoDuration', formData.videoDuration);
       formDataToSend.append('duration', formData.duration);
       formDataToSend.append('difficulty', formData.difficulty);
@@ -304,13 +342,13 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
       }
 
       console.log('Updating exercise with data:');
-      for (let [key, value] of formDataToSend.entries()) {
+      formDataToSend.forEach((value, key) => {
         if (value instanceof File) {
           console.log(`${key}:`, `File: ${value.name} (${value.type}), size: ${value.size} bytes`);
         } else {
-          console.log(`${key}:`, value);
+          console.log(`${key}:`, value as any);
         }
-      }
+      });
 
       await updateExercise(resolvedParams.exerciseId, formDataToSend);
       alert(t('exerciseUpdatedSuccess'));
@@ -333,6 +371,12 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
   }
 
   if (!exercise || !category || !subcategory || !set) {
+    console.warn('🔴 Missing required data for render (edit page):', {
+      hasExercise: Boolean(exercise),
+      hasCategory: Boolean(category),
+      hasSubcategory: Boolean(subcategory),
+      hasSet: Boolean(set),
+    });
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-red-500">{t('categorySubSetNotFound')}</div>
@@ -340,8 +384,21 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
     );
   }
 
+  console.log('🧩 Ready to render edit form with:', {
+    exerciseId: (exercise as any)?._id || (exercise as any)?.id,
+    categoryId: (category as any)?._id,
+    subcategoryId: (subcategory as any)?._id,
+    setId: (set as any)?._id,
+    nameEn: (exercise as any)?.name?.en,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      {/* DEBUG BANNER */}
+      <div className="fixed top-2 left-2 z-50 bg-black text-white text-xs px-2 py-1 rounded">
+        Edit Debug: ex={Boolean(exercise) ? '1' : '0'} cat={Boolean(category) ? '1' : '0'} sub={Boolean(subcategory) ? '1' : '0'} set={Boolean(set) ? '1' : '0'}
+      </div>
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-2xl rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
@@ -352,11 +409,77 @@ export default function SubCategoryEditExercisePage({ params }: SubCategoryEditE
           </div>
 
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {/* Rest of the form identical to original EditExercisePage - truncated for brevity */}
+            {/* სახელი */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('nameEn')} *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name.en}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: { ...formData.name, en: e.target.value } });
+                    handleInputChange('name', e.target.value);
+                  }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${formErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                  placeholder={t('enterExerciseName')}
+                />
+                {formErrors.name && <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('nameRu')} *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name.ru}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: { ...formData.name, ru: e.target.value } });
+                    handleInputChange('name', e.target.value);
+                  }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${formErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                  placeholder={t('enterExerciseName')}
+                />
+                {formErrors.name && <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>}
+              </div>
+            </div>
+
+            {/* აღწერა */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('descriptionEn')} *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={formData.description.en}
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: { ...formData.description, en: e.target.value } });
+                    handleInputChange('description', e.target.value);
+                  }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${formErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                  placeholder={t('writeExerciseDescription')}
+                />
+                {formErrors.description && <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('descriptionRu')} *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={formData.description.ru}
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: { ...formData.description, ru: e.target.value } });
+                    handleInputChange('description', e.target.value);
+                  }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${formErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                  placeholder={t('writeExerciseDescription')}
+                />
+                {formErrors.description && <p className="mt-1 text-xs text-red-500">{t('requiredField')}</p>}
+              </div>
+            </div>
             <div className="border-t border-gray-200 pt-8 flex justify-end gap-4">
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 onClick={() => router.push(redirectPath)}
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"

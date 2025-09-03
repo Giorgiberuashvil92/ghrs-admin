@@ -16,13 +16,15 @@ import {
   ClockIcon,
   FireIcon,
   ChartBarIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 import { 
   CheckCircleIcon as CheckCircleIconSolid,
   XCircleIcon as XCircleIconSolid 
 } from '@heroicons/react/24/solid';
 import { useLanguage } from '@/i18n/language-context';
+import { duplicateExercise } from '@/lib/api/exercises';
 
 // Exercise ტიპის გაფართოება, რომ thumbnailUrl იყოს
 interface ExerciseWithThumbnailUrl extends Exercise {
@@ -57,6 +59,7 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 
 export default function ExercisesClient({ category, set, initialExercises, subcategory }: ExercisesClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [duplicatingExerciseId, setDuplicatingExerciseId] = useState<string | null>(null);
   const { t } = useLanguage();
 
   console.log(initialExercises)
@@ -92,6 +95,21 @@ export default function ExercisesClient({ category, set, initialExercises, subca
     easy: 'bg-green-100 text-green-800',
     medium: 'bg-yellow-100 text-yellow-800',
     hard: 'bg-red-100 text-red-800'
+  };
+
+  const handleDuplicateExercise = async (exerciseId: string) => {
+    try {
+      setDuplicatingExerciseId(exerciseId);
+      const duplicatedExercise = await duplicateExercise(exerciseId);
+      
+      // Refresh the page to show the new duplicated exercise
+      window.location.reload();
+    } catch (error) {
+      console.error('Error duplicating exercise:', error);
+      alert('შეცდომა სავარჯიშოს დუპლიკატის შექმნისას');
+    } finally {
+      setDuplicatingExerciseId(null);
+    }
   };
 
   
@@ -284,17 +302,30 @@ export default function ExercisesClient({ category, set, initialExercises, subca
                       )}
                       
                       {/* Secondary Actions */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-2">
                         <Link
                           href={`${basePath}/sets/${set._id}/exercises/${exercise.id}/edit`}
-                          className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                          className="flex items-center justify-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-medium transition-all"
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <PencilIcon className="h-3 w-3" />
                           {t('edit')}
                         </Link>
                         
-                        <button className="flex items-center justify-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-medium transition-all">
-                          <TrashIcon className="h-4 w-4" />
+                        <button 
+                          onClick={() => handleDuplicateExercise(exercise.id!)}
+                          disabled={duplicatingExerciseId === exercise.id}
+                          className="flex items-center justify-center gap-1 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50"
+                        >
+                          {duplicatingExerciseId === exercise.id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                          ) : (
+                            <DocumentDuplicateIcon className="h-3 w-3" />
+                          )}
+                          {t('duplicate')}
+                        </button>
+                        
+                        <button className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-xs font-medium transition-all">
+                          <TrashIcon className="h-3 w-3" />
                           {t('delete')}
                         </button>
                       </div>

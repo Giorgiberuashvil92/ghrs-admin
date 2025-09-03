@@ -130,18 +130,37 @@ export async function getAllCategories(): Promise<Category[]> {
 }
 
 export async function getCategoryById(categoryId: string): Promise<Category> {
+  const __timerStart = (typeof performance !== 'undefined' ? performance.now() : Date.now());
   try {
-    const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`);
+    const url = `${API_BASE_URL}/categories/${categoryId}`;
+    console.log("📤 Fetching category by id:", categoryId, "→", url);
+    const __timerStart = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+    const response = await fetch(url);
+    const responseText = await response.text();
+    console.log("🧾 Category response status:", response.status);
+    console.log("🧾 Category response body (preview):", responseText.slice(0, 300));
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      let errorData: any;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch {
+        errorData = { message: responseText };
+      }
+      console.error("❌ Failed to fetch category:", errorData);
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
     return data;
   } catch (error) {
     console.error("Error getting category by ID:", error);
     throw error;
+  } finally {
+    const __timerEnd = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const __elapsed = Math.round(__timerEnd - __timerStart);
+    console.log(`⏱️ getCategoryById:${categoryId}: ${__elapsed} ms`);
   }
 }
 

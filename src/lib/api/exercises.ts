@@ -260,16 +260,36 @@ export async function getExercisesByDifficulty(
 }
 
 export async function getExerciseById(id: string): Promise<Exercise> {
-  const response = await fetch(constructApiUrl(`exercises/${id}`));
+  const __timerStart = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  try {
+    const url = constructApiUrl(`exercises/${id}`);
+    console.log("📤 Fetching exercise by id:", id, "→", url);
 
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ message: "Failed to fetch exercise" }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    const response = await fetch(url);
+    const responseText = await response.text();
+    console.log("🧾 Exercise response status:", response.status);
+    // Show small preview of body to avoid huge logs
+    console.log("🧾 Exercise response body (preview):", responseText.slice(0, 300));
+
+    if (!response.ok) {
+      let errorData: any;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch {
+        errorData = { message: responseText };
+      }
+      console.error("❌ Failed to fetch exercise:", errorData);
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = JSON.parse(responseText);
+    console.log("✅ Exercise fetched");
+    return data;
+  } finally {
+    const __timerEnd = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const __elapsed = Math.round(__timerEnd - __timerStart);
+    console.log(`⏱️ getExerciseById:${id}: ${__elapsed} ms`);
   }
-
-  return response.json();
 }
 
 export async function createExercise(data: FormData): Promise<Exercise> {
@@ -381,6 +401,36 @@ export async function createExercise(data: FormData): Promise<Exercise> {
     throw error;
   } finally {
     console.groupEnd();
+  }
+}
+
+export async function duplicateExercise(exerciseId: string): Promise<Exercise> {
+  try {
+    const url = constructApiUrl(`exercises/${exerciseId}/duplicate`);
+    console.log("📤 Duplicating exercise:", exerciseId);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json"
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Server error response:", errorData);
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`,
+      );
+    }
+
+    const result = await response.json();
+    console.log("✅ Exercise duplicated");
+    return result;
+  } catch (error) {
+    console.error("Error duplicating exercise:", error);
+    throw error;
   }
 }
 

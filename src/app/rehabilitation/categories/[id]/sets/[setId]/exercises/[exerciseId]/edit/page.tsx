@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, use } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Exercise, ExerciseFormData } from '@/types/categories';
 import { Category } from '@/lib/api/categories';
@@ -13,11 +13,11 @@ import { TrashIcon, PhotoIcon, LinkIcon, VideoCameraIcon, ClockIcon, ChartBarIco
 import { useLanguage } from '@/i18n/language-context';
 
 interface EditExercisePageProps {
-  params: Promise<{
+  params: {
     id: string;
     setId: string;
     exerciseId: string;
-  }>;
+  };
 }
 
 const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
@@ -42,7 +42,8 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 export default function EditExercisePage({ params }: EditExercisePageProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const resolvedParams = use(params);
+  console.group('🛠️ EditExercisePage mounted');
+  console.log('Resolved params:', params);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [category, setCategory] = useState<Category | null>(null);
@@ -82,6 +83,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     categoryId: '',
   });
   const [videoPreviewEn, setVideoPreviewEn] = useState<string | null>(null);
+  const lastFetchKeyRef = useRef<string | null>(null);
 
   const [formErrors, setFormErrors] = useState<{
     name?: boolean;
@@ -94,24 +96,82 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     media?: boolean;
   }>({});
 
+  // Debug state watchers
   useEffect(() => {
+    console.log('🧭 Route params changed:', params);
+  }, [params]);
+
+  useEffect(() => {
+    console.log('⏳ fetchLoading changed:', fetchLoading);
+  }, [fetchLoading]);
+
+  useEffect(() => {
+    console.log('📦 Data state changed:', {
+      hasExercise: Boolean(exercise),
+      hasCategory: Boolean(category),
+      hasSet: Boolean(set),
+      exercise,
+      category,
+      set,
+    });
+  }, [exercise, category, set]);
+
+  useEffect(() => {
+    const key = `${params.id}-${params.setId}-${params.exerciseId}`;
+    console.log('🔄 useEffect deps changed:', { key, ...{
+      id: params.id,
+      setId: params.setId,
+      exerciseId: params.exerciseId
+    }});
+    if (lastFetchKeyRef.current === key) {
+      console.log('⏭️ Skipping duplicate fetch for key:', key);
+      return;
+    }
+    lastFetchKeyRef.current = key;
     fetchData();
-  }, [resolvedParams.id, resolvedParams.setId, resolvedParams.exerciseId]);
+  }, [params.id, params.setId, params.exerciseId]);
 
   const fetchData = async () => {
     try {
       setFetchLoading(true);
-      const [exerciseData, categoryData, setData] = await Promise.all([
-        getExerciseById(resolvedParams.exerciseId),
-        getCategoryById(resolvedParams.id),
-        getSetById(resolvedParams.setId)
+      console.time('⏱️ fetchData total');
+      console.group('📥 Fetching edit exercise data');
+      console.log('➡️ getSetById:', params.setId);
+      // 1) მოიტანე სეტი ჯერ, რათა მივიღოთ რეალური categoryId
+      const setData = await getSetById(params.setId);
+      console.log('✅ setData:', setData);
+
+      // set.categoryId შეიძლება იყოს ობიექტი ან სტრინგი
+      const derivedCategoryId = ((): string => {
+        const raw = (setData as any)?.categoryId;
+        if (!raw) return params.id;
+        if (typeof raw === 'string') return raw;
+        if (typeof raw === 'object') {
+          return raw._id || raw.id || params.id;
+        }
+        return params.id;
+      })();
+
+      if (derivedCategoryId !== params.id) {
+        console.warn('⚠️ params.id და set.categoryId არ ემთხვევა', { paramsId: params.id, setCategoryId: derivedCategoryId });
+      }
+
+      console.log('➡️ getExerciseById:', params.exerciseId);
+      console.log('➡️ getCategoryById (effective):', derivedCategoryId);
+
+      // 2) პარალელურად მოვიტანოთ exercise და category
+      const [exerciseData, categoryData] = await Promise.all([
+        getExerciseById(params.exerciseId),
+        getCategoryById(derivedCategoryId)
       ]);
-      
+      console.log('✅ exerciseData:', exerciseData);
+      console.log('✅ categoryData:', categoryData);
+
       setExercise(exerciseData);
       setCategory(categoryData);
       setSet(setData);
-      
-      // Pre-fill form data with existing exercise data
+
+      // 3) ფორმის წინასწარი შევსება
       setFormData({
         name: exerciseData.name || { en: '', ru: '' },
         description: exerciseData.description || { en: '', ru: '' },
@@ -130,28 +190,43 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
         categoryId: categoryData._id,
       });
 
-      // Set previews for existing media
-      if (exerciseData.thumbnailImage && typeof exerciseData.thumbnailImage === 'string') {
-        setThumbnailPreview(exerciseData.thumbnailImage);
-        setThumbnailUrl(exerciseData.thumbnailImage);
+      // 4) მედიის წინასწარი დათვალიერება
+      const thumbSrc = (exerciseData as any).thumbnailImage || (exerciseData as any).thumbnailUrl;
+      if (thumbSrc && typeof thumbSrc === 'string') {
+        setThumbnailPreview(thumbSrc);
+        setThumbnailUrl(thumbSrc);
       }
-      // ვიდეოების ინიციალიზაცია
-      console.log('exerciseData:', exerciseData);
-      if (exerciseData.videoUrl) {
-        console.log('Setting videoUrl:', exerciseData.videoUrl);
-        setVideoPreview(exerciseData.videoUrl);
-        setVideoUrl(exerciseData.videoUrl);
+      console.log('exerciseData (for previews):', exerciseData);
+      if ((exerciseData as any).videoUrl) {
+        console.log('Setting videoUrl:', (exerciseData as any).videoUrl);
+        setVideoPreview((exerciseData as any).videoUrl);
+        setVideoUrl((exerciseData as any).videoUrl);
       }
-      if (exerciseData.videoUrlEn) {
-        console.log('Setting videoUrlEn:', exerciseData.videoUrlEn);
-        setVideoPreviewEn(exerciseData.videoUrlEn);
-        setVideoUrlEn(exerciseData.videoUrlEn);
+      if ((exerciseData as any).videoUrlEn) {
+        console.log('Setting videoUrlEn:', (exerciseData as any).videoUrlEn);
+        setVideoPreviewEn((exerciseData as any).videoUrlEn);
+        setVideoUrlEn((exerciseData as any).videoUrlEn);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('❌ Error fetching data:', error);
+      try {
+        const anyError = error as any;
+        const response = anyError?.response;
+        if (response) {
+          console.error('❌ API error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            data: response.data,
+            url: response.config?.url,
+            method: response.config?.method,
+          });
+        }
+      } catch {}
       alert(t('errorLoadingData'));
     } finally {
       setFetchLoading(false);
+      console.timeEnd('⏱️ fetchData total');
+      console.groupEnd();
     }
   };
 
@@ -171,7 +246,10 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     
     setFormErrors(errors);
 
-    if (!isValidObjectId(formData.setId) || !isValidObjectId(formData.categoryId)) {
+    const idsValid = isValidObjectId(formData.setId) && isValidObjectId(formData.categoryId);
+    console.log('✅ validateForm result:', { errors, idsValid, setId: formData.setId, categoryId: formData.categoryId });
+
+    if (!idsValid) {
       alert(t('invalidId'));
       return false;
     }
@@ -276,9 +354,14 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
     setIsLoading(true);
 
     try {
+      console.group('💾 Submitting updateExercise');
+      console.log('Current formData before validation:', formData);
+      console.log('Current previews:', { thumbnailPreview, videoPreview, videoPreviewEn, thumbnailUrl, videoUrl, videoUrlEn });
       if (!validateForm()) {
         setIsLoading(false);
         alert(t('pleaseFillAllRequiredFields'));
+        console.warn('Form validation failed:', { formErrors });
+        console.groupEnd();
         return;
       }
 
@@ -286,6 +369,8 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
           formData.name.ru.includes('http') || formData.description.ru.includes('http')) {
         alert('Please enter text, not URLs');
         setIsLoading(false);
+        console.warn('Validation failed: name/description contain URL');
+        console.groupEnd();
         return;
       }
 
@@ -336,19 +421,34 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
         }
       });
 
-      await updateExercise(resolvedParams.exerciseId, formDataToSend);  
-      alert(t('exerciseUpdatedSuccessfully'));
-      router.push(`/rehabilitation/categories/${resolvedParams.id}/sets/${resolvedParams.setId}/exercises`);
+      await updateExercise(params.exerciseId, formDataToSend);  
+      alert(t('exerciseUpdatedSuccess'));
+      router.push(`/rehabilitation/categories/${params.id}/sets/${params.setId}/exercises`);
       router.refresh();
     } catch (error) {
       console.error('Error updating exercise:', error);
+      try {
+        const anyError = error as any;
+        const response = anyError?.response;
+        if (response) {
+          console.error('❌ Update API error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            data: response.data,
+            url: response.config?.url,
+            method: response.config?.method,
+          });
+        }
+      } catch {}
       alert(t('errorUpdatingExercise'));
     } finally {
       setIsLoading(false);
+      console.groupEnd();
     }
   };
 
   if (fetchLoading) {
+    console.log('🟡 Rendering loading spinner - fetchLoading is true');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
@@ -357,9 +457,14 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
   }
 
   if (!exercise || !category || !set) {
+    console.warn('🔴 Missing required data for render:', {
+      hasExercise: Boolean(exercise),
+      hasCategory: Boolean(category),
+      hasSet: Boolean(set)
+    });
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-500">{t('exerciseCategoryOrSetNotFound')}</div>
+        <div className="text-red-500">{t('categorySetNotFound')}</div>
       </div>
     );
   }
@@ -849,7 +954,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <CogIcon className="h-5 w-5 mr-2" />
-                {t('parameters')}
+                {t('basicInformation')}
               </h3>
               
               <div className="space-y-4">
@@ -863,7 +968,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="is-active" className="block text-sm font-semibold leading-6 text-gray-900">
-                    {t('isActive')}
+                    {t('active')}
                   </label>
                 </div>
 
@@ -877,7 +982,7 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
                     className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="is-published" className="block text-sm font-semibold leading-6 text-gray-900">
-                    {t('isPublished')}
+                    {t('published')}
                   </label>
                 </div>
               </div>
@@ -887,8 +992,8 @@ export default function EditExercisePage({ params }: EditExercisePageProps) {
             <div className="border-t border-gray-200 pt-8 flex justify-end gap-4">
               <Button
                 type="button"
-                variant="secondary"
-                onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/sets/${resolvedParams.setId}/exercises`)}
+                variant="outline"
+                onClick={() => router.push(`/rehabilitation/categories/${params.id}/sets/${params.setId}/exercises`)}
                 disabled={isLoading}
                 className="rounded-xl px-8 py-3"
               >
