@@ -24,7 +24,7 @@ import {
   XCircleIcon as XCircleIconSolid 
 } from '@heroicons/react/24/solid';
 import { useLanguage } from '@/i18n/language-context';
-import { duplicateExercise } from '@/lib/api/exercises';
+import { duplicateExercise, deleteExercise } from '@/lib/api/exercises';
 
 // Exercise ტიპის გაფართოება, რომ thumbnailUrl იყოს
 interface ExerciseWithThumbnailUrl extends Exercise {
@@ -60,6 +60,7 @@ const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
 export default function ExercisesClient({ category, set, initialExercises, subcategory }: ExercisesClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [duplicatingExerciseId, setDuplicatingExerciseId] = useState<string | null>(null);
+  const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
   const { t } = useLanguage();
 
   console.log(initialExercises)
@@ -109,6 +110,22 @@ export default function ExercisesClient({ category, set, initialExercises, subca
       alert('შეცდომა სავარჯიშოს დუპლიკატის შექმნისას');
     } finally {
       setDuplicatingExerciseId(null);
+    }
+  };
+
+  const handleDeleteExercise = async (exerciseId: string) => {
+    try {
+      const confirmed = window.confirm('დარწმუნებული ხარ, რომ წაშალო სავარჯიშო?');
+      if (!confirmed) return;
+      setDeletingExerciseId(exerciseId);
+      await deleteExercise(exerciseId);
+      // განვაახლოთ გვერდი, რომ სია განწმინდდეს
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting exercise:', error);
+      alert('სავარჯიშოს წაშლის დროს მოხდა შეცდომა');
+    } finally {
+      setDeletingExerciseId(null);
     }
   };
 
@@ -324,8 +341,16 @@ export default function ExercisesClient({ category, set, initialExercises, subca
                           {t('duplicate')}
                         </button>
                         
-                        <button className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-xs font-medium transition-all">
-                          <TrashIcon className="h-3 w-3" />
+                        <button 
+                          onClick={() => handleDeleteExercise(exercise.id!)}
+                          disabled={deletingExerciseId === exercise.id}
+                          className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50"
+                        >
+                          {deletingExerciseId === exercise.id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                          ) : (
+                            <TrashIcon className="h-3 w-3" />
+                          )}
                           {t('delete')}
                         </button>
                       </div>
