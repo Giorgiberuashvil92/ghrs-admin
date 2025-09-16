@@ -7,7 +7,7 @@ import { Category } from '@/lib/api/categories';
 import { SubCategory } from '@/types/categories';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/language-context';
-import { duplicateSet } from '@/lib/api/sets';
+import { duplicateSet, deleteSet } from '@/lib/api/sets';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -18,7 +18,8 @@ import {
   PencilIcon,
   EyeIcon,
   EyeSlashIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { 
   CheckCircleIcon as CheckCircleIconSolid,
@@ -35,6 +36,7 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
   const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [duplicatingSetId, setDuplicatingSetId] = useState<string | null>(null);
+  const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
   type LangKey = 'ka' | 'en' | 'ru';
   const getLocalized = (loc?: { ka?: string; en: string; ru: string }) =>
     (loc?.[language as LangKey] || loc?.en || loc?.ru || '');
@@ -74,6 +76,25 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
       alert('შეცდომა სეტის დუპლიკატის შექმნისას');
     } finally {
       setDuplicatingSetId(null);
+    }
+  };
+
+  const handleDeleteSet = async (setId: string) => {
+    if (!confirm('ნამდვილად გინდათ სეტის წაშლა? ეს მოქმედება შეუქცევადია!')) {
+      return;
+    }
+
+    try {
+      setDeletingSetId(setId);
+      await deleteSet(setId);
+      
+      // Refresh the page to remove the deleted set
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting set:', error);
+      alert('შეცდომა სეტის წაშლისას');
+    } finally {
+      setDeletingSetId(null);
     }
   };
 
@@ -266,10 +287,10 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                     </Link>
                     
                     {/* Secondary Actions */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                       <Link
                         href={`${basePath}/sets/${set._id}/edit`}
-                        className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                        className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-sm font-medium transition-all"
                       >
                         <PencilIcon className="h-4 w-4" />
                         {t('edit')}
@@ -278,7 +299,7 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                       <button
                         onClick={() => handleDuplicateSet(set._id)}
                         disabled={duplicatingSetId === set._id}
-                        className="flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
                       >
                         {duplicatingSetId === set._id ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -286,6 +307,19 @@ export default function SetsClient({ initialSets, category, subcategory }: SetsC
                           <DocumentDuplicateIcon className="h-4 w-4" />
                         )}
                         {t('duplicate')}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteSet(set._id)}
+                        disabled={deletingSetId === set._id}
+                        className="flex items-center justify-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
+                      >
+                        {deletingSetId === set._id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        ) : (
+                          <TrashIcon className="h-4 w-4" />
+                        )}
+                        {t('delete')}
                       </button>
                     </div>
                   </div>

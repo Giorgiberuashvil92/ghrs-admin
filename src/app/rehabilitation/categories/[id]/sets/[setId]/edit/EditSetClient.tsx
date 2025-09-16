@@ -58,6 +58,37 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
     return '';
   };
 
+
+  // Extract EN URL from demoVideoUrl object if it exists, otherwise use demoVideoUrlEn field
+  const extractedEnUrl = (() => {
+    console.log('🔍 Debugging demoVideoUrl extraction:');
+    console.log('  initialSet.demoVideoUrl:', initialSet.demoVideoUrl);
+    console.log('  typeof demoVideoUrl:', typeof initialSet.demoVideoUrl);
+    console.log('  has en property:', initialSet.demoVideoUrl && 'en' in initialSet.demoVideoUrl);
+    
+    // If demoVideoUrl is an object with en property, use it
+    if (initialSet.demoVideoUrl && typeof initialSet.demoVideoUrl === 'object' && 'en' in initialSet.demoVideoUrl) {
+      const enUrl = String(initialSet.demoVideoUrl.en || '');
+      console.log('  ✅ Using demoVideoUrl.en:', enUrl);
+      return enUrl;
+    }
+    
+    // Otherwise try demoVideoUrlEn field
+    const fallbackUrl = normalizeStringValue(initialSet.demoVideoUrlEn) || '';
+    console.log('  ⚠️ Using demoVideoUrlEn fallback:', fallbackUrl);
+    return fallbackUrl;
+  })();
+  
+  console.log('🎯 Final extractedEnUrl:', extractedEnUrl);
+  console.log('🔍 FormData initialization:');
+  console.log('  demoVideoUrl (RU):', (() => {
+    if (initialSet.demoVideoUrl && typeof initialSet.demoVideoUrl === 'object' && 'ru' in initialSet.demoVideoUrl) {
+      return String(initialSet.demoVideoUrl.ru || '');
+    }
+    return normalizeStringValue(initialSet.demoVideoUrl) || '';
+  })());
+  console.log('  demoVideoUrlEn (EN):', extractedEnUrl);
+
   const [formData, setFormData] = useState({
     name: initialSet.name || { en: '', ru: '' },
     description: initialSet.description || { en: '', ru: '' },
@@ -67,9 +98,16 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
     warnings: initialSet.warnings || { en: '', ru: '' },
     recommendations: initialSet.recommendations || { en: '', ru: '' },
     additional: initialSet.additional || { en: '', ru: '' },
-    demoVideoUrl: normalizeStringValue(initialSet.demoVideoUrl) || '',
-    // Prefill EN with default demo URL if EN-specific is missing
-    demoVideoUrlEn: normalizeStringValue(initialSet.demoVideoUrlEn) || normalizeStringValue(initialSet.demoVideoUrl) || '',
+    demoVideoUrl: (() => {
+      // If demoVideoUrl is an object with ru property, use it
+      if (initialSet.demoVideoUrl && typeof initialSet.demoVideoUrl === 'object' && 'ru' in initialSet.demoVideoUrl) {
+        return String(initialSet.demoVideoUrl.ru || '');
+      }
+      // Otherwise use normalizeStringValue as fallback
+      return normalizeStringValue(initialSet.demoVideoUrl) || '';
+    })(),
+    // Extract EN URL from demoVideoUrl object if it exists, otherwise use demoVideoUrlEn field
+    demoVideoUrlEn: extractedEnUrl,
     price: initialSet.price || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
     priceEn: initialSet.priceEn || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
     discountedPrice: initialSet.discountedPrice || { monthly: 0, threeMonths: 0, sixMonths: 0, yearly: 0 },
@@ -146,8 +184,10 @@ export default function EditSetClient({ category, subcategory, initialSet }: Edi
           en: String(formData.additional?.en || ''),
           ru: String(formData.additional?.ru || '')
         },
-        demoVideoUrl: String(formData.demoVideoUrl || ''),
-        demoVideoUrlEn: String(formData.demoVideoUrlEn || ''),
+        demoVideoUrl: {
+          en: String(formData.demoVideoUrlEn || formData.demoVideoUrl || ''),
+          ru: String(formData.demoVideoUrl || '')
+        },
         thumbnailImage: String(formData.image || ''),
         price: {
           monthly: Number(formData.price.monthly) || 0,
