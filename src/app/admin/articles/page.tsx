@@ -119,7 +119,7 @@ export default function ArticlesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  console.log(articles);
+  console.log(articles, 'არტიკლები');
   
   const [filters, setFilters] = useState<ArticleFilters>({
     status: 'all',
@@ -149,32 +149,51 @@ export default function ArticlesPage() {
       const response = await getArticles(filters, pagination.page, pagination.limit);
       console.log('Articles response in component:', response);
       
-      // Transform the response data to match our component's needs
-      const transformedArticles = (Array.isArray(response.articles) ? response.articles : [response.articles]).map((article: APIArticle) => ({
-        _id: article._id,
-        title: {
-          ka: article.title?.ka || '',
-          en: article.title?.en || '',
-          ru: article.title?.ru || ''
-        },
-        excerpt: {
-          ka: article.excerpt?.ka || '',
-          en: article.excerpt?.en || '',
-          ru: article.excerpt?.ru || ''
-        },
-        content: {
-          ka: article.content?.ka || '',
-          en: article.content?.en || '',
-          ru: article.content?.ru || ''
-        },
-        categoryId: typeof article.categoryId === 'string' ? article.categoryId : article.categoryId?._id || '',
-        authorName: article.author?.name || '',
-        isPublished: article.isPublished || false,
-        isFeatured: article.isFeatured || false,
-        views: article.viewsCount || 0,
-        createdAt: article.createdAt || new Date().toISOString(),
-        updatedAt: article.updatedAt || new Date().toISOString()
-      }));
+      const transformedArticles = (Array.isArray(response.articles) ? response.articles : [response.articles]).map((article: any) => {
+        const primaryCategoryId = (() => {
+          if (typeof article.categoryId === 'string' && article.categoryId) return article.categoryId;
+          if (article.categoryId && typeof article.categoryId === 'object') return article.categoryId._id || '';
+          if (Array.isArray(article.categoryIds) && article.categoryIds.length > 0) {
+            const first = article.categoryIds[0];
+            return typeof first === 'string' ? first : (first?._id || '');
+          }
+          return '';
+        })();
+
+        const authorNameStr = (() => {
+          const n = (article.authorName ?? article.author?.name);
+          if (n && typeof n === 'object') {
+            return n[language] || n.en || n.ru || '';
+          }
+          return typeof n === 'string' ? n : '';
+        })();
+
+        return {
+          _id: article._id,
+          title: {
+            ka: article.title?.ka || '',
+            en: article.title?.en || '',
+            ru: article.title?.ru || ''
+          },
+          excerpt: {
+            ka: article.excerpt?.ka || '',
+            en: article.excerpt?.en || '',
+            ru: article.excerpt?.ru || ''
+          },
+          content: {
+            ka: article.content?.ka || '',
+            en: article.content?.en || '',
+            ru: article.content?.ru || ''
+          },
+          categoryId: primaryCategoryId,
+          authorName: authorNameStr,
+          isPublished: article.isPublished || false,
+          isFeatured: article.isFeatured || false,
+          views: article.viewsCount || article.views || 0,
+          createdAt: article.createdAt || new Date().toISOString(),
+          updatedAt: article.updatedAt || new Date().toISOString()
+        };
+      });
 
       console.log('Transformed articles:', transformedArticles);
       setArticles(transformedArticles);
@@ -244,8 +263,12 @@ export default function ArticlesPage() {
   };
 
   const getCategoryName = (categoryId: string) => {
+    console.log('getCategoryName called with:', { categoryId, categoriesLength: categories.length, language });
     const category = categories.find(cat => cat._id === categoryId);
-    return category ? category.name[language] : 'Unknown';
+    console.log('Found category:', category);
+    if (!category) return 'Unknown';
+    const name = category.name?.[language] || category.name?.en || category.name?.ru || '';
+    return name || 'Unknown';
   };
 
   const formatDate = (dateString: string) => {
@@ -316,7 +339,7 @@ export default function ArticlesPage() {
               <option value="">All Categories</option>
               {categories.map((category) => (
                 <option key={category._id} value={category._id}>
-                  {category.name[language]}
+                  {category.name?.[language] || category.name?.en || category.name?.ru || 'Unknown'}
                 </option>
               ))}
             </select>
@@ -416,10 +439,10 @@ export default function ArticlesPage() {
                 <td className="px-6 py-4">
                   <div className="max-w-xs">
                     <div className="font-medium text-gray-900 truncate">
-                      {article.title[language]}
+                      {article.title[language] || article.title.en || article.title.ru || '—'}
                     </div>
                     <div className="text-sm text-gray-500 truncate">
-                      {article.excerpt[language]}
+                      {article.excerpt[language] || article.excerpt.en || article.excerpt.ru || ''}
                     </div>
                   </div>
                 </td>

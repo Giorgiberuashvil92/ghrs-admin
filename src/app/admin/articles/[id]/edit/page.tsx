@@ -63,11 +63,35 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
     fetchCategories();
   }, [resolvedParams.id]);
 
+  // Update blogId when blogs are loaded and article is available
+  useEffect(() => {
+    if (blogs.length > 0 && article && formData.blogId) {
+      const blogExists = blogs.find(blog => blog._id === formData.blogId);
+      if (!blogExists) {
+        const extractedBlogId = (typeof (article as any).blogId === 'string'
+          ? (article as any).blogId
+          : ((article as any).blogId?._id ?? (article as any).blogId?.id ?? ''));
+        
+        if (extractedBlogId && blogs.find(blog => blog._id === extractedBlogId)) {
+          setFormData(prev => ({ ...prev, blogId: extractedBlogId }));
+        }
+      }
+    }
+  }, [blogs, article, formData.blogId]);
+
   const fetchArticle = async () => {
     try {
       setPageLoading(true);
       const articleData = await getArticleById(resolvedParams.id);
       setArticle(articleData);
+      
+      // Debug blogId
+
+      
+      const extractedBlogId = (typeof (articleData as any).blogId === 'string'
+        ? (articleData as any).blogId
+        : ((articleData as any).blogId?._id ?? (articleData as any).blogId?.id ?? ''));
+      
       
       // Populate form with existing data
       setFormData({
@@ -76,9 +100,9 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
         content: articleData.content,
         featuredImages: articleData.featuredImages,
         categoryIds: Array.from(new Set((articleData.categoryIds || []).filter(Boolean))),
-        blogId: articleData.blogId,
-         authorName: articleData.authorName,
-         authorBio: articleData.authorBio,
+        blogId: extractedBlogId,
+        authorName: articleData.authorName,
+        authorBio: articleData.authorBio,
         authorAvatar: articleData.authorAvatar,
         tableOfContents: articleData.tableOfContents,
         tags: articleData.tags,
@@ -167,11 +191,9 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
 
       // არსებული სურათების URL-ები
       if (formData.featuredImages && formData.featuredImages.length > 0) {
-        console.log('Processing existing images:', formData.featuredImages);
         const existingUrls = formData.featuredImages.filter(img => 
           img.startsWith('http') && !img.startsWith('blob:')
         );
-        console.log('Filtered existing URLs:', existingUrls);
         if (existingUrls.length > 0) {
           formDataToSend.append('existingFeaturedImages', JSON.stringify(existingUrls));
         }
@@ -179,7 +201,6 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
 
       // ახალი სურათების ფაილები
       if (imageFiles.length > 0) {
-        console.log('Adding new image files:', imageFiles);
         imageFiles.forEach((file, index) => {
           formDataToSend.append('featuredImages', file);
         });
@@ -199,9 +220,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
         }
       }
 
-      console.log('Sending FormData to API...');
       const result = await updateArticle(resolvedParams.id, { formData: formDataToSend, isFormData: true });
-      console.log('API Response:', result);
 
       if (!result.featuredImages || result.featuredImages.length === 0) {
         console.warn('No featured images in response!');
@@ -282,25 +301,20 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
   const handleFeaturedImagesChange = (urls: string | string[] | File[]) => {
     const urlArray = Array.isArray(urls) ? urls : [urls];
     
-    console.log('handleFeaturedImagesChange received:', urlArray);
     
     // თუ ფაილებია, შევინახოთ imageFiles-ში
     if (urlArray[0] instanceof File) {
-      console.log('Saving files:', urlArray);
       setImageFiles(urlArray as File[]);
     }
     
     // შევინახოთ URL-ები ან data URL-ები formData-ში
     const processedUrls = urlArray.map(item => {
       if (item instanceof File) {
-        console.log('Creating URL for file:', item.name);
         return URL.createObjectURL(item);
       }
-      console.log('Using existing URL:', item);
       return item;
     });
     
-    console.log('Setting formData with URLs:', processedUrls);
     setFormData(prev => ({ 
       ...prev, 
       featuredImages: processedUrls
@@ -490,12 +504,39 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">აირჩიეთ ბლოგი</option>
-                      {blogs.map(blog => (
-                        <option key={blog._id} value={blog._id}>
-                          {blog.title[language]}
-                        </option>
-                      ))}
+                      {blogs.map(blog => {
+                        const blogTitle = blog.title[language] || blog.title.en || blog.title.ru || 'Unknown';
+                        return (
+                          <option key={blog._id} value={blog._id}>
+                            {blogTitle}
+                          </option>
+                        );
+                      })}
                     </select>
+                    
+                    {/* Debug select value */}
+                    <div className="mt-1 text-xs text-gray-500">
+                      Debug: Select value = "{formData.blogId}", Type = {typeof formData.blogId}
+                    </div>
+                    
+                    {/* Show selected blog name */}
+                    {formData.blogId && (() => {
+                      const selectedBlog = blogs.find(blog => blog._id === formData.blogId);
+
+                      return selectedBlog ? (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                          <span className="text-sm text-blue-800">
+                            <strong>არჩეული ბლოგი:</strong> {selectedBlog.title[language] || selectedBlog.title.en || selectedBlog.title.ru || 'Unknown'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                          <span className="text-sm text-red-800">
+                            <strong>შეცდომა:</strong> ბლოგი ვერ მოიძებნა ID: {formData.blogId}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Categories */}
