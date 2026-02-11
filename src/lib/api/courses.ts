@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 // კურსების CRUD
 export async function getAllCourses(): Promise<Course[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/courses`);
+    const response = await fetch(`${API_BASE_URL}/api/courses`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -24,9 +24,29 @@ export async function getAllCourses(): Promise<Course[]> {
   }
 }
 
+// Admin-ისთვის - ყველა კურსი (published & unpublished)
+export async function getAllCoursesAdmin(): Promise<Course[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/courses`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("getAllCoursesAdmin - raw data:", data);
+
+    // ბექენდი აბრუნებს { courses: [], total: number }
+    return data.courses || [];
+  } catch (error) {
+    console.error("Error fetching courses (admin):", error);
+    throw error;
+  }
+}
+
 export async function getCourse(id: string): Promise<Course> {
   try {
-    const response = await fetch(`${API_BASE_URL}/courses/${id}`);
+    const response = await fetch(`${API_BASE_URL}/api/courses/${id}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -46,7 +66,7 @@ export async function createCourse(data: CreateCourseData): Promise<Course> {
   try {
     console.log("createCourse - sending data:", data);
     
-    const response = await fetch(`${API_BASE_URL}/courses`, {
+    const response = await fetch(`${API_BASE_URL}/api/courses`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -74,7 +94,7 @@ export async function updateCourse(id: string, data: UpdateCourseData): Promise<
   try {
     console.log("updateCourse - sending data:", data);
 
-    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/courses/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -100,7 +120,7 @@ export async function updateCourse(id: string, data: UpdateCourseData): Promise<
 
 export async function deleteCourse(id: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/courses/${id}`, {
       method: "DELETE",
     });
 
@@ -119,7 +139,7 @@ export async function deleteCourse(id: string): Promise<void> {
 
 export async function toggleCourseStatus(id: string): Promise<Course> {
   try {
-    const response = await fetch(`${API_BASE_URL}/courses/${id}/toggle-status`, {
+    const response = await fetch(`${API_BASE_URL}/api/courses/${id}/toggle-status`, {
       method: "PATCH",
     });
 
@@ -138,3 +158,5 @@ export async function toggleCourseStatus(id: string): Promise<Course> {
     throw error;
   }
 }
+
+export { Course };

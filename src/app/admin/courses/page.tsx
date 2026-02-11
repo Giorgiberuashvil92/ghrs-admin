@@ -71,7 +71,7 @@ export default function CoursesPage() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/courses`);
+      const response = await fetch(`${API_BASE_URL}/api/courses`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch courses');
@@ -114,7 +114,7 @@ export default function CoursesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/courses/${id}`, {
         method: 'DELETE'
       });
 
@@ -134,7 +134,7 @@ export default function CoursesPage() {
       const course = courses.find(c => c.id === id);
       if (!course) return;
 
-      const response = await fetch(`${API_BASE_URL}/courses/${id}/toggle-publish`, {
+      const response = await fetch(`${API_BASE_URL}/api/courses/${id}/toggle-publish`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

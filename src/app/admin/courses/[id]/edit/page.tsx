@@ -243,7 +243,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
         setInitialLoading(true);
         
         // Fetch course data
-        const courseResponse = await fetch(`${API_URL}/courses/${resolvedParams.id}`);
+        const courseResponse = await fetch(`${API_URL}/api/courses/${resolvedParams.id}`);
         if (!courseResponse.ok) {
           throw new Error('Failed to fetch course');
         }
@@ -280,8 +280,8 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
         // Fetch instructors and categories
         const [instructorsResponse, categoriesResponse] = await Promise.all([
-          fetch(`${API_URL}/instructors`),
-          fetch(`${API_URL}/categories`)
+          fetch(`${API_URL}/api/instructors`),
+          fetch(`${API_URL}/api/categories`)
         ]);
 
         if (instructorsResponse.ok && categoriesResponse.ok) {
@@ -319,7 +319,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
   const fetchSubcategories = async (categoryId: string, subcategoryId: string) => {
     setLoadingSubcategories(true);
     try {
-      const response = await fetch(`${API_URL}/categories/${categoryId}/subcategories/${subcategoryId}`);
+      const response = await fetch(`${API_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch subcategories');
@@ -433,7 +433,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
 
       console.log('Course data to update:', courseData);
       
-      const response = await fetch(`${API_URL}/courses/${resolvedParams.id}`, {
+      const response = await fetch(`${API_URL}/api/courses/${resolvedParams.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

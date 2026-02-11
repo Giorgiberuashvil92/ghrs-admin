@@ -2,10 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getAllCoursesAdmin, Course } from "@/lib/api/courses";
 import { Button } from "@/components/ui-elements/button";
+import { useLanguage } from "@/i18n/language-context";
+
+// Helper function to get localized string from multilingual object
+function getLocalizedString(
+  value: string | { en?: string; ru?: string; ka?: string } | undefined,
+  language: 'ka' | 'en' | 'ru' = 'ka'
+): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return value[language] || value.ka || value.en || value.ru || '';
+  }
+  return '';
+}
 
 export function CoursesOverview() {
+  const { language } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,8 +30,7 @@ export function CoursesOverview() {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const data = await getAllCoursesAdmin(); // ყველა კურსი (published & unpublished)
-        // მხოლოდ ბოლო 6 კურსი
+        const data = await getAllCoursesAdmin();
         setCourses(data.slice(0, 6));
       } catch (err) {
         console.error("Error fetching courses:", err);
@@ -84,7 +99,7 @@ export function CoursesOverview() {
           </span>
         </div>
         <div className="flex gap-2">
-          <Link href="/pages/courses/add">
+          <Link href="/admin/courses/new">
             <Button
               label="ახალი კურსი"
               variant="primary"
@@ -96,7 +111,7 @@ export function CoursesOverview() {
               }
             />
           </Link>
-          <Link href="/pages/courses">
+          <Link href="/admin/courses">
             <Button
               label="ყველა კურსი"
               variant="outlinePrimary"
@@ -123,7 +138,7 @@ export function CoursesOverview() {
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             შექმენით თქვენი პირველი კურსი
           </p>
-          <Link href="/pages/courses/add">
+          <Link href="/admin/courses/new">
             <Button
               label="კურსის შექმნა"
               variant="primary"
@@ -137,20 +152,22 @@ export function CoursesOverview() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
+          {courses.map((course, index) => (
             <Link 
-              href={`/pages/courses/${course.id}?data=${encodeURIComponent(JSON.stringify(course))}`}
-              key={course.id}
+              href={`/admin/courses/${course.id}/edit`}
+              key={course.id || `course-${index}`}
             >
               <div
                 className="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer"
               >
               {/* Course Image */}
               <div className="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
-                {course.image ? (
-                  <img
-                    src={course.image}
-                    alt={course.title}
+                {course.thumbnail ? (
+                  <Image
+                    src={course.thumbnail}
+                    alt={getLocalizedString(course.title, language)}
+                    width={400}
+                    height={225}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                 ) : (
@@ -179,7 +196,7 @@ export function CoursesOverview() {
               <div className="p-4">
                 <div className="mb-2">
                   <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                    {course.title}
+                    {getLocalizedString(course.title, language)}
                   </h3>
                 </div>
 
@@ -214,9 +231,11 @@ export function CoursesOverview() {
                 {/* Course Details */}
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {course.category}
-                    </span>
+                    {course.categoryId && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Category ID: {course.categoryId}
+                      </span>
+                    )}
                     {course.price > 0 && (
                       <span className="font-semibold text-purple-600 dark:text-purple-400">
                         ${course.price}
@@ -224,21 +243,13 @@ export function CoursesOverview() {
                     )}
                   </div>
                   
-                  <div className="flex gap-1">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        course.level === "beginner"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                          : course.level === "intermediate"
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                      }`}
-                    >
-                      {course.level === "beginner" && "დამწყები"}
-                      {course.level === "intermediate" && "საშუალო"}
-                      {course.level === "advanced" && "მაღალი"}
-                    </span>
-                  </div>
+                  {course.duration && (
+                    <div className="flex gap-1">
+                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                        {course.duration} საათი
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Tags */}

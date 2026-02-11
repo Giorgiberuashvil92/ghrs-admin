@@ -91,8 +91,8 @@ export default function NewCoursePage() {
         console.log('Fetching data from:', `${API_URL}/instructors`);
         
         const [instructorsResponse, categoriesResponse] = await Promise.all([
-          fetch(`${API_URL}/instructors`),
-          fetch(`${API_URL}/categories`)
+          fetch(`${API_URL}/api/instructors`),
+          fetch(`${API_URL}/api/categories`)
         ]);
 
         console.log('Instructors response status:', instructorsResponse.status);
@@ -126,7 +126,7 @@ export default function NewCoursePage() {
   const fetchSubcategories = async (categoryId: string, subcategoryId: string) => {
     setLoadingSubcategories(true);
     try {
-      const response = await fetch(`${API_URL}/categories/${categoryId}/subcategories/${subcategoryId}`);
+      const response = await fetch(`${API_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch subcategories');
@@ -264,7 +264,7 @@ export default function NewCoursePage() {
 
       console.log('Course data to create:', courseData);
       
-      const response = await fetch(`${API_URL}/courses`, {
+      const response = await fetch(`${API_URL}/api/courses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

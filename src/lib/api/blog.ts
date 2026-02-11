@@ -176,7 +176,7 @@ export async function getAllArticles(params?: {
 export async function searchArticles(query: string): Promise<BlogArticle[]> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/articles/search?q=${encodeURIComponent(query)}`,
+      `${API_BASE_URL}/api/articles/search?q=${encodeURIComponent(query)}`,
     );
 
     if (!response.ok) {
@@ -193,7 +193,7 @@ export async function searchArticles(query: string): Promise<BlogArticle[]> {
 
 export async function getFeaturedArticles(): Promise<BlogArticle[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/featured`);
+    const response = await fetch(`${API_BASE_URL}/api/articles/featured`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -209,7 +209,7 @@ export async function getFeaturedArticles(): Promise<BlogArticle[]> {
 
 export async function getArticle(id: string): Promise<BlogArticle> {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/${id}`);
+    const response = await fetch(`${API_BASE_URL}/api/articles/${id}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -225,7 +225,7 @@ export async function getArticle(id: string): Promise<BlogArticle> {
 
 export async function getArticleBySlug(slug: string): Promise<BlogArticle> {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/slug/${slug}`);
+    const response = await fetch(`${API_BASE_URL}/api/articles/slug/${slug}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -244,7 +244,7 @@ export async function getArticlesByCategory(
 ): Promise<BlogArticle[]> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/articles/category/${categoryId}`,
+      `${API_BASE_URL}/api/articles/category/${categoryId}`,
     );
 
     if (!response.ok) {
@@ -270,7 +270,7 @@ export async function createArticle(
       readTimeMinutes: calculateReadTime(data.content),
     };
 
-    const response = await fetch(`${API_BASE_URL}/articles`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -307,7 +307,7 @@ export async function updateArticle(
       updateData.readTimeMinutes = calculateReadTime(data.content);
     }
 
-    const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -329,7 +329,7 @@ export async function updateArticle(
 
 export async function deleteArticle(id: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles/${id}`, {
       method: "DELETE",
     });
 
@@ -348,7 +348,7 @@ export async function getArticleComments(
 ): Promise<BlogComment[]> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/articles/${articleId}/comments`,
+      `${API_BASE_URL}/api/articles/${articleId}/comments`,
     );
 
     if (!response.ok) {
@@ -369,7 +369,7 @@ export async function createComment(
 ): Promise<BlogComment> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/articles/${articleId}/comments`,
+      `${API_BASE_URL}/api/articles/${articleId}/comments`,
       {
         method: "POST",
         headers: {
@@ -394,7 +394,7 @@ export async function createComment(
 export async function approveComment(commentId: string): Promise<BlogComment> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/comments/${commentId}/approve`,
+      `${API_BASE_URL}/api/comments/${commentId}/approve`,
       {
         method: "PUT",
         headers: {
@@ -417,7 +417,7 @@ export async function approveComment(commentId: string): Promise<BlogComment> {
 
 export async function deleteComment(commentId: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
       method: "DELETE",
     });
 

@@ -53,7 +53,7 @@ export const NAV_DATA = [
           {
             title: "Courses",
             titleKey: "courses",
-            url: "/pages/courses",
+            url: "/admin/courses",
           },
         ],
       },

@@ -41,7 +41,7 @@ export const getBlogs = async (
     params.append("page", page.toString());
     params.append("limit", limit.toString());
 
-    const url = `${API_BASE_URL}/blogs?${params.toString()}`;
+    const url = `${API_BASE_URL}/api/blogs?${params.toString()}`;
     console.log("Making request to:", url);
 
     const response = await fetch(url, {
@@ -74,7 +74,7 @@ export const getBlogs = async (
 // Get single blog by ID
 export const getBlogById = async (id: string): Promise<Blog> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
       credentials: "include",
       headers: {
         Accept: "application/json",
@@ -98,7 +98,7 @@ export const createBlog = async (request: CreateBlogRequest): Promise<Blog> => {
   try {
     if (request.isFormData) {
       // For FormData (with file upload), use /blogs endpoint
-      const response = await fetch(`${API_BASE_URL}/blogs`, {
+      const response = await fetch(`${API_BASE_URL}/api/blogs`, {
         method: "POST",
         credentials: "include",
         body: request.formData as FormData
@@ -113,7 +113,7 @@ export const createBlog = async (request: CreateBlogRequest): Promise<Blog> => {
       return await response.json();
     } else {
       // For JSON data, use /blogs/json endpoint (recommended)
-      const response = await fetch(`${API_BASE_URL}/blogs/json`, {
+      const response = await fetch(`${API_BASE_URL}/api/blogs/json`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -186,7 +186,7 @@ export const updateBlog = async (
 // Delete blog (soft delete)
 export const deleteBlog = async (id: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
       method: "DELETE",
       credentials: "include",
       headers: {
@@ -207,7 +207,7 @@ export const deleteBlog = async (id: string): Promise<void> => {
 export const getFeaturedBlogs = async (limit = 10): Promise<Blog[]> => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/blogs/featured?limit=${limit}`,
+      `${API_BASE_URL}/api/blogs/featured?limit=${limit}`,
       {
         credentials: "include",
         headers: {
@@ -232,7 +232,7 @@ export const getFeaturedBlogs = async (limit = 10): Promise<Blog[]> => {
 export const getPopularBlogs = async (limit = 10): Promise<Blog[]> => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/blogs/popular?limit=${limit}`,
+      `${API_BASE_URL}/api/blogs/popular?limit=${limit}`,
       {
         credentials: "include",
         headers: {
@@ -256,7 +256,7 @@ export const getPopularBlogs = async (limit = 10): Promise<Blog[]> => {
 // Bulk delete blogs
 export const bulkDeleteBlogs = async (ids: string[]): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/bulk-delete`, {
+    const response = await fetch(`${API_BASE_URL}/api/blogs/bulk-delete`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -281,7 +281,7 @@ export const bulkUpdateBlogsStatus = async (
   updates: Partial<Pick<Blog, "isPublished" | "isFeatured">>,
 ): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/bulk-update`, {
+    const response = await fetch(`${API_BASE_URL}/api/blogs/bulk-update`, {
       method: "POST",
       credentials: "include",
       headers: {

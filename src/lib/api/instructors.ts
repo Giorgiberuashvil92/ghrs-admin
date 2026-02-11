@@ -12,7 +12,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 // Instructors CRUD
 export async function getAllInstructors(): Promise<Instructor[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/instructors`);
+    const response = await fetch(`${API_BASE_URL}/api/instructors`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -31,7 +31,7 @@ export async function getAllInstructors(): Promise<Instructor[]> {
 
 export async function getInstructor(id: string): Promise<Instructor> {
   try {
-    const response = await fetch(`${API_BASE_URL}/instructors/${id}`);
+    const response = await fetch(`${API_BASE_URL}/api/instructors/${id}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -51,7 +51,7 @@ export async function createInstructor(data: CreateInstructorData): Promise<Inst
   try {
     console.log("createInstructor - sending data:", data);
     
-    const response = await fetch(`${API_BASE_URL}/instructors`, {
+    const response = await fetch(`${API_BASE_URL}/api/instructors`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export async function updateInstructor(id: string, data: UpdateInstructorData): 
   try {
     console.log("updateInstructor - sending data:", data);
 
-    const response = await fetch(`${API_BASE_URL}/instructors/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/instructors/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -105,7 +105,7 @@ export async function updateInstructor(id: string, data: UpdateInstructorData): 
 
 export async function deleteInstructor(id: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/instructors/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/instructors/${id}`, {
       method: "DELETE",
     });
 
@@ -124,7 +124,7 @@ export async function deleteInstructor(id: string): Promise<void> {
 
 export async function toggleInstructorStatus(id: string): Promise<Instructor> {
   try {
-    const response = await fetch(`${API_BASE_URL}/instructors/${id}/toggle-status`, {
+    const response = await fetch(`${API_BASE_URL}/api/instructors/${id}/toggle-status`, {
       method: "PATCH",
     });
 
@@ -147,7 +147,7 @@ export async function toggleInstructorStatus(id: string): Promise<Instructor> {
 // Dropdown option-ებისთვის
 export async function getInstructorsDropdown(): Promise<InstructorOption[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/instructors/dropdown`);
+    const response = await fetch(`${API_BASE_URL}/api/instructors/dropdown`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

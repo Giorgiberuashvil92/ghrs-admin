@@ -21,7 +21,7 @@ const uploadToCloudinary = async (
     formData.append("file", file);
     formData.append("folder", folder);
 
-    const response = await fetch(`${API_BASE_URL}/upload/image`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload/image`, {
       method: "POST",
       credentials: "include",
       body: formData,
@@ -76,7 +76,7 @@ export async function getArticles(
 ) {
   try {
     // let url = `http://localhost:4000/articles?page=${page}&limit=${limit}`;
-    let url = `${API_BASE_URL}/articles?page=${page}&limit=${limit}`;
+    let url = `${API_BASE_URL}/api/articles?page=${page}&limit=${limit}`;
 
     // Add filters to URL if they exist
     if (filters) {
@@ -209,7 +209,7 @@ export async function getArticles(
 // Get single article by ID
 export const getArticleById = async (id: string): Promise<Article> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles/${id}`, {
       credentials: "include",
     });
 
@@ -440,7 +440,7 @@ async function sendFormDataRequest(
   id: string,
   formData: FormData,
 ): Promise<Article> {
-  const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/articles/${id}`, {
     method: "PATCH",
     credentials: "include",
     body: formData,
@@ -466,7 +466,7 @@ async function sendFormDataRequest(
 // Delete article (soft delete)
 export const deleteArticle = async (id: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles/${id}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -484,7 +484,7 @@ export const deleteArticle = async (id: string): Promise<void> => {
 export const getFeaturedArticles = async (limit = 10): Promise<Article[]> => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/articles/featured?limit=${limit}`,
+      `${API_BASE_URL}/api/articles/featured?limit=${limit}`,
       {
         credentials: "include",
       },
@@ -505,7 +505,7 @@ export const getFeaturedArticles = async (limit = 10): Promise<Article[]> => {
 export const getPopularArticles = async (limit = 10): Promise<Article[]> => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/articles/popular?limit=${limit}`,
+      `${API_BASE_URL}/api/articles/popular?limit=${limit}`,
       {
         credentials: "include",
       },
@@ -525,7 +525,7 @@ export const getPopularArticles = async (limit = 10): Promise<Article[]> => {
 // Bulk delete articles
 export const bulkDeleteArticles = async (ids: string[]): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/bulk-delete`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles/bulk-delete`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -549,7 +549,7 @@ export const bulkUpdateArticlesStatus = async (
   updates: Partial<Pick<Article, "isPublished" | "isFeatured">>,
 ): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/bulk-update`, {
+    const response = await fetch(`${API_BASE_URL}/api/articles/bulk-update`, {
       method: "POST",
       credentials: "include",
       headers: {

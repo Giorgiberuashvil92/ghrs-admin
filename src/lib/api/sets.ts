@@ -7,7 +7,16 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 
 // Helper function to construct API URLs
 function constructApiUrl(path: string): string {
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  // თუ path უკვე იწყება /api/-ით, არ დავამატოთ კიდევ ერთხელ
+  if (path.startsWith("/api/")) {
+    return `${API_BASE_URL}${path}`;
+  }
+  // თუ path იწყება /-ით, დავამატოთ /api prefix
+  if (path.startsWith("/")) {
+    return `${API_BASE_URL}/api${path}`;
+  }
+  // სხვა შემთხვევაში, დავამატოთ /api/ prefix
+  return `${API_BASE_URL}/api/${path}`;
 }
 
 export async function createSet(request: CreateSetRequest): Promise<Set> {

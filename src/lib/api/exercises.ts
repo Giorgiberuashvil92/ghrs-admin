@@ -6,7 +6,16 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 
 // Helper function to construct API URLs
 function constructApiUrl(path: string): string {
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  // თუ path უკვე იწყება /api/-ით, არ დავამატოთ კიდევ ერთხელ
+  if (path.startsWith("/api/")) {
+    return `${API_BASE_URL}${path}`;
+  }
+  // თუ path იწყება /-ით, დავამატოთ /api prefix
+  if (path.startsWith("/")) {
+    return `${API_BASE_URL}/api${path}`;
+  }
+  // სხვა შემთხვევაში, დავამატოთ /api/ prefix
+  return `${API_BASE_URL}/api/${path}`;
 }
 
 // ლოკალიზებული ველების ვალიდაცია
@@ -295,7 +304,7 @@ export async function getExerciseById(id: string): Promise<Exercise> {
 export async function createExercise(data: FormData): Promise<Exercise> {
   try {
     console.group("🏋️‍♂️ სავარჯიშოს შექმნის მოთხოვნა");
-    console.log("📍 URL:", `${API_BASE_URL}/exercises`);
+    console.log("📍 URL:", `${API_BASE_URL}/api/exercises`);
 
     // ლოკალიზებული ველების ლოგირება
     console.group("🌐 ლოკალიზებული ველები:");

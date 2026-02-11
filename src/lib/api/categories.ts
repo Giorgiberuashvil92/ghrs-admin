@@ -65,7 +65,7 @@ export async function createCategory(data: CreateCategoryData) {
       sortOrder: data.sortOrder,
     });
 
-    const response = await fetch(`${API_BASE_URL}/categories`, {
+    const response = await fetch(`${API_BASE_URL}/api/categories`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -110,7 +110,7 @@ export async function createCategory(data: CreateCategoryData) {
 
 export async function getAllCategories(): Promise<Category[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories`, {
+    const response = await fetch(`${API_BASE_URL}/api/categories`, {
       credentials: "include",
       headers: {
         Accept: "application/json",
@@ -132,7 +132,7 @@ export async function getAllCategories(): Promise<Category[]> {
 export async function getCategoryById(categoryId: string): Promise<Category> {
   const __timerStart = (typeof performance !== 'undefined' ? performance.now() : Date.now());
   try {
-    const url = `${API_BASE_URL}/categories/${categoryId}`;
+    const url = `${API_BASE_URL}/api/categories/${categoryId}`;
     console.log("📤 Fetching category by id:", categoryId, "→", url);
     const __timerStart = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -168,7 +168,7 @@ export async function getCategoryById(categoryId: string): Promise<Category> {
 export async function getCategorySets(categoryId: string) {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/sets`,
+      `${API_BASE_URL}/api/categories/${categoryId}/sets`,
     );
 
     if (!response.ok) {
@@ -197,7 +197,7 @@ export async function updateCategory(
       sortOrder: data.sortOrder,
     });
 
-    const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -242,7 +242,7 @@ export async function updateCategory(
 
 export async function deleteCategory(categoryId: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}`, {
       method: "DELETE",
     });
 
@@ -286,12 +286,12 @@ export async function getSubCategories(
   try {
     // თუ backend არ აქვს ცალკე endpoint, ვიყენებთ getAllCategories და ვფილტრავთ
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories`,
+      `${API_BASE_URL}/api/categories/${categoryId}/subcategories`,
     );
 
     if (!response.ok) {
       // თუ ცალკე endpoint არ მუშაობს, ვცდილობთ ყველა კატეგორია
-      const allResponse = await fetch(`${API_BASE_URL}/categories`);
+      const allResponse = await fetch(`${API_BASE_URL}/api/categories`);
       if (!allResponse.ok) {
         throw new Error(`HTTP error! status: ${allResponse.status}`);
       }
@@ -318,7 +318,7 @@ export async function getSubCategoryById(
 ): Promise<SubCategory> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories/${subCategoryId}`,
+      `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subCategoryId}`,
     );
 
     if (!response.ok) {
@@ -350,7 +350,7 @@ export async function createSubCategory(
     });
 
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories`,
+      `${API_BASE_URL}/api/categories/${categoryId}/subcategories`,
       {
         method: "POST",
         headers: {
@@ -413,7 +413,7 @@ export async function updateSubCategory(
     });
 
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories/${subCategoryId}`,
+      `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subCategoryId}`,
       {
         method: "PATCH",
         headers: {
@@ -464,7 +464,7 @@ export async function deleteSubCategory(
 ): Promise<void> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories/${subCategoryId}`,
+      `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subCategoryId}`,
       {
         method: "DELETE",
       },
@@ -486,7 +486,7 @@ export async function getSubCategorySets(
 ) {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/categories/${categoryId}/subcategories/${subCategoryId}/sets`,
+      `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subCategoryId}/sets`,
     );
 
     if (!response.ok) {
