@@ -63,6 +63,7 @@ export interface Course {
   relatedCourses: string[];
   categoryId: string;
   subcategoryId?: string;
+  categoryIds?: string[];
   createdAt: string;
   updatedAt: string;
   startDate: string;

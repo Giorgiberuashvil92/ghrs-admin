@@ -2,66 +2,36 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createCategory } from "@/lib/api/categories";
+import { createCourseCategory } from "@/lib/api/course-categories";
 import { useLanguage } from "@/i18n/language-context";
 import { TrashIcon, PhotoIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 
-const API_BASE_URL = process.env.NODE_ENV === 'development'
-  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-  : process.env.NEXT_PUBLIC_API_URL || 'https://ghrs-backend.onrender.com';
+const API_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+    : process.env.NEXT_PUBLIC_API_URL || "https://ghrs-backend.onrender.com";
 
-// ცალკე ფუნქცია ფაილების ატვირთვისთვის
-const createCategoryWithFile = async (formData: FormData) => {
-  try {
-    console.log("Creating category with file upload");
-    Array.from(formData.entries()).forEach(([key, value]) => {
-      console.log(`${key}:`, value);
-    });
+const BASE = "/admin/categories";
 
-    const response = await fetch(`${API_BASE_URL}/api/categories`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      try {
-        const errorData = await response.json();
-        console.error("Server error response:", errorData);
-        errorMessage = errorData.message || errorMessage;
-      } catch (jsonError) {
-        try {
-          const errorText = await response.text();
-          console.error("Server error response (text):", errorText);
-          errorMessage = errorText || errorMessage;
-        } catch (textError) {
-          console.error("Could not parse error response");
-        }
-      }
-      throw new Error(errorMessage);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error creating category with file:", error);
-    throw error;
+async function createCourseCategoryWithFile(formData: FormData) {
+  const response = await fetch(`${API_BASE_URL}/api/course-categories`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(err.message || `HTTP error! status: ${response.status}`);
   }
-};
+  return response.json();
+}
 
-const ImageComponent = ({ src, alt }: { src: string; alt: string }) => {
-  if (src.startsWith("data:")) {
-    return (
-      <img src={src} alt={alt} className="h-24 w-24 rounded-lg object-cover" />
-    );
-  }
-  return (
-    <img src={src} alt={alt} className="h-24 w-24 rounded-lg object-cover" />
-  );
-};
+const ImagePreview = ({ src, alt }: { src: string; alt: string }) => (
+  <img src={src} alt={alt} className="h-24 w-24 rounded-lg object-cover" />
+);
 
-export default function AddCategoryPage() {
+export default function AdminAddCategoryPage() {
   const router = useRouter();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
@@ -70,16 +40,8 @@ export default function AddCategoryPage() {
   const [isImageUrlInput, setIsImageUrlInput] = useState(false);
   const imageFileRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
-    name: {
-      ka: "",
-      en: "",
-      ru: "",
-    },
-    description: {
-      ka: "",
-      en: "",
-      ru: "",
-    },
+    name: { en: "", ru: "" },
+    description: { en: "", ru: "" },
     imageUrl: "",
     isActive: true,
     isPublished: false,
@@ -90,7 +52,7 @@ export default function AddCategoryPage() {
     setFormData((prev) => ({
       ...prev,
       [field]: {
-        ...(prev[field as keyof typeof prev] as any),
+        ...(prev[field as keyof typeof prev] as Record<string, string>),
         [lang]: value,
       },
     }));
@@ -98,16 +60,12 @@ export default function AddCategoryPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.name.ka) {
-      alert(t("pleaseEnterGeorgianName"));
-      return;
+    if (!formData.name.en && !formData.name.ru) {
+      alert(t("pleaseEnterEnglishOrRussianName"));
+      return; 
     }
-
     setLoading(true);
-
     try {
-      // ფაილი თუ არის, FormData-ს გამოვიყენოთ
       if (imageFile || (formData.imageUrl && formData.imageUrl.trim())) {
         const dataToSend = new FormData();
         dataToSend.append("name", JSON.stringify(formData.name));
@@ -115,33 +73,26 @@ export default function AddCategoryPage() {
         dataToSend.append("isActive", formData.isActive.toString());
         dataToSend.append("isPublished", formData.isPublished.toString());
         dataToSend.append("sortOrder", formData.sortOrder.toString());
-
         if (imageFile) {
           dataToSend.append("image", imageFile);
         } else if (
-          formData.imageUrl &&
-          formData.imageUrl.trim() &&
+          formData.imageUrl?.trim() &&
           /^https?:\/\//.test(formData.imageUrl)
         ) {
           dataToSend.append("imageUrl", formData.imageUrl);
         }
-
-        await createCategoryWithFile(dataToSend);
+        await createCourseCategoryWithFile(dataToSend);
       } else {
-        // ფაილი არ არის, JSON ობიექტი გავაგზავნოთ
-        const jsonData = {
+        await createCourseCategory({
           name: formData.name,
           description: formData.description,
           isActive: formData.isActive,
           isPublished: formData.isPublished,
           sortOrder: formData.sortOrder,
-        };
-
-        await createCategory(jsonData);
+        });
       }
-
       alert(t("categoryCreatedSuccess"));
-      router.push("/rehabilitation/categories");
+      router.push(BASE);
     } catch (error) {
       console.error("Error creating category:", error);
       alert(t("categoryCreateError"));
@@ -157,7 +108,7 @@ export default function AddCategoryPage() {
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
         setImageFile(file);
-        setFormData((prev) => ({ ...prev, imageUrl: "" })); // Clear URL input if file is chosen
+        setFormData((prev) => ({ ...prev, imageUrl: "" }));
       };
       reader.readAsDataURL(file);
     }
@@ -167,15 +118,13 @@ export default function AddCategoryPage() {
     setImagePreview(null);
     setImageFile(null);
     setFormData((prev) => ({ ...prev, imageUrl: "" }));
-    if (imageFileRef.current) {
-      imageFileRef.current.value = "";
-    }
+    if (imageFileRef.current) imageFileRef.current.value = "";
   };
 
   const handleImageUrlSubmit = () => {
     if (formData.imageUrl.trim()) {
       setImagePreview(formData.imageUrl);
-      setImageFile(null); // Clear file input if URL is chosen
+      setImageFile(null);
       setIsImageUrlInput(false);
     } else {
       alert(t("pleaseEnterImageUrl"));
@@ -185,39 +134,29 @@ export default function AddCategoryPage() {
   return (
     <div className="p-8">
       <div className="mx-auto max-w-2xl">
+        <button
+          type="button"
+          onClick={() => router.push(BASE)}
+          className="mb-4 text-blue-600 hover:text-blue-700"
+        >
+          ← {t("backToCategories")}
+        </button>
         <h1 className="mb-6 text-3xl font-bold">{t("addNewCategory")}</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ქართული სახელი */}
           <div>
             <label className="mb-2 block text-sm font-medium">
-              {t("nameInGeorgian")} *
+              {t("nameInEnglish")} *
             </label>
             <input
               type="text"
               required
-              value={formData.name.ka}
-              onChange={(e) => handleInputChange("name", "ka", e.target.value)}
-              className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500"
-              placeholder={t("enterGeorgianName")}
-            />
-          </div>
-
-          {/* ინგლისური სახელი */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t("nameInEnglish")}
-            </label>
-            <input
-              type="text"
               value={formData.name.en}
               onChange={(e) => handleInputChange("name", "en", e.target.value)}
               className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500"
               placeholder={t("enterEnglishName")}
             />
           </div>
-
-          {/* რუსული სახელი */}
           <div>
             <label className="mb-2 block text-sm font-medium">
               {t("nameInRussian")}
@@ -230,24 +169,6 @@ export default function AddCategoryPage() {
               placeholder={t("enterRussianName")}
             />
           </div>
-
-          {/* ქართული აღწერა */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t("descriptionInGeorgian")}
-            </label>
-            <textarea
-              value={formData.description.ka}
-              onChange={(e) =>
-                handleInputChange("description", "ka", e.target.value)
-              }
-              className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              placeholder={t("enterGeorgianDescription")}
-            />
-          </div>
-
-          {/* ინგლისური აღწერა */}
           <div>
             <label className="mb-2 block text-sm font-medium">
               {t("descriptionInEnglish")}
@@ -262,8 +183,6 @@ export default function AddCategoryPage() {
               placeholder={t("enterEnglishDescription")}
             />
           </div>
-
-          {/* რუსული აღწერა */}
           <div>
             <label className="mb-2 block text-sm font-medium">
               {t("descriptionInRussian")}
@@ -279,25 +198,19 @@ export default function AddCategoryPage() {
             />
           </div>
 
-          {/* სურათის URL */}
           <div className="rounded-xl bg-gray-50 p-6">
             <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
               <PhotoIcon className="mr-2 h-5 w-5" />
               {t("categoryImage")}
             </h3>
-
             <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-700">
-                {t("uploadImage")} *
-              </label>
-
               {imagePreview ? (
                 <div className="relative">
-                  <ImageComponent src={imagePreview} alt={t("thumbnailAlt")} />
+                  <ImagePreview src={imagePreview} alt={t("thumbnailAlt")} />
                   <button
                     type="button"
                     onClick={handleImageDelete}
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white transition-colors hover:bg-red-600"
+                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -310,7 +223,6 @@ export default function AddCategoryPage() {
                   </p>
                 </div>
               )}
-
               <div className="flex gap-2">
                 <input
                   ref={imageFileRef}
@@ -340,8 +252,7 @@ export default function AddCategoryPage() {
                   {t("url")}
                 </Button>
               </div>
-
-              {isImageUrlInput && ( // Add this block for URL input
+              {isImageUrlInput && (
                 <div className="flex gap-2">
                   <input
                     type="url"
@@ -352,11 +263,7 @@ export default function AddCategoryPage() {
                     placeholder={t("enterImageUrl")}
                     className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   />
-                  <Button
-                    type="button"
-                    onClick={handleImageUrlSubmit}
-                    size="sm"
-                  >
+                  <Button type="button" onClick={handleImageUrlSubmit} size="sm">
                     {t("add")}
                   </Button>
                 </div>
@@ -364,20 +271,18 @@ export default function AddCategoryPage() {
             </div>
           </div>
 
-          {/* ღილაკები */}
           <div className="flex gap-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700 disabled:bg-blue-300"
+              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:bg-blue-300"
             >
               {loading ? t("creating") : t("create")}
             </button>
-
             <button
               type="button"
-              onClick={() => router.back()}
-              className="rounded-lg bg-gray-100 px-6 py-3 transition-colors hover:bg-gray-200"
+              onClick={() => router.push(BASE)}
+              className="rounded-lg bg-gray-100 px-6 py-3 hover:bg-gray-200"
             >
               {t("cancel")}
             </button>

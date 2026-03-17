@@ -75,6 +75,7 @@ export default function NewCoursePage() {
     tags: [],
     categoryId: '',
     subcategoryId: '',
+    categoryIds: [],
     startDate: '',
     endDate: ''
   });
@@ -92,7 +93,7 @@ export default function NewCoursePage() {
         
         const [instructorsResponse, categoriesResponse] = await Promise.all([
           fetch(`${API_URL}/api/instructors`),
-          fetch(`${API_URL}/api/categories`)
+          fetch(`${API_URL}/api/course-categories`)
         ]);
 
         console.log('Instructors response status:', instructorsResponse.status);
@@ -108,8 +109,8 @@ export default function NewCoursePage() {
         console.log('Instructors data:', instructorsData);
         console.log('Categories data:', categoriesData);
 
-        // Ensure we're setting arrays even if the response is empty or invalid
         setInstructors(Array.isArray(instructorsData.instructors) ? instructorsData.instructors : []);
+        // ყველა კატეგორია (მშობელი + საბკატეგორიები) მრავალი არჩევისთვის
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -123,10 +124,10 @@ export default function NewCoursePage() {
   }, []);
 
   // ქვეკატეგორიების წამოღება კატეგორიის არჩევისას
-  const fetchSubcategories = async (categoryId: string, subcategoryId: string) => {
+  const fetchSubcategories = async (categoryId: string) => {
     setLoadingSubcategories(true);
     try {
-      const response = await fetch(`${API_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}`);
+      const response = await fetch(`${API_URL}/api/course-categories/${categoryId}/subcategories`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch subcategories');
@@ -182,7 +183,7 @@ export default function NewCoursePage() {
     if (!formData.title.en && !formData.title.ru) newErrors.title = 'სათაური სავალდებულოა მინიმუმ ერთ ენაზე';
     if (!formData.description.en && !formData.description.ru) newErrors.description = 'აღწერა სავალდებულოა მინიმუმ ერთ ენაზე';
     if (!formData.price || formData.price <= 0) newErrors.price = 'ფასი სავალდებულოა და უნდა იყოს 0-ზე მეტი';
-    if (!formData.categoryId) newErrors.category = 'კატეგორია სავალდებულოა';
+    if (!formData.categoryIds?.length) newErrors.category = 'მინიმუმ ერთი კატეგორია სავალდებულოა';
     if (!formData.thumbnail) newErrors.thumbnail = 'მთავარი სურათი სავალდებულოა';
     if (!formData.instructor.name) newErrors.instructor = 'ინსტრუქტორი სავალდებულოა';
     if (formData.languages.length === 0) newErrors.languages = 'მინიმუმ ერთი ენა უნდა იყოს არჩეული';
@@ -227,7 +228,9 @@ export default function NewCoursePage() {
           ru: formData.certificateDescription.ru || formData.certificateDescription.en || ''
         },
         languages: formData.languages,
-        categoryId: formData.categoryId,
+        categoryIds: formData.categoryIds?.length ? formData.categoryIds : undefined,
+        categoryId: formData.categoryIds?.[0],
+        subcategoryId: formData.categoryIds?.[1],
         additionalImages: formData.additionalImages,
         certificateImages: formData.certificateImages,
         learningOutcomes: formData.learningOutcomes,
@@ -254,7 +257,6 @@ export default function NewCoursePage() {
           },
           duration: item.duration || 0
         })),
-        ...(formData.subcategoryId && { subcategoryId: formData.subcategoryId }),
         ...(formData.duration && { duration: formData.duration }),
         ...(formData.startDate && { startDate: formData.startDate }),
         ...(formData.endDate && { endDate: formData.endDate }),
@@ -845,98 +847,35 @@ export default function NewCoursePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'Category' : language === 'ru' ? 'Категория' : 'კატეგორია'} <span className="text-red-500">*</span>
+                    {language === 'en' ? 'Categories' : language === 'ru' ? 'Категории' : 'კატეგორიები'} <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={async (e) => {
-                      const newCategoryId = e.target.value;
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        categoryId: newCategoryId,
-                        // აღარ ვარესეტებთ subcategoryId-ს აქ
-                      }));
-                      
-                      if (newCategoryId) {
-                        const selectedCategory = categories.find(cat => cat._id === newCategoryId);
-                        if (selectedCategory && selectedCategory.subcategories.length > 0) {
-                          await fetchSubcategories(newCategoryId, selectedCategory.subcategories[0]);
-                        } else {
-                          setSubcategories([]);
-                          // მხოლოდ მაშინ ვარესეტებთ, როცა კატეგორიას არ აქვს ქვეკატეგორიები
-                          setFormData(prev => ({
-                            ...prev,
-                            subcategoryId: ''
-                          }));
-                        }
-                      } else {
-                        setSubcategories([]);
-                        // ან როცა კატეგორია საერთოდ არ არის არჩეული
-                        setFormData(prev => ({
-                          ...prev,
-                          subcategoryId: ''
-                        }));
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.category ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">
-                      {language === 'en' ? 'Select category' : language === 'ru' ? 'Выберите категорию' : 'აირჩიეთ კატეგორია'}
-                    </option>
-                    {categories.map(category => (
-                      <option key={category._id} value={category._id}>
-                        {category.name[language as keyof typeof category.name] || category.name.en}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category && <p className="text-red-500 text-sm mt-1">
-                    {language === 'en' 
-                      ? 'Category is required'
-                      : language === 'ru'
-                      ? 'Категория обязательна'
-                      : 'კატეგორია სავალდებულოა'}
-                  </p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'Subcategory' : language === 'ru' ? 'Подкатегория' : 'ქვეკატეგორია'}
-                  </label>
-                  <div className="relative">
-                    <select
-                      ref={subcategoryRef}
-                      value={formData.subcategoryId}
-                      onChange={(e) => setFormData(prev => ({ ...prev, subcategoryId: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled={!formData.categoryId || loadingSubcategories}
-                    >
-                      <option value="">
-                        {loadingSubcategories 
-                          ? (language === 'en' 
-                              ? 'Loading subcategories...' 
-                              : language === 'ru' 
-                              ? 'Загрузка подкатегорий...' 
-                              : 'ქვეკატეგორიების ჩატვირთვა...')
-                          : (language === 'en' 
-                              ? 'Select subcategory' 
-                              : language === 'ru' 
-                              ? 'Выберите подкатегорию' 
-                              : 'აირჩიეთ ქვეკატეგორია')}
-                      </option>
-                      {subcategories.map(sub => (
-                        <option key={sub._id} value={sub._id}>
-                          {sub.name[language as keyof typeof sub.name] || sub.name.en}
-                        </option>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {language === 'en' ? 'You can select multiple categories.' : language === 'ru' ? 'Можно выбрать несколько категорий.' : 'შეგიძლიათ აირჩიოთ რამდენიმე კატეგორია.'}
+                  </p>
+                  <div className={`max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2 ${errors.category ? 'border-red-500' : 'border-gray-300'}`}>
+                    {([...categories] as { _id: string; name: Record<string, string>; parentId?: string }[])
+                      .sort((a, b) => (a.parentId ? 1 : 0) - (b.parentId ? 1 : 0))
+                      .map((cat) => (
+                        <label key={cat._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={formData.categoryIds?.includes(cat._id) ?? false}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({ ...prev, categoryIds: [...(prev.categoryIds ?? []), cat._id] }));
+                              } else {
+                                setFormData(prev => ({ ...prev, categoryIds: (prev.categoryIds ?? []).filter(id => id !== cat._id) }));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={cat.parentId ? 'pl-4 text-gray-600' : 'font-medium'}>
+                            {(cat.name[language as keyof typeof cat.name] || cat.name.en) || ''}
+                          </span>
+                        </label>
                       ))}
-                    </select>
-                    {loadingSubcategories && (
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                      </div>
-                    )}
                   </div>
+                  {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
                 </div>
 
                 <div>

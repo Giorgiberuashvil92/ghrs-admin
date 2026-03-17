@@ -88,7 +88,6 @@ const translations = {
     publishCourse: 'Publish Course',
     images: 'Images',
     mainImage: 'Main Image',
-    additionalImages: 'Additional Images',
     certificates: 'Certificates',
     certificateImage: 'Certificate Image',
     cancel: 'Cancel'
@@ -182,24 +181,13 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
   const subcategoryRef = useRef<HTMLSelectElement>(null);
   const [categories, setCategories] = useState<Array<{
     _id: string;
-    name: {
-      ka: string;
-      en: string;
-      ru: string;
-      _id: string;
-    };
-    subcategories: string[];
+    name: { ka?: string; en?: string; ru?: string };
+    parentId?: string;
   }>>([]);
 
   const [subcategories, setSubcategories] = useState<Array<{
     _id: string;
-    name: {
-      ka: string;
-      en: string;
-      ru: string;
-      _id: string;
-    };
-    categoryId: string;
+    name: { ka?: string; en?: string; ru?: string };
   }>>([]);
   
   const emptyMultilingualContent: MultilingualContent = { en: '', ru: '' };
@@ -228,6 +216,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
     tags: [],
     categoryId: '',
     subcategoryId: '',
+    categoryIds: [] as string[],
     startDate: '',
     endDate: ''
   });
@@ -274,30 +263,25 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
           tags: courseData.tags || [],
           categoryId: courseData.categoryId || '',
           subcategoryId: courseData.subcategoryId || '',
+          categoryIds: Array.isArray(courseData.categoryIds) && courseData.categoryIds.length
+            ? courseData.categoryIds
+            : courseData.categoryId
+              ? [courseData.categoryId, courseData.subcategoryId].filter(Boolean)
+              : [],
           startDate: courseData.startDate || '',
           endDate: courseData.endDate || ''
         });
 
-        // Fetch instructors and categories
         const [instructorsResponse, categoriesResponse] = await Promise.all([
           fetch(`${API_URL}/api/instructors`),
-          fetch(`${API_URL}/api/categories`)
+          fetch(`${API_URL}/api/course-categories`)
         ]);
 
         if (instructorsResponse.ok && categoriesResponse.ok) {
           const instructorsData = await instructorsResponse.json();
           const categoriesData = await categoriesResponse.json();
-
           setInstructors(Array.isArray(instructorsData.instructors) ? instructorsData.instructors : []);
           setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-
-          // If course has subcategory, fetch subcategories
-          if (courseData.categoryId && courseData.subcategoryId) {
-            const selectedCategory = categoriesData.find((cat: any) => cat._id === courseData.categoryId);
-            if (selectedCategory && selectedCategory.subcategories.length > 0) {
-              await fetchSubcategories(courseData.categoryId, selectedCategory.subcategories[0]);
-            }
-          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -315,20 +299,14 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
     fetchData();
   }, [resolvedParams.id]);
 
-  // ქვეკატეგორიების წამოღება კატეგორიის არჩევისას
-  const fetchSubcategories = async (categoryId: string, subcategoryId: string) => {
+  // ქვეკატეგორიების წამოღება კატეგორიის არჩევისას (კურსების კატეგორიები)
+  const fetchSubcategories = async (categoryId: string) => {
     setLoadingSubcategories(true);
     try {
-      const response = await fetch(`${API_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch subcategories');
-      }
-
+      const response = await fetch(`${API_URL}/api/course-categories/${categoryId}/subcategories`);
+      if (!response.ok) throw new Error('Failed to fetch subcategories');
       const data = await response.json();
-      const subcategoriesArray = Array.isArray(data) ? data : [data];
-      setSubcategories(subcategoriesArray);
-
+      setSubcategories(Array.isArray(data) ? data : [data]);
     } catch (error) {
       console.error('Error fetching subcategories:', error);
       setSubcategories([]);
@@ -374,7 +352,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
     if (!formData.title.en && !formData.title.ru) newErrors.title = tr.titleRequired;
     if (!formData.description.en && !formData.description.ru) newErrors.description = tr.descriptionRequired;
     if (!formData.price || formData.price <= 0) newErrors.price = tr.priceRequired;
-    if (!formData.categoryId) newErrors.category = tr.categoryRequired;
+    if (!formData.categoryIds?.length) newErrors.category = tr.categoryRequired;
     if (!formData.thumbnail) newErrors.thumbnail = tr.thumbnailRequired;
     if (!formData.instructor.name) newErrors.instructor = tr.instructorRequired;
     if (formData.languages.length === 0) newErrors.languages = tr.languagesRequired;
@@ -407,8 +385,11 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
           name: formData.instructor.name
         },
         languages: formData.languages,
-        categoryId: formData.categoryId,
-        ...(formData.subcategoryId && { subcategoryId: formData.subcategoryId }),
+        ...(formData.categoryIds?.length && {
+          categoryIds: formData.categoryIds,
+          categoryId: formData.categoryIds[0],
+          subcategoryId: formData.categoryIds[1],
+        }),
         ...(formData.duration && { duration: formData.duration }),
         ...(formData.startDate && { startDate: formData.startDate }),
         ...(formData.endDate && { endDate: formData.endDate }),
@@ -577,43 +558,33 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {tr.category} <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) => {
-                      setFormData(prev => ({ ...prev, categoryId: e.target.value }));
-                      setSubcategories([]); // Clear subcategories when category changes
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.category ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">{tr.selectCategory}</option>
-                    {categories.map(category => (
-                      <option key={category._id} value={category._id}>
-                        {category.name.en || category.name.ru || category.name.ka}
-                      </option>
-                    ))}
-                  </select>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {currentLang === 'ru' ? 'Можно выбрать несколько категорий.' : 'You can select multiple categories.'}
+                  </p>
+                  <div className={`max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2 ${errors.category ? 'border-red-500' : 'border-gray-300'}`}>
+                    {[...categories]
+                      .sort((a, b) => (a.parentId ? 1 : 0) - (b.parentId ? 1 : 0))
+                      .map((cat) => (
+                        <label key={cat._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={formData.categoryIds?.includes(cat._id) ?? false}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({ ...prev, categoryIds: [...(prev.categoryIds ?? []), cat._id] }));
+                              } else {
+                                setFormData(prev => ({ ...prev, categoryIds: (prev.categoryIds ?? []).filter(id => id !== cat._id) }));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={cat.parentId ? 'pl-4 text-gray-600' : 'font-medium'}>
+                            {cat.name?.en || cat.name?.ru || cat.name?.ka || ''}
+                          </span>
+                        </label>
+                      ))}
+                  </div>
                   {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {tr.subcategory}
-                  </label>
-                  <select
-                    value={formData.subcategoryId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subcategoryId: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={!formData.categoryId || loadingSubcategories}
-                  >
-                    <option value="">{tr.selectSubcategory}</option>
-                    {subcategories.map(subcategory => (
-                      <option key={subcategory._id} value={subcategory._id}>
-                        {subcategory.name.en || subcategory.name.ru || subcategory.name.ka}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
             </div>
@@ -960,7 +931,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
               <MultilingualInput
                 label={tr.tags}
                 value={formData.tags as unknown as MultilingualContent}
-                onChange={(value) => setFormData(prev => ({ ...prev, tags: value as unknown as MultilingualContent }))}
+                onChange={(value) => setFormData(prev => ({ ...prev, tags: (value as unknown) as string[] }))}
                 type="textarea"
                 className={errors.tags ? 'border-red-500' : ''}
               />

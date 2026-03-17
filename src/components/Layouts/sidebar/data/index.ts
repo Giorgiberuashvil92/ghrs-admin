@@ -41,19 +41,19 @@ export const NAV_DATA = [
         icon: Icons.Alphabet,
         items: [
           {
+            title: "Category Management",
+            titleKey: "categoryManagement",
+            url: "/admin/categories",
+          },
+          {
             title: "Course Management",
             titleKey: "courseManagement",
             url: "/admin/courses",
           },
           {
-            title: "Instructor Management", 
+            title: "Instructor Management",
             titleKey: "instructorManagement",
             url: "/admin/instructors",
-          },
-          {
-            title: "Courses",
-            titleKey: "courses",
-            url: "/admin/courses",
           },
         ],
       },
