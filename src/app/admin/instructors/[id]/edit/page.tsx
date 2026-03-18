@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Instructor, MultilingualContent } from '@/types/instructors';
+import { Instructor } from '@/types/instructors';
 import { Button } from '@/components/ui/button';
 import ImageUpload from '@/components/FormElements/ImageUpload';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
@@ -15,7 +15,7 @@ interface EditInstructorPageProps {
 export default function EditInstructorPage({ params }: EditInstructorPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [formData, setFormData] = useState<Instructor>({
@@ -51,7 +51,7 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
       });
     } catch (error) {
       console.error('Error fetching instructor:', error);
-      alert('ინსტრუქტორის ჩატვირთვა ვერ მოხერხდა');
+      alert(t('instructorLoadError'));
       router.push('/admin/instructors');
     } finally {
       setInitialLoading(false);
@@ -61,12 +61,12 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (!formData.name?.trim()) errors.name = 'სახელი სავალდებულოა';
-    if (!formData.email?.trim()) errors.email = 'ელ-ფოსტა სავალდებულოა';
-    if (!formData.profession?.trim()) errors.profession = 'პროფესია სავალდებულოა';
-    if (!formData.bio?.en?.trim() && !formData.bio?.ru?.trim()) errors.bio = 'ბიოგრაფია სავალდებულოა ინგლისურ ან რუსულ ენაზე';
-    if (!formData.htmlContent?.en?.trim() && !formData.htmlContent?.ru?.trim()) errors.htmlContent = 'დეტალური ბიოგრაფია სავალდებულოა ინგლისურ ან რუსულ ენაზე';
-    if (!formData.profileImage) errors.profileImage = 'პროფილის სურათი სავალდებულოა';
+    if (!formData.name?.trim()) errors.name = t('instructorFirstNameRequired');
+    if (!formData.email?.trim()) errors.email = t('instructorEmailRequired');
+    if (!formData.profession?.trim()) errors.profession = t('instructorProfessionRequired');
+    if (!formData.bio?.en?.trim() && !formData.bio?.ru?.trim()) errors.bio = t('instructorBioRequiredEnRu');
+    if (!formData.htmlContent?.en?.trim() && !formData.htmlContent?.ru?.trim()) errors.htmlContent = t('instructorDetailedBioRequiredEnRu');
+    if (!formData.profileImage) errors.profileImage = t('instructorProfileImageRequired');
 
     if (Object.keys(errors).length > 0) {
       alert(Object.values(errors).join('\n'));
@@ -88,12 +88,12 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
       await updateInstructor(id, formData);
       
       console.log('Instructor updated successfully:', formData);
-      alert('ინსტრუქტორი წარმატებით განახლდა!');
+      alert(t('instructorUpdateSuccess'));
       router.push('/admin/instructors');
       
     } catch (error) {
       console.error('Error updating instructor:', error);
-      alert('ინსტრუქტორის განახლება ვერ მოხერხდა');
+      alert(t('instructorUpdateError'));
     } finally {
       setLoading(false);
     }
@@ -110,58 +110,54 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">ინსტრუქტორის რედაქტირება</h1>
-        <p className="text-gray-600 mt-1">განაახლეთ ინსტრუქტორის ინფორმაცია</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('instructorEditTitle')}</h1>
+        <p className="text-gray-600 mt-1">{t('instructorEditSubtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
         <div className="bg-white rounded-lg shadow-sm border p-6 space-y-6">
-          {/* სახელი */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              სახელი და გვარი
+              {t('instructorNameAndSurname')}
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="მაგ: გიორგი გიორგაძე"
+              placeholder={t('instructorPlaceholderNameEdit')}
             />
           </div>
 
-          {/* ელ-ფოსტა */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              ელ-ფოსტა
+              {t('instructorEmail')}
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="მაგ: giorgi@gmail.com"
+              placeholder={t('instructorPlaceholderEmailEdit')}
             />
           </div>
 
-          {/* პროფესია (ცალკე ველი) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              პროფესია (ფოლბექი)
+              {t('instructorProfessionFallback')}
             </label>
             <input
               type="text"
               value={formData.profession}
               onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="მაგ: მასაჟისტი"
+              placeholder={t('instructorPlaceholderProfessionEdit')}
             />
           </div>
 
-          {/* პროფესია ენების მიხედვით */}
           <div>
             <MultilingualInput
-              label="პროფესია (EN / RU)"
+              label={t('instructorProfessionByLanguage')}
               value={{
                 en: formData.professionLocalized?.en ?? '',
                 ru: formData.professionLocalized?.ru ?? '',
@@ -174,15 +170,14 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
                   ka: formData.professionLocalized?.ka ?? '',
                 }
               })}
-              placeholder="პროფესია ენების მიხედვით..."
+              placeholder={t('instructorPlaceholderProfessionByLanguage')}
               languages={['en', 'ru']}
             />
           </div>
 
-          {/* მოკლე ბიოგრაფია */}
           <div>
             <MultilingualInput
-              label="მოკლე ბიოგრაფია"
+              label={t('instructorBio')}
               value={{
                 en: formData.bio?.en || '',
                 ru: formData.bio?.ru || ''
@@ -196,16 +191,15 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
                 }
               })}
               type="textarea"
-              placeholder="მოკლე ბიოგრაფია..."
+              placeholder={t('instructorShortBioPlaceholder')}
               required
               languages={['en', 'ru']}
             />
           </div>
 
-          {/* დეტალური ბიოგრაფია */}
           <div>
             <MultilingualInput
-              label="დეტალური ბიოგრაფია"
+              label={t('instructorDetailedBio')}
               value={{
                 en: formData.htmlContent?.en || '',
                 ru: formData.htmlContent?.ru || ''
@@ -220,16 +214,15 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
               })}
               type="richtext"
               height={1500}
-              placeholder="დეტალური ბიოგრაფია..."
+              placeholder={t('instructorDetailedBioPlaceholder')}
               required
               languages={['en', 'ru']}
             />
           </div>
 
-          {/* პროფილის სურათი */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              პროფილის სურათი
+              {t('instructorProfileImage')}
             </label>
             <ImageUpload
               value={formData.profileImage}
@@ -240,7 +233,6 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
             />
           </div>
 
-          {/* აქტიური/არააქტიური */}
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -249,19 +241,18 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label className="ml-2 block text-sm text-gray-900">
-              აქტიური ინსტრუქტორი
+              {t('instructorActive')}
             </label>
           </div>
         </div>
 
-        {/* ღილაკები */}
         <div className="flex gap-4">
           <Button
             type="submit"
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {loading ? 'ინახება...' : 'შენახვა'}
+            {loading ? t('saving') : t('save')}
           </Button>
           
           <Button
@@ -269,7 +260,7 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
             onClick={() => router.push('/admin/instructors')}
             className="bg-gray-100 text-gray-600 hover:bg-gray-200"
           >
-            გაუქმება
+            {t('cancel')}
           </Button>
         </div>
       </form>

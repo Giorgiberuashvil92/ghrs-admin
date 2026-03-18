@@ -12,14 +12,13 @@ import {
   ArrowLeftIcon, 
   UserGroupIcon,
   CameraIcon,
-  BriefcaseIcon,
   PlusIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 
 export default function NewInstructorPage() {
   const router = useRouter();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState<InstructorFormData>({
@@ -74,14 +73,17 @@ export default function NewInstructorPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.firstName.trim()) newErrors.firstName = 'სახელი სავალდებულოა';
-    if (!formData.lastName.trim()) newErrors.lastName = 'გვარი სავალდებულოა';
-    if (!formData.email.trim()) newErrors.email = 'ელ-ფოსტა სავალდებულოა';
-    if (!formData.profession?.trim() && !formData.professionLocalized?.en?.trim() && !formData.professionLocalized?.ru?.trim()) newErrors.profession = 'პროფესია სავალდებულოა (მინიმუმ ერთ ენაზე)';
-    if (!formData.role.en.trim()) newErrors.role = 'როლი სავალდებულოა ქართულ ენაზე';    
-    if (!formData.bio.en.trim()) newErrors.bio = 'მოკლე ბიოგრაფია სავალდებულოა ქართულ ენაზე';
-    if (!formData.detailedBio.en.trim()) newErrors.detailedBio = 'დეტალური ბიოგრაფია სავალდებულოა ქართულ ენაზე';
-    if (!formData.profileImage) newErrors.profileImage = 'პროფილის სურათი სავალდებულოა';
+    if (!formData.firstName.trim()) newErrors.firstName = t('instructorFirstNameRequired');
+    if (!formData.lastName.trim()) newErrors.lastName = t('instructorLastNameRequired');
+    if (!formData.email.trim()) newErrors.email = t('instructorEmailRequired');
+    if (!formData.profession?.trim() && !formData.professionLocalized?.en?.trim() && !formData.professionLocalized?.ru?.trim()) newErrors.profession = t('instructorProfessionRequired');
+    const hasRole = [formData.role?.ka, formData.role?.en, formData.role?.ru].some((v) => (v || '').trim());
+    if (!hasRole) newErrors.role = t('instructorRoleRequired');
+    const hasBio = [formData.bio?.ka, formData.bio?.en, formData.bio?.ru].some((v) => (v || '').trim());
+    if (!hasBio) newErrors.bio = t('instructorBioRequired');
+    const hasDetailedBio = [formData.detailedBio?.ka, formData.detailedBio?.en, formData.detailedBio?.ru].some((v) => (v || '').trim());
+    if (!hasDetailedBio) newErrors.detailedBio = t('instructorDetailedBioRequired');
+    if (!formData.profileImage) newErrors.profileImage = t('instructorProfileImageRequired');
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -108,12 +110,12 @@ export default function NewInstructorPage() {
       const newInstructor = await createInstructor(instructorData);
       
       console.log('Instructor created successfully:', newInstructor);
-      alert('ინსტრუქტორი წარმატებით შეიქმნა!');
+      alert(t('instructorCreateSuccess'));
       router.push('/admin/instructors');
       
     } catch (error) {
       console.error('Error creating instructor:', error);
-      alert('ინსტრუქტორის შექმნა ვერ მოხერხდა');
+      alert(t('instructorCreateError'));
     } finally {
       setLoading(false);
     }
@@ -133,9 +135,9 @@ export default function NewInstructorPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <UserGroupIcon className="h-8 w-8 text-blue-600" />
-              ახალი ინსტრუქტორის დამატება
+              {t('instructorAddNew')}
             </h1>
-            <p className="text-gray-600 mt-1">შეავსეთ ძირითადი ინფორმაცია ახალი ინსტრუქტორის დასამატებლად</p>
+            <p className="text-gray-600 mt-1">{t('instructorFillBasicInfo')}</p>
           </div>
         </div>
       </div>
@@ -146,13 +148,13 @@ export default function NewInstructorPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Basic Information */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">ძირითადი ინფორმაცია</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{t('basicInformation')}</h2>
               
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      სახელი <span className="text-red-500">*</span>
+                      {t('instructorFirstName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -161,14 +163,14 @@ export default function NewInstructorPage() {
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.firstName ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="მაგ. ლაშა"
+                      placeholder={t('instructorPlaceholderFirstName')}
                     />
                     {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      გვარი <span className="text-red-500">*</span>
+                      {t('instructorLastName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -177,7 +179,7 @@ export default function NewInstructorPage() {
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.lastName ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="მაგ. ჯიქია"
+                      placeholder={t('instructorPlaceholderLastName')}
                     />
                     {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                   </div>
@@ -186,7 +188,7 @@ export default function NewInstructorPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ელ-ფოსტა <span className="text-red-500">*</span>
+                      {t('instructorEmail')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -195,40 +197,40 @@ export default function NewInstructorPage() {
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="lasha@example.com"
+                      placeholder={t('instructorPlaceholderEmail')}
                     />
                     {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ტელეფონი
+                      {t('instructorPhone')}
                     </label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+995 555 123 456"
+                      placeholder={t('instructorPlaceholderPhone')}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    პროფესია (ცალკე ველი, ფოლბექი)
+                    {t('instructorProfessionFallback')}
                   </label>
                   <input
                     type="text"
                     value={formData.profession}
                     onChange={(e) => setFormData(prev => ({ ...prev, profession: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="მაგ. Teacher / ინსტრუქტორი (თუ არ ივსება ქვემოთ)"
+                    placeholder={t('instructorPlaceholderProfession')}
                   />
                 </div>
                 <div>
                   <MultilingualInput
-                    label="პროფესია ენების მიხედვით (EN / RU)"
+                    label={t('instructorProfessionByLanguage')}
                     value={{
                       en: formData.professionLocalized.en,
                       ru: formData.professionLocalized.ru,
@@ -241,7 +243,7 @@ export default function NewInstructorPage() {
                         ru: value.ru,
                       },
                     }))}
-                    placeholder="მაგ. Manual therapist, Instructor"
+                    placeholder={t('instructorPlaceholderProfessionLocalized')}
                     languages={['en', 'ru']}
                   />
                   {errors.profession && <p className="text-red-500 text-sm mt-1">{errors.profession}</p>}
@@ -249,43 +251,43 @@ export default function NewInstructorPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    სრული ტიტული/წოდება
+                    {t('instructorFullTitle')}
                   </label>
                   <input
                     type="text"
                     value={formData.fullTitle}
                     onChange={(e) => setFormData(prev => ({ ...prev, fullTitle: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="მაგ. Dr. ლაშა ჯიქია, Ph.D, C.A., P.T."
+                    placeholder={t('instructorPlaceholderFullTitle')}
                   />
                 </div>
 
                 <MultilingualInput
-                  label="როლი/პოზიცია"
+                  label={t('instructorRole')}
                   value={formData.role}
                   onChange={(value) => setFormData(prev => ({ ...prev, role: value as MultilingualContent }))}
                   required
                   type="textarea"
                   rows={2}
                   className={errors.role ? 'border-red-500' : ''}
-                  placeholder="მაგ. კოლეჯის დამფუძნებელი და ხელმძღვანელი"
+                  placeholder={t('instructorPlaceholderRole')}
                 />
                 {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
 
                 <MultilingualInput
-                  label="მოკლე ბიოგრაფია"
+                  label={t('instructorBio')}
                   value={formData.bio}
                   onChange={(value) => setFormData(prev => ({ ...prev, bio: value as MultilingualContent }))}
                   required
                   type="textarea"
                   rows={4}
                   className={errors.bio ? 'border-red-500' : ''}
-                  placeholder="ინსტრუქტორის შესახებ მოკლე ინფორმაცია..."
+                  placeholder={t('instructorPlaceholderBio')}
                 />
                 {errors.bio && <p className="text-red-500 text-sm">{errors.bio}</p>}
 
                 <MultilingualInput
-                  label="დეტალური ბიოგრაფია"
+                  label={t('instructorDetailedBio')}
                   value={formData.detailedBio}
                   onChange={(value) => setFormData(prev => ({ ...prev, detailedBio: value as MultilingualContent }))}
                   required
@@ -293,7 +295,7 @@ export default function NewInstructorPage() {
                   rows={12}
                   height={1500}
                   className={errors.detailedBio ? 'border-red-500' : ''}
-                  placeholder="ინსტრუქტორის დეტალური ბიოგრაფია, განათლება, გამოცდილება..."
+                  placeholder={t('instructorPlaceholderDetailedBio')}
                 />
                 {errors.detailedBio && <p className="text-red-500 text-sm">{errors.detailedBio}</p>}
               </div>
@@ -302,23 +304,23 @@ export default function NewInstructorPage() {
             {/* FAQ Content */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">FAQ კონტენტი</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('instructorFaqContent')}</h2>
                 <Button type="button" onClick={addFAQItem} size="sm">
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  კითხვის დამატება
+                  {t('instructorAddQuestion')}
                 </Button>
               </div>
 
               {formData.faqContent.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
-                  FAQ კითხვები არ არის დამატებული
+                  {t('instructorNoFaqAdded')}
                 </p>
               ) : (
                 <div className="space-y-6">
                   {formData.faqContent.map((faq, index) => (
                     <div key={faq.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-medium text-gray-900">კითხვა #{index + 1}</h3>
+                        <h3 className="font-medium text-gray-900">{t('instructorQuestionNumber')} #{index + 1}</h3>
                         <Button
                           type="button"
                           onClick={() => removeFAQItem(index)}
@@ -332,21 +334,21 @@ export default function NewInstructorPage() {
 
                       <div className="space-y-4">
                         <MultilingualInput
-                          label="კითხვა"
+                          label={t('instructorQuestion')}
                           value={faq.question}
                           onChange={(value) => updateFAQItem(index, 'question', value as MultilingualContent)}
                           type="text"
-                          placeholder="შეიყვანეთ კითხვა..."
+                          placeholder={t('instructorPlaceholderQuestion')}
                         />
 
                         <MultilingualInput
-                          label="პასუხი"
+                          label={t('instructorAnswer')}
                           value={faq.answer}
                           onChange={(value) => updateFAQItem(index, 'answer', value as MultilingualContent)}
                           type="richtext"
                           rows={4}
                           height={1000}
-                          placeholder="შეიყვანეთ პასუხი..."
+                          placeholder={t('instructorPlaceholderAnswer')}
                         />
                       </div>
                     </div>
@@ -362,11 +364,11 @@ export default function NewInstructorPage() {
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
                 <CameraIcon className="h-5 w-5" />
-                პროფილის სურათი
+                {t('instructorProfileImage')}
               </h2>
               
               <ImageUpload
-                label="ატვირთეთ სურათი"
+                label={t('instructorUploadImage')}
                 required
                 value={formData.profileImage}
                 onChange={(url) => setFormData(prev => ({ ...prev, profileImage: url as string }))}
@@ -377,7 +379,7 @@ export default function NewInstructorPage() {
 
             {/* Status Settings */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">სტატუსი</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">{t('status')}</h2>
               
               <div className="space-y-4">
                 <label className="flex items-center">
@@ -388,7 +390,7 @@ export default function NewInstructorPage() {
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    აქტიური ინსტრუქტორი
+                    {t('instructorActive')}
                   </span>
                 </label>
 
@@ -400,7 +402,7 @@ export default function NewInstructorPage() {
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    ვერიფიცირებული ინსტრუქტორი
+                    {t('instructorVerified')}
                   </span>
                 </label>
               </div>
@@ -414,12 +416,12 @@ export default function NewInstructorPage() {
                   disabled={loading}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
-                  {loading ? 'მუშავდება...' : 'ინსტრუქტორის შექმნა'}
+                  {loading ? t('instructorCreating') : t('instructorCreate')}
                 </Button>
                 
                 <Link href="/admin/instructors">
                   <Button type="button" variant="outline" className="w-full">
-                    გაუქმება
+                    {t('cancel')}
                   </Button>
                 </Link>
               </div>

@@ -21,68 +21,12 @@ import {
   StarIcon as StarIconSolid 
 } from '@heroicons/react/24/solid';
 
-// Translation object
-const translations = {
-  ka: {
-    title: 'ინსტრუქტორების მართვა',
-    subtitle: 'მართავით და ამატებთ ახალ ინსტრუქტორებს',
-    newInstructor: 'ახალი ინსტრუქტორი',
-    searchPlaceholder: 'ძებნა ინსტრუქტორების მიხედვით...',
-    allInstructors: 'ყველა ინსტრუქტორი',
-    active: 'აქტიური',
-    inactive: 'არააქტიური',
-    verified: 'ვერიფიცირებული',
-    deleteError: 'ინსტრუქტორის წაშლა ვერ მოხერხდა',
-    totalInstructors: 'სულ ინსტრუქტორები',
-    activeInstructors: 'აქტიური ინსტრუქტორები',
-    verifiedInstructors: 'ვერიფიცირებული ინსტრუქტორები',
-    totalStudents: 'სულ სტუდენტები',
-    averageRating: 'საშუალო რეიტინგი'
-  },
-  en: {
-    title: 'Instructor Management',
-    subtitle: 'Manage and add new instructors',
-    newInstructor: 'New Instructor',
-    searchPlaceholder: 'Search instructors...',
-    allInstructors: 'All Instructors',
-    active: 'Active',
-    inactive: 'Inactive',
-    verified: 'Verified',
-    deleteError: 'Failed to delete instructor',
-    totalInstructors: 'Total Instructors',
-    activeInstructors: 'Active Instructors',
-    verifiedInstructors: 'Verified Instructors',
-    totalStudents: 'Total Students',
-    averageRating: 'Average Rating'
-  },
-  ru: {
-    title: 'Управление инструкторами',
-    subtitle: 'Управляйте и добавляйте новых инструкторов',
-    newInstructor: 'Новый инструктор',
-    searchPlaceholder: 'Поиск инструкторов...',
-    allInstructors: 'Все инструкторы',
-    active: 'Активные',
-    inactive: 'Неактивные',
-    verified: 'Верифицированные',
-    deleteError: 'Не удалось удалить инструктора',
-    totalInstructors: 'Всего инструкторов',
-    activeInstructors: 'Активные инструкторы',
-    verifiedInstructors: 'Верифицированные инструкторы',
-    totalStudents: 'Всего студентов',
-    averageRating: 'Средний рейтинг'
-  }
-};
-
 export default function InstructorsPage() {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'verified'>('all');
-
-  // Get current language translations
-  const currentLang = language === 'ka' ? 'ka' : language === 'ru' ? 'ru' : 'en';
-  const tr = translations[currentLang as keyof typeof translations];
 
   useEffect(() => {
     fetchInstructors();
@@ -103,16 +47,16 @@ export default function InstructorsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`დარწმუნებული ხართ რომ გინდათ "${name}"-ის წაშლა?`)) return;
+    if (!confirm(t('instructorDeleteConfirm').replace('{name}', name))) return;
     
     try {
       const { deleteInstructor } = await import('@/lib/api/instructors');
       await deleteInstructor(id);
       setInstructors(instructors.filter(instructor => instructor._id !== id));
-      alert('ინსტრუქტორი წარმატებით წაიშალა');
+      alert(t('instructorDeleteSuccess'));
     } catch (error) {
       console.error('Error deleting instructor:', error);
-      alert('ინსტრუქტორის წაშლა ვერ მოხერხდა');
+      alert(t('instructorDeleteError'));
     }
   };
 
@@ -125,7 +69,7 @@ export default function InstructorsPage() {
       ));
     } catch (error) {
       console.error('Error toggling instructor status:', error);
-      alert('ინსტრუქტორის სტატუსის შეცვლა ვერ მოხერხდა');
+      alert(t('instructorToggleStatusError'));
     }
   };
 
@@ -170,15 +114,15 @@ export default function InstructorsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <UserGroupIcon className="h-8 w-8 text-blue-600" />
-            {tr.title}
+            {t('instructorManagementTitle')}
           </h1>
-          <p className="text-gray-600 mt-1">{tr.subtitle}</p>
+          <p className="text-gray-600 mt-1">{t('instructorManagementSubtitle')}</p>
         </div>
         
         <Link href="/admin/instructors/new">
           <Button className="bg-blue-600 hover:bg-blue-700">
             <PlusIcon className="h-4 w-4 mr-2" />
-            {tr.newInstructor}
+            {t('instructorAddNewBtn')}
           </Button>
         </Link>
       </div>
@@ -191,7 +135,7 @@ export default function InstructorsPage() {
               <UserGroupIcon className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">სულ ინსტრუქტორები</p>
+              <p className="text-sm font-medium text-gray-600">{t('instructorTotalInstructors')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
           </div>
@@ -203,7 +147,7 @@ export default function InstructorsPage() {
               <CheckBadgeIconSolid className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">აქტიური</p>
+              <p className="text-sm font-medium text-gray-600">{t('active')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
             </div>
           </div>
@@ -217,7 +161,7 @@ export default function InstructorsPage() {
               <AcademicCapIcon className="h-6 w-6 text-orange-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">სულ სტუდენტები</p>
+              <p className="text-sm font-medium text-gray-600">{t('instructorTotalStudents')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalStudents.toLocaleString()}</p>
             </div>
           </div>
@@ -229,7 +173,7 @@ export default function InstructorsPage() {
               <StarIconSolid className="h-6 w-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">საშუალო რეიტინგი</p>
+              <p className="text-sm font-medium text-gray-600">{t('instructorAverageRating')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.averageRating.toFixed(1)}</p>
             </div>
           </div>
@@ -244,7 +188,7 @@ export default function InstructorsPage() {
             <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="ინსტრუქტორების ძიება..."
+              placeholder={t('instructorSearchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -254,12 +198,12 @@ export default function InstructorsPage() {
           {/* Filter */}
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
+            onChange={(e) => setFilter(e.target.value as 'all' | 'active' | 'inactive' | 'verified')}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="all">ყველა ინსტრუქტორი</option>
-            <option value="active">აქტიური</option>
-            <option value="inactive">არააქტიური</option>
+            <option value="all">{t('instructorAllInstructors')}</option>
+            <option value="active">{t('active')}</option>
+            <option value="inactive">{t('inactive')}</option>
           </select>
         </div>
       </div>
@@ -269,12 +213,12 @@ export default function InstructorsPage() {
         {filteredInstructors.length === 0 ? (
           <div className="text-center py-12">
             <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg mb-2">ინსტრუქტორები არ მოიძებნა</p>
-            <p className="text-gray-400 mb-6">დაამატეთ თქვენი პირველი ინსტრუქტორი</p>
+            <p className="text-gray-500 text-lg mb-2">{t('instructorNotFound')}</p>
+            <p className="text-gray-400 mb-6">{t('instructorAddFirstHint')}</p>
             <Link href="/admin/instructors/new">
               <Button>
                 <PlusIcon className="h-4 w-4 mr-2" />
-                პირველი ინსტრუქტორის დამატება
+                {t('instructorAddFirstBtn')}
               </Button>
             </Link>
           </div>
@@ -286,22 +230,22 @@ export default function InstructorsPage() {
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ინსტრუქტორი
+                      {t('instructorTableInstructor')}
                     </th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      პროფესია
+                      {t('instructorProfession')}
                     </th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      კურსები/სტუდენტები
+                      {t('instructorCoursesStudents')}
                     </th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      რეიტინგი
+                      {t('instructorRating')}
                     </th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      სტატუსი
+                      {t('instructorStatus')}
                     </th>
                     <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      მოქმედებები
+                      {t('actions')}
                     </th>
                   </tr>
                 </thead>
@@ -339,10 +283,10 @@ export default function InstructorsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
-                          {instructor.coursesCount || 0} კურსი
+                          {instructor.coursesCount || 0} {t('instructorCourseLabel')}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {instructor.studentsCount || 0} სტუდენტი
+                          {instructor.studentsCount || 0} {t('instructorStudentLabel')}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -363,7 +307,7 @@ export default function InstructorsPage() {
                                 : 'bg-red-100 text-red-800 hover:bg-red-200'
                             }`}
                           >
-                            {instructor.isActive ? 'აქტიური' : 'არააქტიური'}
+                            {instructor.isActive ? t('active') : t('inactive')}
                           </button>
                         </div>
                       </td>
@@ -372,21 +316,21 @@ export default function InstructorsPage() {
                           <Link
                             href={`/admin/instructors/${instructor._id}`}
                             className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
-                            title="ნახვა"
+                            title={t('instructorView')}
                           >
                             <EyeIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/admin/instructors/${instructor._id}/edit`}
                             className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
-                            title="რედაქტირება"
+                            title={t('instructorEdit')}
                           >
                             <PencilIcon className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(instructor._id, instructor.name)}
                             className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
-                            title="წაშლა"
+                            title={t('delete')}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -451,8 +395,8 @@ export default function InstructorsPage() {
                         </div>
                         
                         <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-                          <span>{instructor.coursesCount || 0} კურსი</span>
-                          <span>{instructor.studentsCount || 0} სტუდენტი</span>
+                          <span>{instructor.coursesCount || 0} {t('instructorCourseLabel')}</span>
+                          <span>{instructor.studentsCount || 0} {t('instructorStudentLabel')}</span>
                           <span className="flex items-center">
                             <StarIconSolid className="h-3 w-3 text-yellow-400 mr-1" />
                             {(instructor.averageRating || 0).toFixed(1)}
@@ -468,7 +412,7 @@ export default function InstructorsPage() {
                                 : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {instructor.isActive ? 'აქტიური' : 'არააქტიური'}
+                            {instructor.isActive ? t('active') : t('inactive')}
                           </button>
                         </div>
                       </div>
