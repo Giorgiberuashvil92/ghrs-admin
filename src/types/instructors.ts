@@ -10,6 +10,7 @@ export interface BackendInstructorData {
   name: string;                           // firstName + lastName ერთად
   email: string;
   profession: string;                     // role-ის ნაცვლად
+  professionLocalized?: { en?: string; ru?: string; ka?: string };
   bio: MultilingualContent;
   htmlContent: MultilingualContent;       // detailedBio-ს ნაცვლად
   profileImage: string;
@@ -41,6 +42,7 @@ export interface Instructor {
   name: string;
   email: string;
   profession: string;
+  professionLocalized?: { en?: string; ru?: string; ka?: string };
   bio: MultilingualContent;
   htmlContent: MultilingualContent;
   profileImage: string;
@@ -59,6 +61,7 @@ export interface InstructorFormData {
   email: string;
   phone: string;
   profession: string;
+  professionLocalized: { en: string; ru: string; ka: string };
   role: MultilingualContent;
   fullTitle: string;
   bio: MultilingualContent; // მოკლე ბიოგრაფია
@@ -107,6 +110,7 @@ export interface CreateInstructorData {
   name: string;
   email: string;
   profession: string;
+  professionLocalized?: { en?: string; ru?: string; ka?: string };
   bio: MultilingualContent;
   htmlContent: MultilingualContent;
   profileImage: string;
@@ -119,10 +123,18 @@ export interface UpdateInstructorData extends Partial<CreateInstructorData> {
 
 // Helper ფუნქცია - ფრონტენდის ფორმატიდან ბექენდის ფორმატში გადაყვანა
 export function mapToBackendFormat(formData: InstructorFormData): BackendInstructorData {
+  const professionLocalized = formData.professionLocalized
+    ? {
+        en: formData.professionLocalized.en?.trim() || undefined,
+        ru: formData.professionLocalized.ru?.trim() || undefined,
+        ka: formData.professionLocalized.ka?.trim() || undefined,
+      }
+    : undefined;
   return {
     name: `${formData.firstName} ${formData.lastName}`.trim(),
     email: formData.email,
-    profession: formData.profession,
+    profession: formData.profession || formData.professionLocalized?.en || formData.professionLocalized?.ru || '',
+    professionLocalized: professionLocalized && (professionLocalized.en || professionLocalized.ru || professionLocalized.ka) ? professionLocalized : undefined,
     bio: formData.bio,
     htmlContent: formData.detailedBio, // detailedBio -> htmlContent
     profileImage: formData.profileImage,
@@ -141,6 +153,7 @@ export function mapFromBackendFormat(backendData: any): Instructor {
     name: `${firstName} ${lastName}`.trim(),
     email: backendData.email,
     profession: backendData.profession,
+    professionLocalized: backendData.professionLocalized,
     bio: backendData.bio,
     htmlContent: backendData.htmlContent, // htmlContent -> detailedBio
     profileImage: backendData.profileImage,

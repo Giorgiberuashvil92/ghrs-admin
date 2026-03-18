@@ -57,6 +57,7 @@ export default function NewCoursePage() {
     shortDescription: emptyMultilingualContent,
     announcements: [],
     price: 0,
+    priceLocalized: { en: 0, ru: 0, ka: 0 },
     thumbnail: '',
     additionalImages: [],
     advertisementImage: '', // დავამატოთ რეკლამის სურათის ველი
@@ -182,7 +183,9 @@ export default function NewCoursePage() {
     
     if (!formData.title.en && !formData.title.ru) newErrors.title = 'სათაური სავალდებულოა მინიმუმ ერთ ენაზე';
     if (!formData.description.en && !formData.description.ru) newErrors.description = 'აღწერა სავალდებულოა მინიმუმ ერთ ენაზე';
-    if (!formData.price || formData.price <= 0) newErrors.price = 'ფასი სავალდებულოა და უნდა იყოს 0-ზე მეტი';
+    const hasPrice = (formData.price && formData.price > 0) ||
+      (formData.priceLocalized && ((formData.priceLocalized.en ?? 0) > 0 || (formData.priceLocalized.ru ?? 0) > 0 || (formData.priceLocalized.ka ?? 0) > 0));
+    if (!hasPrice) newErrors.price = 'ფასი სავალდებულოა (მთავარი ან ენების მიხედვით)';
     if (!formData.categoryIds?.length) newErrors.category = 'მინიმუმ ერთი კატეგორია სავალდებულოა';
     if (!formData.thumbnail) newErrors.thumbnail = 'მთავარი სურათი სავალდებულოა';
     if (!formData.instructor.name) newErrors.instructor = 'ინსტრუქტორი სავალდებულოა';
@@ -213,7 +216,14 @@ export default function NewCoursePage() {
           en: formData.shortDescription.en || '',
           ru: formData.shortDescription.ru || formData.shortDescription.en || ''
         },
-        price: formData.price,
+        price: formData.price || formData.priceLocalized?.en || formData.priceLocalized?.ru || formData.priceLocalized?.ka || 0,
+        priceLocalized: formData.priceLocalized && (formData.priceLocalized.en || formData.priceLocalized.ru || formData.priceLocalized.ka)
+          ? {
+              en: formData.priceLocalized.en || undefined,
+              ru: formData.priceLocalized.ru || undefined,
+              ka: formData.priceLocalized.ka || undefined,
+            }
+          : undefined,
         thumbnail: formData.thumbnail,
         isPublished: formData.isPublished,
         instructor: {
@@ -749,7 +759,7 @@ export default function NewCoursePage() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'Price (GEL)' : language === 'ru' ? 'Цена (GEL)' : 'ფასი (ლარი)'} <span className="text-red-500">*</span>
+                    {language === 'en' ? 'Price (fallback)' : language === 'ru' ? 'Цена (основная)' : 'ფასი (ფოლბექი)'}
                   </label>
                   <input
                     type="number"
@@ -757,17 +767,78 @@ export default function NewCoursePage() {
                     min="0"
                     value={formData.price}
                     onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.price ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="99.99"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'en' ? 'Price by language' : language === 'ru' ? 'Цена по языкам' : 'ფასი ენების მიხედვით'} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">EN ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.priceLocalized?.en ?? ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          priceLocalized: {
+                            ...prev.priceLocalized,
+                            en: parseFloat(e.target.value) || 0,
+                            ru: prev.priceLocalized?.ru ?? 0,
+                            ka: prev.priceLocalized?.ka ?? 0,
+                          },
+                        }))}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">RU (₽)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.priceLocalized?.ru ?? ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          priceLocalized: {
+                            ...prev.priceLocalized,
+                            en: prev.priceLocalized?.en ?? 0,
+                            ru: parseFloat(e.target.value) || 0,
+                            ka: prev.priceLocalized?.ka ?? 0,
+                          },
+                        }))}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">KA (₾)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.priceLocalized?.ka ?? ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          priceLocalized: {
+                            ...prev.priceLocalized,
+                            en: prev.priceLocalized?.en ?? 0,
+                            ru: prev.priceLocalized?.ru ?? 0,
+                            ka: parseFloat(e.target.value) || 0,
+                          },
+                        }))}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
                   {errors.price && <p className="text-red-500 text-sm mt-1">
-                    {language === 'en' 
-                      ? 'Price is required and must be greater than 0'
-                      : language === 'ru'
-                      ? 'Цена обязательна и должна быть больше 0'
-                      : 'ფასი სავალდებულოა და უნდა იყოს 0-ზე მეტი'}
+                    {language === 'en' ? 'Enter at least one price (above or by language)' : language === 'ru' ? 'Укажите хотя бы одну цену' : 'შეავსეთ მინიმუმ ერთი ფასი'}
                   </p>}
                 </div>
 

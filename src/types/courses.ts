@@ -43,6 +43,7 @@ export interface Course {
   shortDescription: MultilingualContent;
   announcements: CourseAnnouncement[]; // ცვლილება: ერთი ველის ნაცვლად მასივი
   price: number;
+  priceLocalized?: { en?: number; ru?: number; ka?: number };
   thumbnail: string;
   additionalImages: string[];
   advertisementImage: string; // რეკლამის სურათი

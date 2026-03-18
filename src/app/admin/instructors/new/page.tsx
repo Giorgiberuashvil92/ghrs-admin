@@ -28,6 +28,7 @@ export default function NewInstructorPage() {
     email: '',
     phone: '',
     profession: '',
+    professionLocalized: { en: '', ru: '', ka: '' },
     role: { ka: '', en: '', ru: '' },
     fullTitle: '',
     bio: { ka: '', en: '', ru: '' },
@@ -76,7 +77,7 @@ export default function NewInstructorPage() {
     if (!formData.firstName.trim()) newErrors.firstName = 'სახელი სავალდებულოა';
     if (!formData.lastName.trim()) newErrors.lastName = 'გვარი სავალდებულოა';
     if (!formData.email.trim()) newErrors.email = 'ელ-ფოსტა სავალდებულოა';
-    if (!formData.profession.trim()) newErrors.profession = 'პროფესია სავალდებულოა';
+    if (!formData.profession?.trim() && !formData.professionLocalized?.en?.trim() && !formData.professionLocalized?.ru?.trim()) newErrors.profession = 'პროფესია სავალდებულოა (მინიმუმ ერთ ენაზე)';
     if (!formData.role.en.trim()) newErrors.role = 'როლი სავალდებულოა ქართულ ენაზე';    
     if (!formData.bio.en.trim()) newErrors.bio = 'მოკლე ბიოგრაფია სავალდებულოა ქართულ ენაზე';
     if (!formData.detailedBio.en.trim()) newErrors.detailedBio = 'დეტალური ბიოგრაფია სავალდებულოა ქართულ ენაზე';
@@ -94,16 +95,12 @@ export default function NewInstructorPage() {
     try {
       setLoading(true);
       
+      const { mapToBackendFormat } = await import('@/types/instructors');
+      const backendData = mapToBackendFormat(formData);
       const instructorData: CreateInstructorData = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        profession: formData.profession,
-        bio: formData.bio,
-        htmlContent: formData.detailedBio,
-        profileImage: formData.profileImage,
-        isActive: formData.isActive,
-        isVerified: formData.isVerified,
-        faqContent: formData.faqContent
+        ...backendData,
+        profession: backendData.profession || formData.professionLocalized?.en || formData.professionLocalized?.ru || formData.profession,
+        professionLocalized: backendData.professionLocalized,
       };
 
       // API integration
@@ -219,16 +216,33 @@ export default function NewInstructorPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    პროფესია <span className="text-red-500">*</span>
+                    პროფესია (ცალკე ველი, ფოლბექი)
                   </label>
                   <input
                     type="text"
                     value={formData.profession}
                     onChange={(e) => setFormData(prev => ({ ...prev, profession: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.profession ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="მაგ. სოფთვერ დეველოპერი, მასაჟისტი, ფიზიოთერაპევტი"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="მაგ. Teacher / ინსტრუქტორი (თუ არ ივსება ქვემოთ)"
+                  />
+                </div>
+                <div>
+                  <MultilingualInput
+                    label="პროფესია ენების მიხედვით (EN / RU)"
+                    value={{
+                      en: formData.professionLocalized.en,
+                      ru: formData.professionLocalized.ru,
+                    }}
+                    onChange={(value) => setFormData(prev => ({
+                      ...prev,
+                      professionLocalized: {
+                        ...prev.professionLocalized,
+                        en: value.en,
+                        ru: value.ru,
+                      },
+                    }))}
+                    placeholder="მაგ. Manual therapist, Instructor"
+                    languages={['en', 'ru']}
                   />
                   {errors.profession && <p className="text-red-500 text-sm mt-1">{errors.profession}</p>}
                 </div>

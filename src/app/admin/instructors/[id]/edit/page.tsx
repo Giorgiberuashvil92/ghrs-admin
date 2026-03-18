@@ -23,6 +23,7 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
     name: '',
     email: '',
     profession: '',
+    professionLocalized: { en: '', ru: '', ka: '' },
     bio: { ka: '' },
     htmlContent: { ka: '' },
     profileImage: '',
@@ -44,7 +45,10 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
       setInitialLoading(true);
       const { getInstructor } = await import('@/lib/api/instructors');
       const instructorData = await getInstructor(id);
-      setFormData(instructorData);
+      setFormData({
+        ...instructorData,
+        professionLocalized: instructorData.professionLocalized ?? { en: '', ru: '', ka: '' },
+      });
     } catch (error) {
       console.error('Error fetching instructor:', error);
       alert('ინსტრუქტორის ჩატვირთვა ვერ მოხერხდა');
@@ -140,10 +144,10 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
             />
           </div>
 
-          {/* პროფესია */}
+          {/* პროფესია (ცალკე ველი) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              პროფესია
+              პროფესია (ფოლბექი)
             </label>
             <input
               type="text"
@@ -151,6 +155,27 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
               onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="მაგ: მასაჟისტი"
+            />
+          </div>
+
+          {/* პროფესია ენების მიხედვით */}
+          <div>
+            <MultilingualInput
+              label="პროფესია (EN / RU)"
+              value={{
+                en: formData.professionLocalized?.en ?? '',
+                ru: formData.professionLocalized?.ru ?? '',
+              }}
+              onChange={(value) => setFormData({ 
+                ...formData, 
+                professionLocalized: {
+                  en: value.en ?? '',
+                  ru: value.ru ?? '',
+                  ka: formData.professionLocalized?.ka ?? '',
+                }
+              })}
+              placeholder="პროფესია ენების მიხედვით..."
+              languages={['en', 'ru']}
             />
           </div>
 
