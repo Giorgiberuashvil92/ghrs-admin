@@ -10,6 +10,10 @@ interface RichTextEditorProps {
   className?: string;
   readOnly?: boolean;
   height?: number;
+  /** სიმაღლე იზრდება/მცირდება კონტენტის მიხედვით (TinyMCE autoresize) */
+  autoResize?: boolean;
+  minHeight?: number;
+  maxHeight?: number;
 }
 
 export default function RichTextEditor({
@@ -18,7 +22,10 @@ export default function RichTextEditor({
   placeholder = "დაწყებული შეგიძლიათ ტექსტის ჩაწერა...",
   className = "",
   readOnly = false,
-  height = 1500
+  height = 1500,
+  autoResize = false,
+  minHeight = 280,
+  maxHeight,
 }: RichTextEditorProps) {
   const editorRef = useRef<any>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -31,12 +38,14 @@ export default function RichTextEditor({
     onChange(content);
   };
 
+  const skeletonHeight = autoResize ? minHeight : height;
+
   if (!isMounted) {
     return (
       <div className={`rich-text-editor ${className}`}>
         <div 
           style={{ 
-            height: height, 
+            height: skeletonHeight, 
             border: '1px solid #d1d5db', 
             borderRadius: '0.375rem',
             background: '#f9fafb',
@@ -52,6 +61,14 @@ export default function RichTextEditor({
     );
   }
 
+  const basePlugins = [
+    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+    'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons',
+    'codesample', 'quickbars',
+  ] as const;
+  const plugins = autoResize ? [...basePlugins, 'autoresize'] : [...basePlugins];
+
   return (
     <div className={`rich-text-editor ${className}`}>
       <Editor
@@ -61,16 +78,18 @@ export default function RichTextEditor({
         onEditorChange={handleEditorChange}
         disabled={readOnly}
         init={{
-          height: height,
+          ...(autoResize
+            ? {
+                min_height: minHeight,
+                ...(maxHeight != null ? { max_height: maxHeight } : {}),
+                autoresize_bottom_margin: 24,
+                autoresize_on_init: true,
+              }
+            : { height }),
           width: '100%',
           max_width: 'none',
           menubar: false,
-          plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons',
-            'codesample', 'quickbars'
-          ],
+          plugins,
           toolbar: [
             'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough',
             'link image media table emoticons | align lineheight | checklist numlist bullist indent outdent',
@@ -118,12 +137,28 @@ export default function RichTextEditor({
           
           // Auto-save functionality
           setup: function (editor: any) {
+            const runAutoResize = () => {
+              if (!autoResize) return;
+              try {
+                editor.execCommand('mceAutoResize');
+              } catch {
+                /* ignore */
+              }
+            };
+
             editor.on('init', function () {
               // Editor is ready
               if (readOnly) {
                 editor.getBody().setAttribute('contenteditable', false);
               }
+              runAutoResize();
             });
+
+            if (autoResize) {
+              editor.on('SetContent', function () {
+                requestAnimationFrame(runAutoResize);
+              });
+            }
             
             // Custom button examples
             editor.ui.registry.addButton('customSave', {

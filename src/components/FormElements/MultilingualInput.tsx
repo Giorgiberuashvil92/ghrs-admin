@@ -21,6 +21,10 @@ interface MultilingualInputProps {
   maxLength?: number;
   rows?: number;
   height?: number;
+  /** რიჩტექსტისთვის: სიმაღლე კონტენტის მიხედვით */
+  autoResize?: boolean;
+  minEditorHeight?: number;
+  maxEditorHeight?: number;
   placeholder?: string;
   className?: string;
   // Optional prop to specify which languages to show (defaults to all available)
@@ -36,6 +40,9 @@ export default function MultilingualInput({
   maxLength,
   rows = 6,
   height,
+  autoResize = false,
+  minEditorHeight,
+  maxEditorHeight,
   placeholder,
   className = '',
   languages
@@ -90,10 +97,14 @@ export default function MultilingualInput({
         <div>
           {type === 'richtext' ? (
             <RichTextEditor
+              key={activeTab}
               value={(value && value[activeTab]) || ''}
               onChange={(newValue) => handleChange(activeTab, newValue)}
               placeholder={placeholder}
               height={height}
+              autoResize={autoResize}
+              minHeight={minEditorHeight}
+              maxHeight={maxEditorHeight}
             />
           ) : type === 'textarea' ? (
             <textarea

@@ -16,6 +16,7 @@ import {
   VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { convertUsdToRuKa } from '@/lib/coursePriceConvert';
 
 const API_URL = process.env.NODE_ENV === 'development'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -452,7 +453,8 @@ export default function NewCoursePage() {
                       required
                       type="richtext"
                       rows={10}
-                      height={1500}
+                      autoResize
+                      minEditorHeight={280}
                       className={errors.description ? 'border-red-500' : ''}
                     />
                     {errors.description && <p className="text-red-500 text-sm">
@@ -550,8 +552,10 @@ export default function NewCoursePage() {
                                 )
                               }));
                             }}
-                            type="textarea"
-                            rows={3}
+                            type="richtext"
+                            rows={5}
+                            autoResize
+                            minEditorHeight={220}
                           />
                           
                           <div>
@@ -783,15 +787,21 @@ export default function NewCoursePage() {
                         step="0.01"
                         min="0"
                         value={formData.priceLocalized?.en ?? ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          priceLocalized: {
-                            ...prev.priceLocalized,
-                            en: parseFloat(e.target.value) || 0,
-                            ru: prev.priceLocalized?.ru ?? 0,
-                            ka: prev.priceLocalized?.ka ?? 0,
-                          },
-                        }))}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const en = raw === '' ? 0 : parseFloat(raw);
+                          const usd = Number.isFinite(en) ? en : 0;
+                          const { ru, ka } = convertUsdToRuKa(usd);
+                          setFormData((prev) => ({
+                            ...prev,
+                            priceLocalized: {
+                              ...prev.priceLocalized,
+                              en: usd,
+                              ru,
+                              ka,
+                            },
+                          }));
+                        }}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
                         placeholder="0"
                       />
@@ -837,6 +847,13 @@ export default function NewCoursePage() {
                       />
                     </div>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {language === 'ru'
+                      ? 'При изменении EN ($) цены ₽ и ₾ пересчитываются автоматически.'
+                      : language === 'en'
+                        ? 'Changing EN ($) auto-fills RU (₽) and KA (₾) using the same rates as the storefront.'
+                        : 'EN ($)-ის შეცვლისას RU (₽) და KA (₾) ავტომატურად ივსება (იგივე კურსები).'}
+                  </p>
                   {errors.price && <p className="text-red-500 text-sm mt-1">
                     {language === 'en' ? 'Enter at least one price (above or by language)' : language === 'ru' ? 'Укажите хотя бы одну цену' : 'შეავსეთ მინიმუმ ერთი ფასი'}
                   </p>}
