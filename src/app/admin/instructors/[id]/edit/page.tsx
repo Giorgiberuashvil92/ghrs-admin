@@ -2,7 +2,12 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Instructor } from '@/types/instructors';
+import {
+  Instructor,
+  buildInstructorDisplayName,
+  hasCompleteLocalizedNamePair,
+  legacyFullNameToLocalizedParts,
+} from '@/types/instructors';
 import { Button } from '@/components/ui/button';
 import ImageUpload from '@/components/FormElements/ImageUpload';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
@@ -21,6 +26,8 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
   const [formData, setFormData] = useState<Instructor>({
     _id: id,
     name: '',
+    firstNameLocalized: { en: '', ru: '' },
+    lastNameLocalized: { en: '', ru: '' },
     email: '',
     profession: '',
     professionLocalized: { en: '', ru: '', ka: '' },
@@ -45,8 +52,23 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
       setInitialLoading(true);
       const { getInstructor } = await import('@/lib/api/instructors');
       const instructorData = await getInstructor(id);
+      let firstNameLocalized = instructorData.firstNameLocalized ?? { en: '', ru: '' };
+      let lastNameLocalized = instructorData.lastNameLocalized ?? { en: '', ru: '' };
+      const hasAnyLocalized = [
+        firstNameLocalized.en,
+        firstNameLocalized.ru,
+        lastNameLocalized.en,
+        lastNameLocalized.ru,
+      ].some((x) => (x || '').trim());
+      if (!hasAnyLocalized && (instructorData.name || '').trim()) {
+        const leg = legacyFullNameToLocalizedParts(instructorData.name);
+        firstNameLocalized = leg.firstNameLocalized;
+        lastNameLocalized = leg.lastNameLocalized;
+      }
       setFormData({
         ...instructorData,
+        firstNameLocalized,
+        lastNameLocalized,
         professionLocalized: instructorData.professionLocalized ?? { en: '', ru: '', ka: '' },
       });
     } catch (error) {
@@ -61,7 +83,14 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (!formData.name?.trim()) errors.name = t('instructorFirstNameRequired');
+    if (
+      !hasCompleteLocalizedNamePair(
+        formData.firstNameLocalized ?? { en: '', ru: '' },
+        formData.lastNameLocalized ?? { en: '', ru: '' }
+      )
+    ) {
+      errors.namePair = t('instructorNamePairRequiredEnOrRu');
+    }
     if (!formData.email?.trim()) errors.email = t('instructorEmailRequired');
     if (!formData.profession?.trim()) errors.profession = t('instructorProfessionRequired');
     if (!formData.bio?.en?.trim() && !formData.bio?.ru?.trim()) errors.bio = t('instructorBioRequiredEnRu');
@@ -85,7 +114,17 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
       setLoading(true);
 
       const { updateInstructor } = await import('@/lib/api/instructors');
-      await updateInstructor(id, formData);
+      const name = buildInstructorDisplayName(
+        formData.firstNameLocalized,
+        formData.lastNameLocalized,
+        formData.name
+      );
+      await updateInstructor(id, {
+        ...formData,
+        name,
+        firstNameLocalized: formData.firstNameLocalized ?? { en: '', ru: '' },
+        lastNameLocalized: formData.lastNameLocalized ?? { en: '', ru: '' },
+      });
       
       console.log('Instructor updated successfully:', formData);
       alert(t('instructorUpdateSuccess'));
@@ -116,17 +155,53 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
         <div className="bg-white rounded-lg shadow-sm border p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('instructorNameAndSurname')}
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t('instructorPlaceholderNameEdit')}
+          <div className="space-y-4">
+            <MultilingualInput
+              label={`${t('instructorFirstNameEnRu')} *`}
+              value={{
+                en: formData.firstNameLocalized?.en ?? '',
+                ru: formData.firstNameLocalized?.ru ?? '',
+              }}
+              onChange={(value) =>
+                setFormData({
+                  ...formData,
+                  firstNameLocalized: {
+                    en: value.en ?? '',
+                    ru: value.ru ?? '',
+                  },
+                })
+              }
+              placeholder={t('instructorPlaceholderFirstName')}
+              languages={['en', 'ru']}
             />
+            <MultilingualInput
+              label={`${t('instructorLastNameEnRu')} *`}
+              value={{
+                en: formData.lastNameLocalized?.en ?? '',
+                ru: formData.lastNameLocalized?.ru ?? '',
+              }}
+              onChange={(value) =>
+                setFormData({
+                  ...formData,
+                  lastNameLocalized: {
+                    en: value.en ?? '',
+                    ru: value.ru ?? '',
+                  },
+                })
+              }
+              placeholder={t('instructorPlaceholderLastName')}
+              languages={['en', 'ru']}
+            />
+            <p className="text-xs text-gray-500">
+              {t('instructorSystemFullNameLabel')}:{' '}
+              <span className="font-medium text-gray-700">
+                {buildInstructorDisplayName(
+                  formData.firstNameLocalized,
+                  formData.lastNameLocalized,
+                  formData.name
+                ) || '—'}
+              </span>
+            </p>
           </div>
 
           <div>
