@@ -10,6 +10,8 @@ import {
   FAQContent,
   hasCompleteLocalizedNamePair,
 } from '@/types/instructors';
+import InstructorCertificatesSection from '@/components/instructors/InstructorCertificatesSection';
+import InstructorDiplomasSection from '@/components/instructors/InstructorDiplomasSection';
 import { useLanguage } from '@/i18n/language-context';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
 import ImageUpload from '@/components/FormElements/ImageUpload';
@@ -33,6 +35,9 @@ export default function NewInstructorPage() {
     email: '',
     phone: '',
     profession: '',
+    wikipedia: '',
+    qualification: '',
+    qualificationLocalized: { en: '', ru: '', ka: '' },
     professionLocalized: { en: '', ru: '', ka: '' },
     role: { ka: '', en: '', ru: '' },
     fullTitle: '',
@@ -41,7 +46,9 @@ export default function NewInstructorPage() {
     profileImage: '',
     isActive: true,
     isVerified: false,
-    faqContent: []
+    faqContent: [],
+    certificates: [],
+    diplomas: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -91,7 +98,6 @@ export default function NewInstructorPage() {
     const hasDetailedBio = [formData.detailedBio?.ka, formData.detailedBio?.en, formData.detailedBio?.ru].some((v) => (v || '').trim());
     if (!hasDetailedBio) newErrors.detailedBio = t('instructorDetailedBioRequired');
     if (!formData.profileImage) newErrors.profileImage = t('instructorProfileImageRequired');
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -246,6 +252,37 @@ export default function NewInstructorPage() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Qualification
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData(prev => ({ ...prev, qualification: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter instructor qualification"
+                  />
+                </div>
+                <div>
+                  <MultilingualInput
+                    label="Qualification (EN/RU)"
+                    value={{
+                      en: formData.qualificationLocalized.en,
+                      ru: formData.qualificationLocalized.ru,
+                    }}
+                    onChange={(value) => setFormData(prev => ({
+                      ...prev,
+                      qualificationLocalized: {
+                        ...prev.qualificationLocalized,
+                        en: value.en ?? '',
+                        ru: value.ru ?? '',
+                      },
+                    }))}
+                    placeholder="Enter qualification in English and Russian"
+                    languages={['en', 'ru']}
+                  />
+                </div>
+                <div>
                   <MultilingualInput
                     label={t('instructorProfessionByLanguage')}
                     value={{
@@ -317,6 +354,22 @@ export default function NewInstructorPage() {
                 {errors.detailedBio && <p className="text-red-500 text-sm">{errors.detailedBio}</p>}
               </div>
             </div>
+
+            <InstructorCertificatesSection
+              items={formData.certificates}
+              onChange={(certificates) =>
+                setFormData((prev) => ({ ...prev, certificates }))
+              }
+              t={t}
+              errorHint={errors.certificates}
+            />
+            <InstructorDiplomasSection
+              items={formData.diplomas}
+              onChange={(diplomas) =>
+                setFormData((prev) => ({ ...prev, diplomas }))
+              }
+              t={t}
+            />
 
             {/* FAQ Content */}
             <div className="bg-white rounded-lg shadow-sm border p-6">

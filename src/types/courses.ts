@@ -19,6 +19,8 @@ export interface VideoReview {
 
 export interface CourseInstructor {
   name: string;
+  /** Mongo ObjectId — საჯარო საიტი ინსტრუქტორს ამით იტვირთავს (სახელის შეცვლის შემდეგაც) */
+  instructorId?: string;
   profession?: string;
   image?: string;
   bio?: MultilingualContent;

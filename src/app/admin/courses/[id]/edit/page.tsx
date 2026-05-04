@@ -207,7 +207,8 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
     duration: 0,
     isPublished: false,
     instructor: {
-      name: ''
+      name: '',
+      instructorId: '',
     },
     prerequisites: emptyMultilingualContent,
     certificateDescription: emptyMultilingualContent,
@@ -255,7 +256,8 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
           duration: courseData.duration || 0,
           isPublished: courseData.isPublished || false,
           instructor: {
-            name: courseData.instructor?.name || ''
+            name: courseData.instructor?.name || '',
+            instructorId: courseData.instructor?.instructorId || '',
           },
           prerequisites: courseData.prerequisites || emptyMultilingualContent,
           certificateDescription: courseData.certificateDescription || emptyMultilingualContent,
@@ -276,7 +278,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
         });
 
         const [instructorsResponse, categoriesResponse] = await Promise.all([
-          fetch(`${API_URL}/api/instructors`),
+          fetch(`${API_URL}/api/instructors?limit=500&page=1`),
           fetch(`${API_URL}/api/course-categories`)
         ]);
 
@@ -394,7 +396,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
         thumbnail: formData.thumbnail,
         isPublished: formData.isPublished,
         instructor: {
-          name: formData.instructor.name
+          name: formData.instructor.name,
+          ...(formData.instructor.instructorId?.trim()
+            ? { instructorId: formData.instructor.instructorId.trim() }
+            : {}),
         },
         languages: formData.languages,
         ...(formData.categoryIds?.length && {
@@ -910,6 +915,44 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                     {tr.publishCourse}
                   </span>
                 </label>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {tr.instructor} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={
+                      formData.instructor.instructorId?.trim()
+                        || instructors.find((i) => i.name === formData.instructor.name)?._id
+                        || ''
+                    }
+                    onChange={(e) => {
+                      const selectedInstructor = instructors.find((i) => i._id === e.target.value);
+                      if (selectedInstructor) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          instructor: {
+                            name: selectedInstructor.name,
+                            instructorId: selectedInstructor._id,
+                          },
+                        }));
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.instructor ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">{tr.selectInstructor}</option>
+                    {instructors.map((instructor) => (
+                      <option key={instructor._id} value={instructor._id}>
+                        {instructor.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.instructor && (
+                    <p className="text-red-500 text-sm mt-1">{errors.instructor}</p>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 gap-4">
                   <div>

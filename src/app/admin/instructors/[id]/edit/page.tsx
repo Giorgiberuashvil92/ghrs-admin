@@ -4,10 +4,16 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Instructor,
+  InstructorCertificateFormItem,
+  apiCertificatesToFormItems,
   buildInstructorDisplayName,
+  certificateFormItemsToApi,
   hasCompleteLocalizedNamePair,
   legacyFullNameToLocalizedParts,
+  toInstructorUpdatePayload,
 } from '@/types/instructors';
+import InstructorCertificatesSection from '@/components/instructors/InstructorCertificatesSection';
+import InstructorDiplomasSection from '@/components/instructors/InstructorDiplomasSection';
 import { Button } from '@/components/ui/button';
 import ImageUpload from '@/components/FormElements/ImageUpload';
 import MultilingualInput from '@/components/FormElements/MultilingualInput';
@@ -23,6 +29,8 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [certRows, setCertRows] = useState<InstructorCertificateFormItem[]>([]);
+  const [diplomaRows, setDiplomaRows] = useState<InstructorCertificateFormItem[]>([]);
   const [formData, setFormData] = useState<Instructor>({
     _id: id,
     name: '',
@@ -30,6 +38,9 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
     lastNameLocalized: { en: '', ru: '' },
     email: '',
     profession: '',
+    wikipedia: '',
+    qualification: '',
+    qualificationLocalized: { en: '', ru: '', ka: '' },
     professionLocalized: { en: '', ru: '', ka: '' },
     bio: { ka: '' },
     htmlContent: { ka: '' },
@@ -39,6 +50,7 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
     studentsCount: 0,
     averageRating: 0,
     certificates: [],
+    diplomas: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
@@ -65,6 +77,8 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
         firstNameLocalized = leg.firstNameLocalized;
         lastNameLocalized = leg.lastNameLocalized;
       }
+      setCertRows(apiCertificatesToFormItems(instructorData.certificates));
+      setDiplomaRows(apiCertificatesToFormItems(instructorData.diplomas));
       setFormData({
         ...instructorData,
         firstNameLocalized,
@@ -119,11 +133,12 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
         formData.lastNameLocalized,
         formData.name
       );
+      const certificates = certificateFormItemsToApi(certRows);
+      const diplomas = certificateFormItemsToApi(diplomaRows);
       await updateInstructor(id, {
-        ...formData,
-        name,
-        firstNameLocalized: formData.firstNameLocalized ?? { en: '', ru: '' },
-        lastNameLocalized: formData.lastNameLocalized ?? { en: '', ru: '' },
+        ...toInstructorUpdatePayload(formData, name),
+        certificates,
+        diplomas,
       });
       
       console.log('Instructor updated successfully:', formData);
@@ -153,7 +168,7 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
         <p className="text-gray-600 mt-1">{t('instructorEditSubtitle')}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
         <div className="bg-white rounded-lg shadow-sm border p-6 space-y-6">
           <div className="space-y-4">
             <MultilingualInput
@@ -227,6 +242,49 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
               onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder={t('instructorPlaceholderProfessionEdit')}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Qualification
+            </label>
+            <input
+              type="text"
+              value={formData.qualification ?? ''}
+              onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter instructor qualification"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Wikipedia URL
+            </label>
+            <input
+              type="url"
+              value={formData.wikipedia ?? ''}
+              onChange={(e) => setFormData({ ...formData, wikipedia: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="https://..."
+            />
+          </div>
+          <div>
+            <MultilingualInput
+              label="Qualification (EN/RU)"
+              value={{
+                en: formData.qualificationLocalized?.en ?? '',
+                ru: formData.qualificationLocalized?.ru ?? '',
+              }}
+              onChange={(value) => setFormData({
+                ...formData,
+                qualificationLocalized: {
+                  en: value.en ?? '',
+                  ru: value.ru ?? '',
+                  ka: formData.qualificationLocalized?.ka ?? '',
+                }
+              })}
+              placeholder="Enter qualification in English and Russian"
+              languages={['en', 'ru']}
             />
           </div>
 
@@ -307,6 +365,17 @@ export default function EditInstructorPage({ params }: EditInstructorPageProps) 
               required
             />
           </div>
+
+          <InstructorCertificatesSection
+            items={certRows}
+            onChange={setCertRows}
+            t={t}
+          />
+          <InstructorDiplomasSection
+            items={diplomaRows}
+            onChange={setDiplomaRows}
+            t={t}
+          />
 
           <div className="flex items-center">
             <input

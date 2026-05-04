@@ -66,7 +66,8 @@ export default function NewCoursePage() {
     duration: 0,
     isPublished: false,
     instructor: {
-      name: ''  // მხოლოდ სახელი დავტოვოთ
+      name: '',
+      instructorId: '',
     },
     prerequisites: emptyMultilingualContent,
     certificateDescription: emptyMultilingualContent,
@@ -94,7 +95,7 @@ export default function NewCoursePage() {
         console.log('Fetching data from:', `${API_URL}/instructors`);
         
         const [instructorsResponse, categoriesResponse] = await Promise.all([
-          fetch(`${API_URL}/api/instructors`),
+          fetch(`${API_URL}/api/instructors?limit=500&page=1`),
           fetch(`${API_URL}/api/course-categories`)
         ]);
 
@@ -228,7 +229,10 @@ export default function NewCoursePage() {
         thumbnail: formData.thumbnail,
         isPublished: formData.isPublished,
         instructor: {
-          name: formData.instructor.name
+          name: formData.instructor.name,
+          ...(formData.instructor.instructorId?.trim()
+            ? { instructorId: formData.instructor.instructorId.trim() }
+            : {}),
         },
         prerequisites: {
           en: formData.prerequisites.en || '',
@@ -864,14 +868,19 @@ export default function NewCoursePage() {
                     {language === 'en' ? 'Instructor' : language === 'ru' ? 'Инструктор' : 'ინსტრუქტორი'} <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={instructors.find(i => i.name === formData.instructor.name)?._id || ''}
+                    value={
+                      formData.instructor.instructorId?.trim()
+                        || instructors.find((i) => i.name === formData.instructor.name)?._id
+                        || ''
+                    }
                     onChange={(e) => {
                       const selectedInstructor = instructors.find(i => i._id === e.target.value);
                       if (selectedInstructor) {
                         setFormData(prev => ({
                           ...prev,
                           instructor: {
-                            name: selectedInstructor.name
+                            name: selectedInstructor.name,
+                            instructorId: selectedInstructor._id,
                           }
                         }));
                       }
