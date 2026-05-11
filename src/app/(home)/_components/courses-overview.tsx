@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllCoursesAdmin, Course } from "@/lib/api/courses";
 import { Button } from "@/components/ui-elements/button";
 import { useLanguage } from "@/i18n/language-context";
+import { Course } from "@/types/courses";
+import { getAllCoursesAdmin } from "@/lib/api/courses";
 
 // Helper function to get localized string from multilingual object
 function getLocalizedString(

@@ -1,9 +1,18 @@
-import { DotIcon } from "@/assets/icons";
-import { formatMessageTime } from "@/lib/format-message-time";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { getChatsData } from "../fetch";
+
+const cn = (...classes: Array<string | number | false | null | undefined>) =>
+  classes.filter(Boolean).join(" ");
+
+const formatMessageTime = (timestamp: string) => {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
 
 export async function ChatsCard() {
   const data = await getChatsData();
@@ -53,7 +62,10 @@ export async function ChatsCard() {
                     {chat.lastMessage.content}
                   </span>
 
-                  <DotIcon />
+                  <span
+                    aria-hidden="true"
+                    className="inline-block size-1 rounded-full bg-current opacity-60"
+                  />
 
                   <time
                     className="text-xs"
