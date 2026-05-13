@@ -17,6 +17,12 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { convertUsdToRuKa } from '@/lib/coursePriceConvert';
+import {
+  filterKnownCategoryIds,
+  instructorRowId,
+  resolveInstructorForApi,
+  type InstructorOptionRow,
+} from '@/lib/adminCourseFormUtils';
 
 const API_URL = process.env.NODE_ENV === 'development'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -83,10 +89,7 @@ export default function NewCoursePage() {
     endDate: ''
   });
 
-  const [instructors, setInstructors] = useState<Array<{
-    _id: string;
-    name: string;
-  }>>([]);
+  const [instructors, setInstructors] = useState<InstructorOptionRow[]>([]);
 
   // ინსტრუქტორების და კატეგორიების ჩამოტვირთვა
   useEffect(() => {
@@ -204,7 +207,10 @@ export default function NewCoursePage() {
     
     try {
       setLoading(true);
-      
+
+      const safeCategoryIds = filterKnownCategoryIds(formData.categoryIds, categories);
+      const instructorPayload = resolveInstructorForApi(formData.instructor, instructors);
+
       const courseData = {
         title: {
           en: formData.title.en || '',
@@ -228,12 +234,7 @@ export default function NewCoursePage() {
           : undefined,
         thumbnail: formData.thumbnail,
         isPublished: formData.isPublished,
-        instructor: {
-          name: formData.instructor.name,
-          ...(formData.instructor.instructorId?.trim()
-            ? { instructorId: formData.instructor.instructorId.trim() }
-            : {}),
-        },
+        instructor: instructorPayload,
         prerequisites: {
           en: formData.prerequisites.en || '',
           ru: formData.prerequisites.ru || formData.prerequisites.en || ''
@@ -243,9 +244,9 @@ export default function NewCoursePage() {
           ru: formData.certificateDescription.ru || formData.certificateDescription.en || ''
         },
         languages: formData.languages,
-        categoryIds: formData.categoryIds?.length ? formData.categoryIds : undefined,
-        categoryId: formData.categoryIds?.[0],
-        subcategoryId: formData.categoryIds?.[1],
+        categoryIds: safeCategoryIds.length ? safeCategoryIds : undefined,
+        categoryId: safeCategoryIds[0],
+        subcategoryId: safeCategoryIds.length > 1 ? safeCategoryIds[1] : undefined,
         additionalImages: formData.additionalImages,
         certificateImages: formData.certificateImages,
         learningOutcomes: formData.learningOutcomes,
@@ -279,8 +280,6 @@ export default function NewCoursePage() {
         ...(formData.advertisementImage && { advertisementImage: formData.advertisementImage })
       };
 
-      console.log('Course data to create:', courseData);
-      
       const response = await fetch(`${API_URL}/api/courses`, {
         method: 'POST',
         headers: {
@@ -869,19 +868,23 @@ export default function NewCoursePage() {
                   </label>
                   <select
                     value={
-                      formData.instructor.instructorId?.trim()
-                        || instructors.find((i) => i.name === formData.instructor.name)?._id
-                        || ''
+                      formData.instructor.instructorId?.trim() ||
+                      instructorRowId(
+                        instructors.find((i) => i.name === formData.instructor.name),
+                      ) ||
+                      ''
                     }
                     onChange={(e) => {
-                      const selectedInstructor = instructors.find(i => i._id === e.target.value);
+                      const selectedInstructor = instructors.find(
+                        (i) => instructorRowId(i) === e.target.value,
+                      );
                       if (selectedInstructor) {
-                        setFormData(prev => ({
+                        setFormData((prev) => ({
                           ...prev,
                           instructor: {
                             name: selectedInstructor.name,
-                            instructorId: selectedInstructor._id,
-                          }
+                            instructorId: instructorRowId(selectedInstructor),
+                          },
                         }));
                       }
                     }}
@@ -892,8 +895,8 @@ export default function NewCoursePage() {
                     <option value="">
                       {language === 'en' ? 'Select instructor' : language === 'ru' ? 'Выберите инструктора' : 'აირჩიეთ ინსტრუქტორი'}
                     </option>
-                    {instructors.map(instructor => (
-                      <option key={instructor._id} value={instructor._id}>
+                    {instructors.map((instructor) => (
+                      <option key={instructorRowId(instructor)} value={instructorRowId(instructor)}>
                         {instructor.name}
                       </option>
                     ))}

@@ -1,4 +1,4 @@
-import { Course, CreateCourseData, UpdateCourseData } from '@/types/courses';
+import type { Course, CreateCourseData, UpdateCourseData } from '@/types/courses';
 
 const API_BASE_URL = process.env.NODE_ENV === 'development'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -158,5 +158,3 @@ export async function toggleCourseStatus(id: string): Promise<Course> {
     throw error;
   }
 }
-
-export { Course };

@@ -17,6 +17,12 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { convertUsdToRuKa } from '@/lib/coursePriceConvert';
+import {
+  filterKnownCategoryIds,
+  instructorRowId,
+  resolveInstructorForApi,
+  type InstructorOptionRow,
+} from '@/lib/adminCourseFormUtils';
 
 const API_URL = process.env.NODE_ENV === 'development'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -224,10 +230,24 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
     endDate: ''
   });
 
-  const [instructors, setInstructors] = useState<Array<{
-    _id: string;
-    name: string;
-  }>>([]);
+  const [instructors, setInstructors] = useState<InstructorOptionRow[]>([]);
+
+  /** კურსში შენახული category ID შეიძლება აღარ იარსებებოდეს course-categories-ში — არასწორებს ვაშორებთ სიიდან. */
+  useEffect(() => {
+    if (initialLoading || categories.length === 0) return;
+    setFormData((prev) => {
+      const ids = prev.categoryIds ?? [];
+      if (ids.length === 0) return prev;
+      const filtered = filterKnownCategoryIds(ids, categories);
+      if (filtered.length === ids.length) return prev;
+      return {
+        ...prev,
+        categoryIds: filtered,
+        categoryId: filtered[0] ?? '',
+        subcategoryId: filtered[1] ?? '',
+      };
+    });
+  }, [initialLoading, categories]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -375,7 +395,10 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
     
     try {
       setLoading(true);
-      
+
+      const safeCategoryIds = filterKnownCategoryIds(formData.categoryIds, categories);
+      const instructorPayload = resolveInstructorForApi(formData.instructor, instructors);
+
       const courseData = {
         title: {
           en: formData.title.en || '',
@@ -395,17 +418,12 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
         }),
         thumbnail: formData.thumbnail,
         isPublished: formData.isPublished,
-        instructor: {
-          name: formData.instructor.name,
-          ...(formData.instructor.instructorId?.trim()
-            ? { instructorId: formData.instructor.instructorId.trim() }
-            : {}),
-        },
+        instructor: instructorPayload,
         languages: formData.languages,
-        ...(formData.categoryIds?.length && {
-          categoryIds: formData.categoryIds,
-          categoryId: formData.categoryIds[0],
-          subcategoryId: formData.categoryIds[1],
+        ...(safeCategoryIds.length > 0 && {
+          categoryIds: safeCategoryIds,
+          categoryId: safeCategoryIds[0],
+          ...(safeCategoryIds.length > 1 ? { subcategoryId: safeCategoryIds[1] } : {}),
         }),
         ...(formData.duration && { duration: formData.duration }),
         ...(formData.startDate && { startDate: formData.startDate }),
@@ -429,8 +447,6 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
         })
       };
 
-      console.log('Course data to update:', courseData);
-      
       const response = await fetch(`${API_URL}/api/courses/${resolvedParams.id}`, {
         method: 'PATCH',
         headers: {
@@ -922,18 +938,22 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                   </label>
                   <select
                     value={
-                      formData.instructor.instructorId?.trim()
-                        || instructors.find((i) => i.name === formData.instructor.name)?._id
-                        || ''
+                      formData.instructor.instructorId?.trim() ||
+                      instructorRowId(
+                        instructors.find((i) => i.name === formData.instructor.name),
+                      ) ||
+                      ''
                     }
                     onChange={(e) => {
-                      const selectedInstructor = instructors.find((i) => i._id === e.target.value);
+                      const selectedInstructor = instructors.find(
+                        (i) => instructorRowId(i) === e.target.value,
+                      );
                       if (selectedInstructor) {
                         setFormData((prev) => ({
                           ...prev,
                           instructor: {
                             name: selectedInstructor.name,
-                            instructorId: selectedInstructor._id,
+                            instructorId: instructorRowId(selectedInstructor),
                           },
                         }));
                       }
@@ -944,7 +964,7 @@ export default function EditCoursePage({ params }: EditCoursePageProps) {
                   >
                     <option value="">{tr.selectInstructor}</option>
                     {instructors.map((instructor) => (
-                      <option key={instructor._id} value={instructor._id}>
+                      <option key={instructorRowId(instructor)} value={instructorRowId(instructor)}>
                         {instructor.name}
                       </option>
                     ))}
