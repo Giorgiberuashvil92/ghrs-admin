@@ -32,7 +32,7 @@ export const NAV_DATA = [
           },
           {
             title: "Videos",
-            url: "/pages/videos",
+            url: "/admin/videos",
           },
         ],
       },
