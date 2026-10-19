@@ -16,88 +16,76 @@ const copy = {
     title: "ვიდეო ბიბლიოთეკა",
     subtitle: "ატვირთე და მართე ვიდეოები ერთ სივრცეში",
     add: "ვიდეოს დამატება",
-    demo: "დემო რეჟიმი",
-    notice:
-      "შეგიძლია აირჩიო და ნახო ვიდეოები. Cloudflare R2-ის დაკავშირებამდე ფაილები არ აიტვირთება და გვერდის განახლებისას სია გასუფთავდება.",
-    total: "არჩეული ვიდეოები",
+    total: "ატვირთული ვიდეოები",
     size: "ფაილების მოცულობა",
     storage: "საცავის სტატუსი",
     pending: "დაკავშირების მოლოდინში",
+    connected: "დაკავშირებულია",
     drop: "გადმოიტანე ვიდეოები აქ",
     browse: "ან აირჩიე კომპიუტერიდან",
     formats: "MP4, MOV, WebM · შესაძლებელია რამდენიმე ფაილის არჩევა",
     library: "ჩემი ვიდეოები",
     search: "ვიდეოს ძებნა…",
     empty: "შენი ვიდეო ბიბლიოთეკა აქ გამოჩნდება",
-    emptyText:
-      "დასაწყებად აირჩიე პირველი ვიდეო და ნახე, როგორ გამოჩნდება ადმინ პანელში.",
-    local: "ლოკალური პრევიუ",
+    emptyText: "აირჩიე პირველი ვიდეო R2-ში ასატვირთად.",
     preview: "ვიდეოს ნახვა",
-    remove: "სიიდან ამოღება",
+    remove: "ვიდეოს წაშლა",
     close: "დახურვა",
     invalid: "აირჩიე ვიდეოფაილი (MP4, MOV ან WebM).",
     noResults: "ვიდეო ვერ მოიძებნა",
     connection: "Cloudflare R2",
     connectionText:
-      "საცავის დაკავშირების შემდეგ აქედან შეძლებ ვიდეოების ატვირთვას.",
+      "ვიდეოები იტვირთება Cloudflare R2-ში და გვერდის განახლების შემდეგაც ინახება.",
   },
   en: {
     title: "Video library",
     subtitle: "Upload and manage your videos in one place",
     add: "Add videos",
-    demo: "Demo mode",
-    notice:
-      "Select and preview videos. Files are not uploaded until Cloudflare R2 is connected, and this list clears when you refresh the page.",
-    total: "Selected videos",
+    total: "Uploaded videos",
     size: "Total file size",
     storage: "Storage status",
     pending: "Awaiting connection",
+    connected: "Connected",
     drop: "Drag your videos here",
     browse: "or choose from your computer",
     formats: "MP4, MOV, WebM · Select multiple files",
     library: "My videos",
     search: "Search videos…",
     empty: "Your video library starts here",
-    emptyText:
-      "Choose your first video to see how it will look in the admin panel.",
-    local: "Local preview",
+    emptyText: "Choose your first video to upload to R2.",
     preview: "Preview video",
-    remove: "Remove from list",
+    remove: "Delete video",
     close: "Close",
     invalid: "Choose a video file (MP4, MOV or WebM).",
     noResults: "No videos found",
     connection: "Cloudflare R2",
     connectionText:
-      "Once storage is connected, you can upload videos from this page.",
+      "Videos are uploaded to Cloudflare R2 and remain available after refresh.",
   },
   ru: {
     title: "Видеотека",
     subtitle: "Загружайте и управляйте видео в одном месте",
     add: "Добавить видео",
-    demo: "Демо-режим",
-    notice:
-      "Выбирайте и просматривайте видео. До подключения Cloudflare R2 файлы не загружаются. При обновлении страницы список очищается.",
-    total: "Выбрано видео",
+    total: "Загружено видео",
     size: "Общий размер",
     storage: "Статус хранилища",
     pending: "Ожидает подключения",
+    connected: "Подключено",
     drop: "Перетащите видео сюда",
     browse: "или выберите на компьютере",
     formats: "MP4, MOV, WebM · Можно выбрать несколько файлов",
     library: "Мои видео",
     search: "Поиск видео…",
     empty: "Здесь появится ваша видеотека",
-    emptyText:
-      "Выберите первое видео, чтобы увидеть его в панели администратора.",
-    local: "Локальный просмотр",
+    emptyText: "Выберите первое видео для загрузки в R2.",
     preview: "Смотреть видео",
-    remove: "Убрать из списка",
+    remove: "Удалить видео",
     close: "Закрыть",
     invalid: "Выберите видеофайл (MP4, MOV или WebM).",
     noResults: "Видео не найдены",
     connection: "Cloudflare R2",
     connectionText:
-      "После подключения хранилища здесь можно будет загружать видео.",
+      "Видео сохраняются в Cloudflare R2 и доступны после обновления страницы.",
   },
 };
 
@@ -117,39 +105,109 @@ export default function VideosPage() {
   const [active, setActive] = useState<Video | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const urls = useRef(new Set<string>());
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState("");
+  const [connected, setConnected] = useState(false);
 
-  useEffect(
-    () => () => {
-      urls.current.forEach((url) => URL.revokeObjectURL(url));
-    },
-    [],
-  );
+  async function loadVideos() {
+    const response = await fetch("/api/r2/videos", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Storage unavailable");
+    setVideos(data.videos);
+    setConnected(true);
+  }
+  useEffect(() => {
+    loadVideos().catch((err) => setError(err.message));
+  }, []);
   useEffect(() => {
     if (active) dialog.current?.showModal();
     else dialog.current?.close();
   }, [active]);
 
-  function addFiles(files: FileList | File[]) {
+  async function addFiles(files: FileList | File[]) {
+    if (uploading) return;
     const selected = Array.from(files);
-    const valid = selected.filter(
-      (file) =>
-        file.type.startsWith("video/") || /\.(mp4|mov|webm)$/i.test(file.name),
-    );
-    setError(valid.length !== selected.length ? tr.invalid : "");
-    setVideos((previous) => [
-      ...previous,
-      ...valid.map((file) => {
-        const url = URL.createObjectURL(file);
-        urls.current.add(url);
-        return {
-          id: crypto.randomUUID(),
-          name: file.name,
-          size: file.size,
-          url,
-        };
-      }),
-    ]);
+    if (
+      selected.some(
+        (file) =>
+          !/\.(mp4|mov|webm)$/i.test(file.name) ||
+          !file.size ||
+          file.size > 5 * 1024 ** 3,
+      )
+    ) {
+      setError(tr.invalid + " (max. 5 GB)");
+      return;
+    }
+    setUploading(true);
+    setError("");
+    try {
+      for (const file of selected) {
+        setProgress(`${file.name}: 0%`);
+        const contentType = /\.mov$/i.test(file.name)
+          ? "video/quicktime"
+          : /\.webm$/i.test(file.name)
+            ? "video/webm"
+            : "video/mp4";
+        const response = await fetch("/api/r2/videos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: file.name,
+            size: file.size,
+            contentType,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", data.uploadUrl);
+          xhr.setRequestHeader("Content-Type", contentType);
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable)
+              setProgress(
+                `${file.name}: ${Math.round((event.loaded / event.total) * 100)}%`,
+              );
+          };
+          xhr.onload = () =>
+            xhr.status >= 200 && xhr.status < 300
+              ? resolve()
+              : reject(new Error(`Upload failed (${xhr.status})`));
+          xhr.onerror = () =>
+            reject(
+              new Error(
+                "Upload failed. Check your connection and R2 CORS settings.",
+              ),
+            );
+          xhr.timeout = 60 * 60 * 1000;
+          xhr.ontimeout = () =>
+            reject(new Error("Upload timed out. Please retry."));
+          xhr.send(file);
+        });
+        await loadVideos();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      setProgress("");
+    }
+  }
+
+  async function removeVideo(video: Video) {
+    if (!window.confirm(`${tr.remove}: ${video.name}?`)) return;
+    try {
+      const response = await fetch("/api/r2/videos", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: video.id }),
+      });
+      if (!response.ok) throw new Error("Delete failed");
+      if (active?.id === video.id) setActive(null);
+      setVideos((previous) => previous.filter((item) => item.id !== video.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    }
   }
 
   const visible = videos.filter((video) =>
@@ -171,6 +229,7 @@ export default function VideosPage() {
           </p>
         </div>
         <button
+          disabled={uploading}
           onClick={() => input.current?.click()}
           className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-600"
         >
@@ -182,8 +241,8 @@ export default function VideosPage() {
       <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
         <CloudIcon className="size-6 shrink-0" />
         <div>
-          <p className="font-semibold">{tr.demo}</p>
-          <p className="mt-1 leading-relaxed">{tr.notice}</p>
+          <p className="font-semibold">{tr.connection}</p>
+          <p className="mt-1 leading-relaxed">{tr.connectionText}</p>
         </div>
       </div>
 
@@ -197,7 +256,11 @@ export default function VideosPage() {
             ),
             icon: ArrowUpTrayIcon,
           },
-          { label: tr.storage, value: tr.pending, icon: CloudIcon },
+          {
+            label: tr.storage,
+            value: connected ? tr.connected : tr.pending,
+            icon: CloudIcon,
+          },
         ].map((item) => (
           <div
             key={item.label}
@@ -249,6 +312,7 @@ export default function VideosPage() {
         </div>
         <h2 className="text-lg font-semibold">{tr.drop}</h2>
         <button
+          disabled={uploading}
           onClick={() => input.current?.click()}
           className="mt-2 text-sm font-medium text-orange-600 underline underline-offset-4 dark:text-orange-400"
         >
@@ -258,6 +322,11 @@ export default function VideosPage() {
           {tr.formats}
         </p>
       </div>
+      {uploading && (
+        <p role="status" className="text-sm text-orange-600">
+          {progress}
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-sm text-red-600">
           {error}
@@ -318,17 +387,11 @@ export default function VideosPage() {
                       {formatSize(video.size)}
                     </span>
                     <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                      {tr.local}
+                      {tr.connection}
                     </span>
                     <button
                       aria-label={`${tr.remove}: ${video.name}`}
-                      onClick={() => {
-                        URL.revokeObjectURL(video.url);
-                        urls.current.delete(video.url);
-                        setVideos((previous) =>
-                          previous.filter((item) => item.id !== video.id),
-                        );
-                      }}
+                      onClick={() => removeVideo(video)}
                       className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
                     >
                       <TrashIcon className="size-4" />
