@@ -8,11 +8,26 @@ import {
   PlayIcon,
   TrashIcon,
   MagnifyingGlassIcon,
+  PencilSquareIcon,
+  FolderIcon,
 } from "@heroicons/react/24/outline";
 import { useLanguage } from "@/i18n/language-context";
 
 const copy = {
   ka: {
+    catalogs: "კატალოგები",
+    all: "ყველა ვიდეო",
+    uncategorized: "კატალოგის გარეშე",
+    createCatalog: "კატალოგის შექმნა",
+    catalogName: "კატალოგის სახელი",
+    videoName: "ვიდეოს სახელი",
+    catalog: "კატალოგი",
+    save: "შენახვა",
+    cancel: "გაუქმება",
+    edit: "რედაქტირება",
+    startUpload: "ატვირთვის დაწყება",
+    queue: "ასატვირთი ვიდეოები",
+
     title: "ვიდეო ბიბლიოთეკა",
     subtitle: "ატვირთე და მართე ვიდეოები ერთ სივრცეში",
     add: "ვიდეოს დამატება",
@@ -38,6 +53,19 @@ const copy = {
       "ვიდეოები იტვირთება Cloudflare R2-ში და გვერდის განახლების შემდეგაც ინახება.",
   },
   en: {
+    catalogs: "Catalogs",
+    all: "All videos",
+    uncategorized: "Uncategorized",
+    createCatalog: "Create catalog",
+    catalogName: "Catalog name",
+    videoName: "Video name",
+    catalog: "Catalog",
+    save: "Save",
+    cancel: "Cancel",
+    edit: "Edit video",
+    startUpload: "Start upload",
+    queue: "Videos to upload",
+
     title: "Video library",
     subtitle: "Upload and manage your videos in one place",
     add: "Add videos",
@@ -63,6 +91,19 @@ const copy = {
       "Videos are uploaded to Cloudflare R2 and remain available after refresh.",
   },
   ru: {
+    catalogs: "Каталоги",
+    all: "Все видео",
+    uncategorized: "Без каталога",
+    createCatalog: "Создать каталог",
+    catalogName: "Название каталога",
+    videoName: "Название видео",
+    catalog: "Каталог",
+    save: "Сохранить",
+    cancel: "Отмена",
+    edit: "Изменить видео",
+    startUpload: "Начать загрузку",
+    queue: "Видео для загрузки",
+
     title: "Видеотека",
     subtitle: "Загружайте и управляйте видео в одном месте",
     add: "Добавить видео",
@@ -89,7 +130,15 @@ const copy = {
   },
 };
 
-type Video = { id: string; name: string; size: number; url: string };
+type Video = {
+  id: string;
+  name: string;
+  size: number;
+  url: string;
+  catalogId: string;
+};
+type Catalog = { id: string; name: string };
+type PendingVideo = { id: string; file: File; name: string; catalogId: string };
 const formatSize = (bytes: number) =>
   bytes >= 1024 ** 3
     ? `${(bytes / 1024 ** 3).toFixed(2)} GB`
@@ -99,6 +148,12 @@ export default function VideosPage() {
   const { language } = useLanguage();
   const tr = copy[language];
   const [videos, setVideos] = useState<Video[]>([]);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [catalogFilter, setCatalogFilter] = useState("all");
+  const [newCatalog, setNewCatalog] = useState("");
+  const [pending, setPending] = useState<PendingVideo[]>([]);
+  const [editing, setEditing] = useState<Video | null>(null);
+  const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
@@ -114,6 +169,7 @@ export default function VideosPage() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "Storage unavailable");
     setVideos(data.videos);
+    setCatalogs(data.catalogs || []);
     setConnected(true);
   }
   useEffect(() => {
@@ -124,7 +180,7 @@ export default function VideosPage() {
     else dialog.current?.close();
   }, [active]);
 
-  async function addFiles(files: FileList | File[]) {
+  function addFiles(files: FileList | File[]) {
     if (uploading) return;
     const selected = Array.from(files);
     if (
@@ -138,10 +194,88 @@ export default function VideosPage() {
       setError(tr.invalid + " (max. 5 GB)");
       return;
     }
+    setPending((previous) => [
+      ...previous,
+      ...selected.map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        name: file.name.replace(/\.[^.]+$/, "").slice(0, 200),
+        catalogId: catalogFilter === "all" ? "" : catalogFilter,
+      })),
+    ]);
+    setError("");
+  }
+  async function saveVideoDetails(
+    key: string,
+    name: string,
+    catalogId: string,
+  ) {
+    const response = await fetch("/api/r2/videos", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, name, catalogId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Save failed");
+  }
+  async function createCatalog() {
+    if (!newCatalog.trim() || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/r2/catalogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCatalog }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setCatalogs((previous) =>
+        [...previous, data.catalog].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      );
+      setNewCatalog("");
+      setCatalogFilter(data.catalog.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function updateVideo() {
+    if (!editing || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await saveVideoDetails(editing.id, editing.name, editing.catalogId);
+      setVideos((previous) =>
+        previous.map((item) =>
+          item.id === editing.id
+            ? { ...editing, name: editing.name.trim() }
+            : item,
+        ),
+      );
+      setEditing(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function uploadPending() {
+    if (
+      uploading ||
+      !pending.length ||
+      pending.some((item) => !item.name.trim())
+    )
+      return;
+    const selected = [...pending];
     setUploading(true);
     setError("");
     try {
-      for (const file of selected) {
+      for (const item of selected) {
+        const { file } = item;
         setProgress(`${file.name}: 0%`);
         const contentType = /\.mov$/i.test(file.name)
           ? "video/quicktime"
@@ -184,6 +318,15 @@ export default function VideosPage() {
             reject(new Error("Upload timed out. Please retry."));
           xhr.send(file);
         });
+        setPending((previous) =>
+          previous.filter((entry) => entry.id !== item.id),
+        );
+        try {
+          await saveVideoDetails(data.key, item.name, item.catalogId);
+        } catch (err) {
+          await loadVideos();
+          throw err;
+        }
         await loadVideos();
       }
     } catch (err) {
@@ -210,8 +353,10 @@ export default function VideosPage() {
     }
   }
 
-  const visible = videos.filter((video) =>
-    video.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+  const visible = videos.filter(
+    (video) =>
+      video.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
+      (catalogFilter === "all" || video.catalogId === catalogFilter),
   );
   const panel =
     "rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-dark";
@@ -279,6 +424,138 @@ export default function VideosPage() {
         ))}
       </div>
 
+      <section className={`${panel} space-y-4 p-5`}>
+        <h2 className="flex items-center gap-2 font-semibold">
+          <FolderIcon className="size-5 text-orange-500" />
+          {tr.catalogs}
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "all", name: tr.all },
+            { id: "", name: tr.uncategorized },
+            ...catalogs,
+          ].map((catalog) => (
+            <button
+              key={catalog.id}
+              onClick={() => setCatalogFilter(catalog.id)}
+              aria-pressed={catalogFilter === catalog.id}
+              className={`rounded-lg border px-3 py-2 text-sm ${catalogFilter === catalog.id ? "border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-200" : "border-gray-200 dark:border-gray-600"}`}
+            >
+              {catalog.name}{" "}
+              <span className="ml-1 text-xs">
+                (
+                {
+                  videos.filter(
+                    (video) =>
+                      catalog.id === "all" || video.catalogId === catalog.id,
+                  ).length
+                }
+                )
+              </span>
+            </button>
+          ))}
+        </div>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            createCatalog();
+          }}
+          className="flex flex-wrap gap-2"
+        >
+          <input
+            required
+            maxLength={200}
+            aria-label={tr.catalogName}
+            placeholder={tr.catalogName}
+            value={newCatalog}
+            onChange={(event) => setNewCatalog(event.target.value)}
+            className="rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm dark:border-gray-600"
+          />
+          <button
+            disabled={saving || !newCatalog.trim()}
+            className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {tr.createCatalog}
+          </button>
+        </form>
+      </section>
+      {pending.length > 0 && (
+        <section className={`${panel} space-y-4 p-5`}>
+          <h2 className="font-semibold">{tr.queue}</h2>
+          {pending.map((item) => (
+            <div
+              key={item.id}
+              className="flex flex-wrap items-end gap-3 border-b border-gray-100 pb-4 dark:border-gray-700"
+            >
+              <label className="min-w-48 flex-1 text-sm">
+                {tr.videoName}
+                <input
+                  required
+                  maxLength={200}
+                  disabled={uploading}
+                  value={item.name}
+                  onChange={(event) =>
+                    setPending((previous) =>
+                      previous.map((entry) =>
+                        entry.id === item.id
+                          ? { ...entry, name: event.target.value }
+                          : entry,
+                      ),
+                    )
+                  }
+                  className="mt-1 block w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 dark:border-gray-600"
+                />
+                <span className="text-xs text-gray-500">
+                  {item.file.name} · {formatSize(item.file.size)}
+                </span>
+              </label>
+              <label className="text-sm">
+                {tr.catalog}
+                <select
+                  disabled={uploading}
+                  value={item.catalogId}
+                  onChange={(event) =>
+                    setPending((previous) =>
+                      previous.map((entry) =>
+                        entry.id === item.id
+                          ? { ...entry, catalogId: event.target.value }
+                          : entry,
+                      ),
+                    )
+                  }
+                  className="mt-1 block rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-dark"
+                >
+                  <option value="">{tr.uncategorized}</option>
+                  {catalogs.map((catalog) => (
+                    <option key={catalog.id} value={catalog.id}>
+                      {catalog.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                disabled={uploading}
+                onClick={() =>
+                  setPending((previous) =>
+                    previous.filter((entry) => entry.id !== item.id),
+                  )
+                }
+                aria-label={`${tr.cancel}: ${item.file.name}`}
+                className="rounded-lg p-2 text-red-600"
+              >
+                <TrashIcon className="size-5" />
+              </button>
+            </div>
+          ))}
+          <button
+            disabled={uploading || pending.some((item) => !item.name.trim())}
+            onClick={uploadPending}
+            className="rounded-lg bg-orange-500 px-5 py-3 font-semibold text-white disabled:opacity-50"
+          >
+            {tr.startUpload}
+          </button>
+        </section>
+      )}
       <input
         ref={input}
         type="file"
@@ -382,6 +659,10 @@ export default function VideosPage() {
                   >
                     {video.name}
                   </h3>
+                  <p className="mt-1 truncate text-xs text-gray-500">
+                    {catalogs.find((catalog) => catalog.id === video.catalogId)
+                      ?.name || tr.uncategorized}
+                  </p>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="text-xs text-gray-500">
                       {formatSize(video.size)}
@@ -389,6 +670,13 @@ export default function VideosPage() {
                     <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                       {tr.connection}
                     </span>
+                    <button
+                      aria-label={`${tr.edit}: ${video.name}`}
+                      onClick={() => setEditing({ ...video })}
+                      className="rounded-lg p-2 text-gray-400 hover:text-orange-600"
+                    >
+                      <PencilSquareIcon className="size-4" />
+                    </button>
                     <button
                       aria-label={`${tr.remove}: ${video.name}`}
                       onClick={() => removeVideo(video)}
@@ -421,6 +709,78 @@ export default function VideosPage() {
           {tr.connectionText}
         </p>
       </div>
+      {editing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !saving) setEditing(null);
+          }}
+        >
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-label={tr.edit}
+            onSubmit={(event) => {
+              event.preventDefault();
+              updateVideo();
+            }}
+            className={`${panel} w-full max-w-md space-y-4 p-6`}
+          >
+            <h2 className="font-semibold">{tr.edit}</h2>
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+            <label className="block text-sm">
+              {tr.videoName}
+              <input
+                autoFocus
+                required
+                maxLength={200}
+                value={editing.name}
+                onChange={(event) =>
+                  setEditing({ ...editing, name: event.target.value })
+                }
+                className="mt-1 block w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 dark:border-gray-600"
+              />
+            </label>
+            <label className="block text-sm">
+              {tr.catalog}
+              <select
+                value={editing.catalogId}
+                onChange={(event) =>
+                  setEditing({ ...editing, catalogId: event.target.value })
+                }
+                className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-dark"
+              >
+                <option value="">{tr.uncategorized}</option>
+                {catalogs.map((catalog) => (
+                  <option key={catalog.id} value={catalog.id}>
+                    {catalog.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setEditing(null)}
+                className="rounded-lg border px-4 py-2"
+              >
+                {tr.cancel}
+              </button>
+              <button
+                disabled={saving || !editing.name.trim()}
+                className="rounded-lg bg-orange-500 px-4 py-2 text-white disabled:opacity-50"
+              >
+                {tr.save}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       <dialog
         ref={dialog}
         onCancel={() => setActive(null)}

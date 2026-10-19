@@ -4,10 +4,21 @@ import {
   GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 import { r2Config, videoPrefix } from "@/lib/r2";
+
+import {
+  readDetails,
+  saveDetails,
+  listCatalogs,
+  validVideoKey,
+  validName,
+  catalogExists,
+  detailsKey,
+} from "@/lib/video-library";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,9 +65,11 @@ export async function GET(request: NextRequest) {
       );
       for (const item of result.Contents || []) {
         if (!item.Key || !item.Size) continue;
+        const details = await readDetails(item.Key);
         videos.push({
           id: item.Key,
-          name: item.Key.slice(videoPrefix.length + 37),
+          name: details?.name || item.Key.slice(videoPrefix.length + 37),
+          catalogId: details?.catalogId || "",
           size: item.Size,
           createdAt: item.LastModified?.toISOString(),
           url: await getSignedUrl(
@@ -72,6 +85,7 @@ export async function GET(request: NextRequest) {
     } while (ContinuationToken);
     return NextResponse.json(
       {
+        catalogs: await listCatalogs(),
         videos: videos.sort((a, b) =>
           (b.createdAt || "").localeCompare(a.createdAt || ""),
         ),
@@ -102,14 +116,22 @@ export async function POST(request: NextRequest) {
       );
     }
     const key = `${videoPrefix}${randomUUID()}-${name.replace(new RegExp("[^\\p{L}\\p{N}._ -]", "gu"), "_")}`;
-    const directUpload = process.env.R2_UPLOAD_MODE === "direct" ||
+    const directUpload =
+      process.env.R2_UPLOAD_MODE === "direct" ||
       (process.env.VERCEL === "1" && process.env.R2_UPLOAD_MODE !== "proxy");
     let uploadUrl = `/api/r2/videos/upload?key=${encodeURIComponent(key)}`;
     if (directUpload) {
       const { client, bucket } = r2Config();
-      uploadUrl = await getSignedUrl(client, new PutObjectCommand({
-        Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size,
-      }), { expiresIn: 3600 });
+      uploadUrl = await getSignedUrl(
+        client,
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          ContentType: contentType,
+          ContentLength: size,
+        }),
+        { expiresIn: 3600 },
+      );
     }
     return NextResponse.json(
       { key, uploadUrl },
@@ -136,6 +158,42 @@ export async function DELETE(request: NextRequest) {
     }
     const { client, bucket } = r2Config();
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+    await client.send(
+      new DeleteObjectCommand({ Bucket: bucket, Key: detailsKey(key) }),
+    );
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const denied = validateOrigin(request);
+  if (denied) return denied;
+  try {
+    const { key, name, catalogId = "" } = await request.json();
+    if (
+      !validVideoKey(key) ||
+      !validName(name) ||
+      !(await catalogExists(catalogId))
+    ) {
+      return NextResponse.json(
+        { message: "Enter a video name and select an existing catalog." },
+        { status: 400 },
+      );
+    }
+    const { client, bucket } = r2Config();
+    try {
+      await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    } catch (error) {
+      if (error?.$metadata?.httpStatusCode === 404)
+        return NextResponse.json(
+          { message: "Video not found" },
+          { status: 404 },
+        );
+      throw error;
+    }
+    await saveDetails(key, { name: name.trim(), catalogId });
     return NextResponse.json({ success: true });
   } catch (error) {
     return failure(error);

@@ -23,3 +23,9 @@ On Vercel, uploads default to direct signed R2 URLs to avoid the function body
 size limit. Configure R2 bucket CORS for the admin origin before uploading.
 R2_UPLOAD_MODE=direct or proxy explicitly selects the transport. Local servers
 default to proxy and do not need CORS for uploads.
+
+Video display names and catalog assignments are stored as independent JSON
+objects under video-library/videos/. Catalogs live under video-library/catalogs/.
+Renaming or moving a video does not change its object key or require reuploading.
+Existing videos without metadata keep their original names under Uncategorized.
+Run node scripts/test-video-library.cjs for offline route and persistence checks.
