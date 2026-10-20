@@ -15,6 +15,23 @@ import { useLanguage } from "@/i18n/language-context";
 
 const copy = {
   ka: {
+    link: "ვიდეოს ბმული",
+    copyLink: "ბმულის კოპირება",
+    copied: "დაკოპირებულია",
+    copyAll: "ნაჩვენები ბმულების კოპირება",
+    sort: "სორტირება",
+    newest: "ჯერ ახალი",
+    oldest: "ჯერ ძველი",
+    nameAsc: "სახელი: ა–ჰ",
+    nameDesc: "სახელი: ჰ–ა",
+    sizeDesc: "ზომა: კლებადობით",
+    catalogSort: "კატალოგის მიხედვით",
+    list: "სია",
+    grid: "ბარათები",
+    linkExpiry:
+      "ეს ბმულები მოქმედებს 24 საათი; გვერდის განახლებით მიიღებ ახალ ბმულებს.",
+    copyFailed: "კოპირება ვერ მოხერხდა — მონიშნე ბმული და დააკოპირე.",
+
     catalogs: "კატალოგები",
     all: "ყველა ვიდეო",
     uncategorized: "კატალოგის გარეშე",
@@ -53,6 +70,23 @@ const copy = {
       "ვიდეოები იტვირთება Cloudflare R2-ში და გვერდის განახლების შემდეგაც ინახება.",
   },
   en: {
+    link: "Video URL",
+    copyLink: "Copy link",
+    copied: "Copied",
+    copyAll: "Copy visible links",
+    sort: "Sort",
+    newest: "Newest first",
+    oldest: "Oldest first",
+    nameAsc: "Name: A–Z",
+    nameDesc: "Name: Z–A",
+    sizeDesc: "Size: largest first",
+    catalogSort: "By catalog",
+    list: "List",
+    grid: "Cards",
+    linkExpiry:
+      "These links are valid for 24 hours; refresh the page to get new links.",
+    copyFailed: "Copy failed — select the URL and copy it manually.",
+
     catalogs: "Catalogs",
     all: "All videos",
     uncategorized: "Uncategorized",
@@ -91,6 +125,24 @@ const copy = {
       "Videos are uploaded to Cloudflare R2 and remain available after refresh.",
   },
   ru: {
+    link: "Ссылка на видео",
+    copyLink: "Копировать ссылку",
+    copied: "Скопировано",
+    copyAll: "Копировать показанные ссылки",
+    sort: "Сортировка",
+    newest: "Сначала новые",
+    oldest: "Сначала старые",
+    nameAsc: "Название: А–Я",
+    nameDesc: "Название: Я–А",
+    sizeDesc: "Сначала большие",
+    catalogSort: "По каталогу",
+    list: "Список",
+    grid: "Карточки",
+    linkExpiry:
+      "Ссылки действуют 24 часа; обновите страницу, чтобы получить новые.",
+    copyFailed:
+      "Не удалось скопировать — выделите ссылку и скопируйте вручную.",
+
     catalogs: "Каталоги",
     all: "Все видео",
     uncategorized: "Без каталога",
@@ -136,6 +188,7 @@ type Video = {
   size: number;
   url: string;
   catalogId: string;
+  createdAt?: string;
 };
 type Catalog = { id: string; name: string };
 type PendingVideo = { id: string; file: File; name: string; catalogId: string };
@@ -154,6 +207,16 @@ export default function VideosPage() {
   const [pending, setPending] = useState<PendingVideo[]>([]);
   const [editing, setEditing] = useState<Video | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sort, setSort] = useState("newest");
+  const [view, setView] = useState("list");
+  const [copied, setCopied] = useState("");
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+    },
+    [],
+  );
   const [query, setQuery] = useState("");
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
@@ -353,11 +416,42 @@ export default function VideosPage() {
     }
   }
 
-  const visible = videos.filter(
-    (video) =>
-      video.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
-      (catalogFilter === "all" || video.catalogId === catalogFilter),
-  );
+  const catalogName = (video: Video) =>
+    catalogs.find((catalog) => catalog.id === video.catalogId)?.name ||
+    tr.uncategorized;
+  const visible = videos
+    .filter(
+      (video) =>
+        (video.name + " " + catalogName(video))
+          .toLocaleLowerCase()
+          .includes(query.toLocaleLowerCase()) &&
+        (catalogFilter === "all" || video.catalogId === catalogFilter),
+    )
+    .sort((a, b) => {
+      if (sort === "nameAsc")
+        return a.name.localeCompare(b.name, language, { numeric: true });
+      if (sort === "nameDesc")
+        return b.name.localeCompare(a.name, language, { numeric: true });
+      if (sort === "sizeDesc") return b.size - a.size;
+      if (sort === "catalogSort")
+        return (
+          catalogName(a).localeCompare(catalogName(b), language) ||
+          a.name.localeCompare(b.name, language, { numeric: true })
+        );
+      return sort === "oldest"
+        ? (a.createdAt || "").localeCompare(b.createdAt || "")
+        : (b.createdAt || "").localeCompare(a.createdAt || "");
+    });
+  async function copyLinks(text: string, id: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(""), 2500);
+    } catch {
+      setError(tr.copyFailed);
+    }
+  }
   const panel =
     "rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-dark";
 
@@ -629,17 +723,95 @@ export default function VideosPage() {
             />
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-5 dark:border-gray-700">
+          <label className="text-sm">
+            {tr.catalog}
+            <select
+              value={catalogFilter}
+              onChange={(event) => setCatalogFilter(event.target.value)}
+              className="ml-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-dark"
+            >
+              <option value="all">{tr.all}</option>
+              <option value="">{tr.uncategorized}</option>
+              {catalogs.map((catalog) => (
+                <option key={catalog.id} value={catalog.id}>
+                  {catalog.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm">
+            {tr.sort}
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value)}
+              className="ml-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-dark"
+            >
+              {[
+                "newest",
+                "oldest",
+                "nameAsc",
+                "nameDesc",
+                "sizeDesc",
+                "catalogSort",
+              ].map((value) => (
+                <option key={value} value={value}>
+                  {tr[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex gap-1">
+            {["list", "grid"].map((value) => (
+              <button
+                key={value}
+                aria-pressed={view === value}
+                onClick={() => setView(value)}
+                className={`rounded-lg border px-3 py-2 text-sm ${view === value ? "border-orange-500 text-orange-600" : "border-gray-200 dark:border-gray-600"}`}
+              >
+                {tr[value]}
+              </button>
+            ))}
+          </div>
+          <button
+            disabled={!visible.length}
+            onClick={() =>
+              copyLinks(
+                visible
+                  .map(
+                    (video) =>
+                      `${video.name}\t${catalogName(video)}\t${video.url}`,
+                  )
+                  .join("\n"),
+                "all",
+              )
+            }
+            className="rounded-lg border border-orange-300 px-3 py-2 text-sm text-orange-600 disabled:opacity-50"
+          >
+            {copied === "all" ? tr.copied : tr.copyAll}
+          </button>
+          <p className="w-full text-xs text-gray-500">{tr.linkExpiry}</p>
+          <p role="status" className="sr-only">
+            {copied ? tr.copied : ""}
+          </p>
+        </div>
         {visible.length ? (
-          <div className="grid gap-5 p-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div
+            className={
+              view === "grid"
+                ? "grid gap-5 p-5 sm:grid-cols-2 xl:grid-cols-3"
+                : "space-y-3 p-5"
+            }
+          >
             {visible.map((video) => (
               <article
                 key={video.id}
-                className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700"
+                className={`overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 ${view === "list" ? "flex flex-col sm:flex-row" : ""}`}
               >
                 <button
                   onClick={() => setActive(video)}
                   aria-label={`${tr.preview}: ${video.name}`}
-                  className="group relative block aspect-video w-full overflow-hidden bg-slate-950"
+                  className={`group relative block aspect-video shrink-0 overflow-hidden bg-slate-950 ${view === "list" ? "w-full sm:w-40" : "w-full"}`}
                 >
                   <video
                     src={video.url}
@@ -652,7 +824,7 @@ export default function VideosPage() {
                     <PlayIcon className="size-12 rounded-full bg-white/90 p-3 text-orange-600" />
                   </span>
                 </button>
-                <div className="p-4">
+                <div className="min-w-0 flex-1 p-4">
                   <h3
                     className="truncate text-sm font-semibold"
                     title={video.name}
@@ -663,6 +835,29 @@ export default function VideosPage() {
                     {catalogs.find((catalog) => catalog.id === video.catalogId)
                       ?.name || tr.uncategorized}
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <input
+                      aria-label={`${tr.link}: ${video.name}`}
+                      readOnly
+                      value={video.url}
+                      onFocus={(event) => event.target.select()}
+                      className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-xs text-gray-500 dark:border-gray-600"
+                    />
+                    <button
+                      onClick={() => copyLinks(video.url, video.id)}
+                      className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      {copied === video.id ? tr.copied : tr.copyLink}
+                    </button>
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-xs dark:border-gray-600"
+                    >
+                      {tr.preview}
+                    </a>
+                  </div>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="text-xs text-gray-500">
                       {formatSize(video.size)}
@@ -692,8 +887,10 @@ export default function VideosPage() {
         ) : (
           <div className="px-6 py-16 text-center">
             <FilmIcon className="mx-auto mb-4 size-12 text-gray-300" />
-            <h3 className="font-semibold">{query ? tr.noResults : tr.empty}</h3>
-            {!query && (
+            <h3 className="font-semibold">
+              {query || catalogFilter !== "all" ? tr.noResults : tr.empty}
+            </h3>
+            {!query && catalogFilter === "all" && (
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-gray-500 dark:text-gray-400">
                 {tr.emptyText}
               </p>
