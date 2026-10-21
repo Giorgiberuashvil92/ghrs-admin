@@ -4,6 +4,7 @@ export const NAV_DATA = [
   {
     label: "MAIN MENU",
     items: [
+      { title: "Users", url: "/admin/users", icon: Icons.User, items: [] },
       {
         title: "Dashboard",
         icon: Icons.HomeIcon,

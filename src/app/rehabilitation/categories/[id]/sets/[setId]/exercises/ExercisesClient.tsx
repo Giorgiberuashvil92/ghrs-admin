@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { VideoLinkEditor } from '@/components/Exercises/VideoLinkEditor';
 import { useState } from 'react';
 import { Exercise } from '@/types/categories';
 import { Category } from '@/lib/api/categories';
@@ -307,6 +308,12 @@ export default function ExercisesClient({ category, set, initialExercises, subca
                         </div>
                       </div>
                     </div>
+
+                    {exercise.id && <VideoLinkEditor
+                      id={exercise.id}
+                      videoUrl={exercise.videoUrl || (typeof exercise.videoFile === 'string' ? exercise.videoFile : '')}
+                      videoUrlEn={exercise.videoUrlEn || ''}
+                    />}
 
                     {/* Action Buttons */}
                     <div className="space-y-3">
