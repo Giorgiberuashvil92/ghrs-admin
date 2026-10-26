@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   DeleteObjectCommand,
-  GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   HeadObjectCommand,
@@ -72,11 +71,7 @@ export async function GET(request: NextRequest) {
           catalogId: details?.catalogId || "",
           size: item.Size,
           createdAt: item.LastModified?.toISOString(),
-          url: await getSignedUrl(
-            client,
-            new GetObjectCommand({ Bucket: bucket, Key: item.Key }),
-            { expiresIn: 86400 },
-          ),
+          url: new URL(`/api/r2/play/${item.Key.split('/').map(encodeURIComponent).join('/')}`, request.url).href,
         });
       }
       ContinuationToken = result.IsTruncated

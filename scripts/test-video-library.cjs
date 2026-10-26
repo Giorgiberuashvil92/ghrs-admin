@@ -99,6 +99,14 @@ function request(method, body) {
   objects.set(key, "video");
   const listing = async () => (await videos.GET(request("GET"))).json();
   let list = await listing();
+  assert.equal(list.videos[0].url, 'http://localhost/api/r2/play/' + key);
+  const playback = load('src/app/api/r2/play/[...key]/route.ts');
+  const response = await playback.GET(request('GET'), { params: Promise.resolve({ key: key.split('/') }) });
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('location'), 'https://example.test/' + key);
+  assert.equal((await playback.GET(request('GET'), { params: Promise.resolve({ key: ['video-library', 'private.json'] }) })).status, 400);
+  assert.equal((await playback.GET(request('GET'), { params: Promise.resolve({ key: ['admin-videos', 'missing.mp4'] }) })).status, 404);
   assert.equal(list.videos[0].name, "original.mp4");
   assert.equal(list.videos[0].catalogId, "");
   assert.equal(list.catalogs[0].id, catalog.id);
