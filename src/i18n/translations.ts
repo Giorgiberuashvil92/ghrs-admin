@@ -1,5 +1,6 @@
 export const translations = {
   ka: {
+    questionnaires: 'კითხვარები',
     additionalInformation: "დამატებითი ინფორმაცია",
     demoVideo: "დემო ვიდეო",
     demoVideoUrl: "დემო ვიდეოს URL",
@@ -379,6 +380,7 @@ export const translations = {
   },
   
   en: {
+    questionnaires: 'Questionnaires',
     additionalInformation: "Additional Information",
     demoVideo: "Demo Video",
     demoVideoUrl: "Demo Video URL",
@@ -756,6 +758,7 @@ export const translations = {
   },
   
   ru: {
+    questionnaires: 'Анкеты',
     additionalInformation: "Дополнительная информация",
     demoVideo: "Демо видео",
     demoVideoUrl: "URL демо видео",

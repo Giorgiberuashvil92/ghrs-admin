@@ -42,6 +42,10 @@ const copy = {
     save: "შენახვა",
     cancel: "გაუქმება",
     edit: "რედაქტირება",
+    editCatalog: "კატალოგის რედაქტირება",
+    deleteCatalog: "კატალოგის წაშლა",
+    confirmDeleteCatalog:
+      "წავშალოთ კატალოგი? ვიდეოები კატალოგის გარეშე გადავა.",
     startUpload: "ატვირთვის დაწყება",
     queue: "ასატვირთი ვიდეოები",
 
@@ -97,6 +101,10 @@ const copy = {
     save: "Save",
     cancel: "Cancel",
     edit: "Edit video",
+    editCatalog: "Edit catalog",
+    deleteCatalog: "Delete catalog",
+    confirmDeleteCatalog:
+      "Delete this catalog? Videos will become uncategorized.",
     startUpload: "Start upload",
     queue: "Videos to upload",
 
@@ -153,6 +161,10 @@ const copy = {
     save: "Сохранить",
     cancel: "Отмена",
     edit: "Изменить видео",
+    editCatalog: "Изменить каталог",
+    deleteCatalog: "Удалить каталог",
+    confirmDeleteCatalog:
+      "Удалить каталог? Видео останутся без каталога.",
     startUpload: "Начать загрузку",
     queue: "Видео для загрузки",
 
@@ -206,6 +218,7 @@ export default function VideosPage() {
   const [newCatalog, setNewCatalog] = useState("");
   const [pending, setPending] = useState<PendingVideo[]>([]);
   const [editing, setEditing] = useState<Video | null>(null);
+  const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
   const [saving, setSaving] = useState(false);
   const [sort, setSort] = useState("newest");
   const [view, setView] = useState("list");
@@ -302,6 +315,69 @@ export default function VideosPage() {
       setCatalogFilter(data.catalog.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function updateCatalog() {
+    if (!editingCatalog || saving || !editingCatalog.name.trim()) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/r2/catalogs", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingCatalog.id,
+          name: editingCatalog.name,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setCatalogs((previous) =>
+        previous
+          .map((catalog) =>
+            catalog.id === data.catalog.id ? data.catalog : catalog,
+          )
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setEditingCatalog(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function removeCatalog(catalog: Catalog) {
+    if (
+      !window.confirm(`${tr.confirmDeleteCatalog}\n\n${catalog.name}`) ||
+      saving
+    )
+      return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/r2/catalogs", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: catalog.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Delete failed");
+      setCatalogs((previous) =>
+        previous.filter((item) => item.id !== catalog.id),
+      );
+      setVideos((previous) =>
+        previous.map((video) =>
+          video.catalogId === catalog.id
+            ? { ...video, catalogId: "" }
+            : video,
+        ),
+      );
+      if (catalogFilter === catalog.id) setCatalogFilter("all");
+      if (editingCatalog?.id === catalog.id) setEditingCatalog(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
     } finally {
       setSaving(false);
     }
@@ -525,28 +601,59 @@ export default function VideosPage() {
         </h2>
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "all", name: tr.all },
-            { id: "", name: tr.uncategorized },
-            ...catalogs,
+            { id: "all", name: tr.all, managed: false },
+            { id: "", name: tr.uncategorized, managed: false },
+            ...catalogs.map((catalog) => ({ ...catalog, managed: true })),
           ].map((catalog) => (
-            <button
-              key={catalog.id}
-              onClick={() => setCatalogFilter(catalog.id)}
-              aria-pressed={catalogFilter === catalog.id}
-              className={`rounded-lg border px-3 py-2 text-sm ${catalogFilter === catalog.id ? "border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-200" : "border-gray-200 dark:border-gray-600"}`}
+            <div
+              key={catalog.id || "uncategorized"}
+              className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-sm ${catalogFilter === catalog.id ? "border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-200" : "border-gray-200 dark:border-gray-600"}`}
             >
-              {catalog.name}{" "}
-              <span className="ml-1 text-xs">
-                (
-                {
-                  videos.filter(
-                    (video) =>
-                      catalog.id === "all" || video.catalogId === catalog.id,
-                  ).length
-                }
-                )
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setCatalogFilter(catalog.id)}
+                aria-pressed={catalogFilter === catalog.id}
+                className="px-1 py-1"
+              >
+                {catalog.name}{" "}
+                <span className="ml-1 text-xs">
+                  (
+                  {
+                    videos.filter(
+                      (video) =>
+                        catalog.id === "all" || video.catalogId === catalog.id,
+                    ).length
+                  }
+                  )
+                </span>
+              </button>
+              {catalog.managed && (
+                <>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    aria-label={`${tr.editCatalog}: ${catalog.name}`}
+                    onClick={() =>
+                      setEditingCatalog({ id: catalog.id, name: catalog.name })
+                    }
+                    className="rounded p-1 text-gray-400 hover:text-orange-600"
+                  >
+                    <PencilSquareIcon className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    aria-label={`${tr.deleteCatalog}: ${catalog.name}`}
+                    onClick={() =>
+                      removeCatalog({ id: catalog.id, name: catalog.name })
+                    }
+                    className="rounded p-1 text-gray-400 hover:text-red-600"
+                  >
+                    <TrashIcon className="size-4" />
+                  </button>
+                </>
+              )}
+            </div>
           ))}
         </div>
         <form
@@ -970,6 +1077,64 @@ export default function VideosPage() {
               </button>
               <button
                 disabled={saving || !editing.name.trim()}
+                className="rounded-lg bg-orange-500 px-4 py-2 text-white disabled:opacity-50"
+              >
+                {tr.save}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      {editingCatalog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !saving) setEditingCatalog(null);
+          }}
+        >
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-label={tr.editCatalog}
+            onSubmit={(event) => {
+              event.preventDefault();
+              updateCatalog();
+            }}
+            className={`${panel} w-full max-w-md space-y-4 p-6`}
+          >
+            <h2 className="font-semibold">{tr.editCatalog}</h2>
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+            <label className="block text-sm">
+              {tr.catalogName}
+              <input
+                autoFocus
+                required
+                maxLength={200}
+                value={editingCatalog.name}
+                onChange={(event) =>
+                  setEditingCatalog({
+                    ...editingCatalog,
+                    name: event.target.value,
+                  })
+                }
+                className="mt-1 block w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 dark:border-gray-600"
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setEditingCatalog(null)}
+                className="rounded-lg border px-4 py-2"
+              >
+                {tr.cancel}
+              </button>
+              <button
+                disabled={saving || !editingCatalog.name.trim()}
                 className="rounded-lg bg-orange-500 px-4 py-2 text-white disabled:opacity-50"
               >
                 {tr.save}

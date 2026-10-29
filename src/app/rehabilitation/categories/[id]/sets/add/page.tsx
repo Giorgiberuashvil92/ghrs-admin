@@ -2,13 +2,14 @@ import { getCategoryById } from '@/lib/api/categories';
 import AddSetClient from './AddSetClient';
 
 interface AddSetPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function AddSetPage({ params }: AddSetPageProps) {
-  const category = await getCategoryById(params.id);
+  const { id } = await params;
+  const category = await getCategoryById(id);
 
   return (
     <>

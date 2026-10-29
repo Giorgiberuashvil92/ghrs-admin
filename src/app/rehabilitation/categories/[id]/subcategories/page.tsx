@@ -135,7 +135,7 @@ export default function SubCategoriesPage({ params }: SubCategoriesPageProps) {
                 onClick={() => router.push(`/rehabilitation/categories/${resolvedParams.id}/subcategories/${subcategory._id}/sets`)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm w-full"
               >
-                {t('sets')} ({subcategory.complexes?.length || 0})
+                {t('sets')} ({subcategory.setsCount ?? 0})
               </button>
               
               <div className="flex gap-2">

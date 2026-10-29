@@ -112,7 +112,7 @@ export function Sidebar() {
                                 aria-hidden="true"
                               />
 
-                              <span>{item.title}</span>
+                              <span>{(item as any).titleKey ? t((item as any).titleKey) : item.title}</span>
 
                               <ChevronUp
                                 className={cn(
@@ -167,7 +167,7 @@ export function Sidebar() {
                                   aria-hidden="true"
                                 />
 
-                                <span>{item.title}</span>
+                                <span>{(item as any).titleKey ? t((item as any).titleKey) : item.title}</span>
                               </MenuItem>
                             );
                           })()

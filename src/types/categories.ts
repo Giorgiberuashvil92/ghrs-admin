@@ -164,6 +164,7 @@ export interface SubCategory {
   createdAt: string;
   updatedAt: string;
   complexes: Complex[];
+  setsCount?: number;
 }
 
 export interface Category {

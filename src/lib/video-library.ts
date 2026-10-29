@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
   ListObjectsV2Command,
@@ -66,11 +67,61 @@ export async function catalogExists(id: unknown): Promise<boolean> {
     !!(await readJson(`${catalogPrefix}${id}.json`))
   );
 }
+export function validCatalogId(id: unknown): id is string {
+  return typeof id === "string" && /^[a-f0-9-]{36}$/.test(id);
+}
+
 export async function createCatalog(name: string) {
   const catalog = { id: randomUUID(), name: name.trim() };
   await writeJson(`${catalogPrefix}${catalog.id}.json`, catalog);
   return catalog;
 }
+
+export async function updateCatalog(id: string, name: string) {
+  if (!validCatalogId(id) || !validName(name)) return null;
+  const key = `${catalogPrefix}${id}.json`;
+  const existing = await readJson<Catalog>(key);
+  if (!existing) return null;
+  const catalog = { id, name: name.trim() };
+  await writeJson(key, catalog);
+  return catalog;
+}
+
+async function uncategorizeVideos(catalogId: string) {
+  const { client, bucket } = r2Config();
+  let token: string | undefined;
+  do {
+    const result = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: videoPrefix,
+        ContinuationToken: token,
+      }),
+    );
+    for (const item of result.Contents || []) {
+      if (!item.Key || !validVideoKey(item.Key)) continue;
+      const details = await readDetails(item.Key);
+      if (details?.catalogId !== catalogId) continue;
+      await saveDetails(item.Key, {
+        name: details.name,
+        catalogId: "",
+      });
+    }
+    token = result.IsTruncated ? result.NextContinuationToken : undefined;
+  } while (token);
+}
+
+export async function deleteCatalog(id: string) {
+  if (!validCatalogId(id)) return false;
+  const key = `${catalogPrefix}${id}.json`;
+  const existing = await readJson<Catalog>(key);
+  if (!existing) return false;
+  const { client, bucket } = r2Config();
+  await uncategorizeVideos(id);
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+  return true;
+}
+
 export async function listCatalogs(): Promise<Catalog[]> {
   const { client, bucket } = r2Config();
   const catalogs: Catalog[] = [];
